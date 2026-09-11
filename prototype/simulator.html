@@ -1,0 +1,4890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HoodQuest (HQ) — 25-Year On-Chain Living Simulation</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d120c;
+      color: #e6edd9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 16px 12px 40px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 20px;
+      color: #bbf766;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    p.subtitle {
+      font-size: 12px;
+      color: #8fa789;
+    }
+    .main-layout {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      max-width: 540px;
+      width: 100%;
+    }
+    .nft-container {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      background: #151d13;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(187, 247, 102, 0.2);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      image-rendering: pixelated;
+    }
+    .hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .badge {
+      background: rgba(10, 16, 9, 0.88);
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(132, 204, 76, 0.35);
+      color: #bbf766;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .badge .name {
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .badge .meta {
+      font-size: 10px;
+      color: #9cb894;
+      font-weight: normal;
+    }
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      gap: 6px;
+    }
+    .icon-btn {
+      background: rgba(10, 16, 9, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e6edd9;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s ease;
+    }
+    .icon-btn:hover {
+      background: rgba(74, 124, 45, 0.9);
+      border-color: #84cc4c;
+      transform: scale(1.05);
+    }
+    .utc-timer-badge {
+      position: absolute;
+      top: 58px;
+      right: 10px;
+      background: rgba(10, 16, 9, 0.85);
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      color: #ffd700;
+      font-family: monospace;
+      pointer-events: auto;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 10;
+    }
+    .utc-timer-badge:hover {
+      border-color: #ffd700;
+      background: rgba(30, 26, 8, 0.9);
+    }
+    .bottom-bar {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      z-index: 10;
+    }
+    .btn {
+      flex: 1;
+      padding: 8px 10px;
+      background: rgba(18, 28, 16, 0.92);
+      border: 1px solid rgba(132, 204, 76, 0.35);
+      color: #e6edd9;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      backdrop-filter: blur(8px);
+      text-align: center;
+      user-select: none;
+    }
+    .btn:hover {
+      background: #284c1b;
+      border-color: #84cc4c;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .btn.primary {
+      background: #254d1a;
+      border-color: #84cc4c;
+      color: #c7f474;
+    }
+    .toast-msg {
+      position: absolute;
+      bottom: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #ffd700;
+      background: rgba(0, 0, 0, 0.75);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      pointer-events: none;
+      letter-spacing: 0.3px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    /* Simulation Control Panel */
+    .control-panel {
+      width: 100%;
+      background: #141b12;
+      border: 1px solid #283a24;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #23331f;
+      padding-bottom: 8px;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #bbf766;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .time-readout {
+      font-family: monospace;
+      font-size: 12px;
+      color: #ffd700;
+    }
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #799473;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: #84cc4c;
+      cursor: pointer;
+    }
+    .warp-btn-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .warp-btn {
+      flex: 1;
+      min-width: 50px;
+      padding: 6px 8px;
+      background: #1c2919;
+      border: 1px solid #3d5834;
+      color: #c9dec0;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .warp-btn:hover {
+      background: #2b4524;
+      border-color: #84cc4c;
+      color: #fff;
+    }
+    .warp-btn.active {
+      background: #3c6b2e;
+      border-color: #bbf766;
+      color: #fff;
+    }
+    .toggle-row {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: #a6c09f;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .toggle-group {
+      display: flex;
+      gap: 4px;
+    }
+    .pill-btn {
+      padding: 4px 8px;
+      background: #1c2919;
+      border: 1px solid #334a2c;
+      border-radius: 12px;
+      font-size: 10px;
+      color: #b0c9a9;
+      cursor: pointer;
+    }
+    .pill-btn.active {
+      background: #395c2b;
+      border-color: #84cc4c;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    /* Preset Character Bar */
+    .presets-box {
+      width: 100%;
+      background: #10160f;
+      border: 1px solid #23331f;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .presets-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: #8fa789;
+      display: flex;
+      justify-content: space-between;
+    }
+    .preset-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .chip {
+      white-space: nowrap;
+      padding: 5px 9px;
+      background: #182215;
+      border: 1px solid #31442a;
+      border-radius: 6px;
+      font-size: 10px;
+      color: #c9dec0;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover {
+      background: #253b20;
+      border-color: #84cc4c;
+      color: #fff;
+    }
+    .chip.active {
+      background: #2f5223;
+      border-color: #bbf766;
+      color: #fff;
+    }
+
+    /* On-Chain Robinhood Testnet Loot Hub */
+    .onchain-panel {
+      width: 100%;
+      background: linear-gradient(180deg, #162215 0%, #10180e 100%);
+      border: 1px solid #36502e;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .onchain-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      border-bottom: 1px solid #23331f;
+      padding-bottom: 8px;
+    }
+    .onchain-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #bbf766;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chain-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4cd964;
+      box-shadow: 0 0 8px #4cd964;
+      display: inline-block;
+    }
+    .contract-links {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ext-link {
+      font-size: 10px;
+      color: #8fa789;
+      text-decoration: none;
+      background: rgba(0,0,0,0.3);
+      padding: 3px 7px;
+      border-radius: 4px;
+      border: 1px solid #283a24;
+      transition: all 0.15s;
+    }
+    .ext-link:hover {
+      color: #ffd700;
+      border-color: #ffd700;
+      background: rgba(255,215,0,0.1);
+    }
+    .wallet-bar {
+      display: flex;
+      gap: 6px;
+    }
+    .wallet-input {
+      flex: 1;
+      background: #0c120a;
+      border: 1px solid #283a24;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #ffd700;
+    }
+    .wallet-input:focus {
+      outline: none;
+      border-color: #84cc4c;
+    }
+    .loot-tray-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: bold;
+      color: #c9dec0;
+    }
+    .loot-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 480px) {
+      .loot-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .loot-card {
+      background: linear-gradient(180deg, #10190f 0%, #0c130b 100%);
+      border: 1px solid #23381f;
+      border-radius: 8px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      position: relative;
+      user-select: none;
+    }
+    .loot-card:hover {
+      border-color: #84cc4c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .loot-card.equipped {
+      background: linear-gradient(180deg, #182e16 0%, #122210 100%);
+      border: 1px solid #ffd700;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+    }
+    .loot-card.locked {
+      opacity: 0.4;
+      filter: grayscale(0.85);
+      cursor: not-allowed;
+      border-style: dashed;
+      border-color: #2e3d29;
+    }
+    .loot-card.locked:hover {
+      border-color: #5c3838;
+      transform: none;
+      box-shadow: none;
+    }
+    .loot-card-icon {
+      font-size: 24px;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .loot-card-name {
+      font-size: 10px;
+      font-weight: 700;
+      color: #e6edd9;
+      line-height: 1.2;
+      min-height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .loot-card-rarity {
+      font-size: 8px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .loot-card-rarity.rarity-mythic {
+      background: rgba(255, 215, 0, 0.15);
+      color: #ffd700;
+      border: 1px solid rgba(255, 215, 0, 0.4);
+    }
+    .loot-card-rarity.rarity-rare {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .loot-card-rarity.rarity-uncommon {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .loot-card-rarity.rarity-common {
+      background: rgba(143, 167, 137, 0.15);
+      color: #9cb894;
+      border: 1px solid rgba(143, 167, 137, 0.25);
+    }
+    .loot-card-count {
+      font-size: 10px;
+      color: #ffd700;
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .loot-card-status {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: bold;
+      color: #799473;
+    }
+    .loot-card.equipped .loot-card-status {
+      color: #4cd964;
+    }
+    .loot-card.locked .loot-card-status {
+      color: #8c6d6d;
+    }
+    .heist-action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .heist-btn {
+      flex: 2;
+      min-width: 220px;
+      background: linear-gradient(135deg, #2b541d 0%, #1e3d14 100%);
+      border-color: #ffd700;
+      color: #ffd700;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+    }
+    .heist-btn:hover {
+      background: linear-gradient(135deg, #376a25 0%, #29521b 100%);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+    }
+    .heist-feedback {
+      font-size: 11px;
+      color: #ffd700;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #3d5c31;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: none;
+      word-break: break-word;
+    }
+    .quest-dossier {
+      background: #0d170c;
+      border: 1px solid #284420;
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .quest-dossier-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+    }
+    .cooldown-pill {
+      font-size: 9px;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+    }
+    .cooldown-pill.ready {
+      background: rgba(76, 217, 100, 0.2);
+      color: #4cd964;
+      border: 1px solid #4cd964;
+    }
+    .cooldown-pill.active {
+      background: rgba(255, 215, 0, 0.2);
+      color: #ffd700;
+      border: 1px solid #ffd700;
+    }
+    .quest-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .quest-stat-card {
+      background: #142413;
+      border: 1px solid #263e20;
+      border-radius: 6px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+    .quest-stat-label {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #799473;
+    }
+    .quest-stat-value {
+      font-size: 10px;
+      font-weight: bold;
+      color: #e6edd9;
+      font-family: monospace;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    .quest-log-box {
+      background: #091008;
+      border: 1px solid #1c2e17;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 10px;
+      line-height: 1.4;
+      max-height: 120px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quest-log-entry {
+      border-left: 2px solid #ffd700;
+      padding-left: 6px;
+      color: #d1dcce;
+    }
+    .quest-log-entry.success {
+      border-left-color: #4cd964;
+      background: rgba(76, 217, 100, 0.08);
+      padding: 4px 6px;
+      border-radius: 0 4px 4px 0;
+    }
+    .quest-log-entry .log-time {
+      color: #8fa789;
+      font-size: 9px;
+      display: block;
+    }
+    .outfitter-box {
+      background: linear-gradient(180deg, #111a10 0%, #0a1109 100%);
+      border: 1px solid #3d5e32;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .outfitter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffd700;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+      padding-bottom: 6px;
+    }
+    .outfitter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+      gap: 6px;
+    }
+    .craft-btn {
+      background: #142211;
+      border: 1px solid #2d4725;
+      border-radius: 6px;
+      padding: 7px 6px;
+      color: #e6edd9;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      text-align: center;
+    }
+    .craft-btn:hover:not(:disabled) {
+      background: #233e1d;
+      border-color: #ffd700;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+    .craft-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      border-color: #1e2e1b;
+      filter: grayscale(0.7);
+    }
+    .craft-btn .craft-cost {
+      color: #ffd700;
+      font-family: monospace;
+      font-size: 9px;
+      font-weight: bold;
+    }
+    .craft-btn:disabled .craft-cost {
+      color: #8fa789;
+    }
+    .onchain-svg-viewer {
+      background: #090e08;
+      border: 1px solid #283a24;
+      border-radius: 8px;
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .onchain-svg-frame {
+      width: 220px;
+      height: 220px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ffd700;
+      box-shadow: 0 0 16px rgba(0,0,0,0.6);
+      background: #000;
+    }
+    .onchain-svg-frame svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🏹 HoodQuest (HQ): 25-Year Living Simulation</h1>
+    <p class="subtitle">On-Chain Procedural Diorama • Zero-Gas Evolution • Universal UTC Daily Cycle</p>
+  </header>
+
+  <div class="main-layout">
+    <!-- NFT Diorama Container -->
+    <div class="nft-container" id="container">
+      <canvas id="stage" width="440" height="440"></canvas>
+
+      <!-- On-Canvas HUD -->
+      <div class="hud">
+        <div class="badge">
+          <span class="name" id="charName">Robin of Locksley</span>
+          <span class="meta" id="charMeta">The Outlaw Archer • Stage I (Recruit)</span>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="btnSound" title="Toggle Sound">🔊</button>
+          <button class="icon-btn" id="btnTimeMode" title="Toggle Day/Sunset/Night">☀️</button>
+        </div>
+      </div>
+
+      <div class="utc-timer-badge" id="utcBadge" title="Global Universal Reset Clock">
+        <span>⏱️ UTC Reset: <strong id="utcCountdown">08:14:22</strong></span>
+      </div>
+
+      <div class="toast-msg" id="toastMsg">Notification</div>
+
+      <!-- Interaction Bar -->
+      <div class="bottom-bar">
+        <button class="btn primary" id="btnInteract">✨ Interact</button>
+        <button class="btn" id="btnFeed">🍎 Feed Snack</button>
+        <button class="btn" id="btnCampfire">🔥 Stoke Camp</button>
+        <button class="btn" id="btnArchery">🎯 Shoot Target</button>
+      </div>
+    </div>
+
+    <!-- 25-Year Time Machine Sandbox Control Panel -->
+    <div class="control-panel">
+      <div class="panel-header">
+        <span class="panel-title">⏳ 25-Year Time Warp Simulator</span>
+        <span class="time-readout" id="ageDisplay">Day 0 • Year 0 • Spring</span>
+      </div>
+
+      <div class="slider-row">
+        <input type="range" id="timeSlider" min="0" max="9125" value="0" step="1">
+        <div class="slider-labels">
+          <span>Day 0 (Mint)</span>
+          <span>Yr 1 (365d)</span>
+          <span>Yr 5 (Scout)</span>
+          <span>Yr 10 (Veteran)</span>
+          <span>Yr 25 (Legend: 9,125d)</span>
+        </div>
+      </div>
+
+      <div class="warp-btn-row">
+        <button class="warp-btn" id="warp1d">+1 Day</button>
+        <button class="warp-btn" id="warp7d">+1 Week</button>
+        <button class="warp-btn" id="warp30d">+1 Month</button>
+        <button class="warp-btn" id="warp365d">+1 Year</button>
+        <button class="warp-btn" id="warp5y">+5 Years</button>
+        <button class="warp-btn" id="warp25y">👑 Max 25y</button>
+        <button class="warp-btn" id="warpPlay" style="background:#264a1b; border-color:#84cc4c; color:#bbf766;">▶ Auto Play</button>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <span>Care State: </span>
+          <div class="pill-btn active" id="pillCared" style="display:inline-block;">🔥 Active & Cared For</div>
+          <div class="pill-btn" id="pillDormant" style="display:inline-block;">💤 Overgrown Slumber</div>
+        </div>
+        <div class="toggle-group">
+          <span style="font-size:10px; margin-right:4px;">Season:</span>
+          <button class="pill-btn active" id="sAuto">Auto</button>
+          <button class="pill-btn" id="sSpring">🌸</button>
+          <button class="pill-btn" id="sSummer">☀️</button>
+          <button class="pill-btn" id="sAutumn">🍂</button>
+          <button class="pill-btn" id="sWinter">❄️</button>
+        </div>
+      </div>
+
+      <!-- Interactive Companion Simulator & Independent Age Controls -->
+      <div class="companion-sim-panel" style="margin-top:12px; padding:10px 14px; background:#0b170e; border:1px solid #1f381c; border-radius:8px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px; font-weight:bold; color:#88b04b;">🐾 Companion (ERC-721):</span>
+            <button class="pill-btn comp-btn active" data-comp="auto" id="btnCompAuto">Auto</button>
+            <button class="pill-btn comp-btn" data-comp="Camp Hound" id="btnCompHound">🐕 Hound</button>
+            <button class="pill-btn comp-btn" data-comp="Hunting Falcon" id="btnCompFalcon">🦅 Falcon</button>
+            <button class="pill-btn comp-btn" data-comp="Barn Owl" id="btnCompOwl">🦉 Owl</button>
+            <button class="pill-btn comp-btn" data-comp="None" id="btnCompNone">🚫 None</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px; color:#88b04b;">Pet Evolution:</span>
+            <button class="pill-btn pet-stage-btn active" data-stage="auto" id="btnPetStageAuto">Sync</button>
+            <button class="pill-btn pet-stage-btn" data-stage="1" id="btnPetStage1">Pup (St. 1)</button>
+            <button class="pill-btn pet-stage-btn" data-stage="3" id="btnPetStage3">Adult (St. 3)</button>
+            <button class="pill-btn pet-stage-btn" data-stage="5" id="btnPetStage5">Legend (St. 5)</button>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; border-top:1px solid #162914; padding-top:6px;">
+          <span id="companionPerkInfo" style="color:#ffd700;">🐾 Bonded Companion: Independent ERC-721 Evolution</span>
+          <span style="color:#88b04b; font-style:italic;">💡 Unbonded pets rest in Hearth Den with 0 food / 0 aging</span>
+        </div>
+      </div>
+    </div>
+
+        <!-- Sherwood Camp Backdrop & Props Simulation -->
+    <div class="presets-box" style="margin-bottom: 4px; border-color: rgba(132, 204, 76, 0.4);">
+      <div class="presets-title">
+        <span>🌲 Sherwood Camp Backdrop & Props:</span>
+        <span style="font-size:11px; color:#88b04b;">Toggle items in camp scene</span>
+      </div>
+      <div class="preset-chips" id="backdropChips">
+        <div class="chip active" data-prop="target" id="chipPropTarget">🎯 Target</div>
+        <div class="chip active" data-prop="campfire" id="chipPropCampfire">🔥 Hearth</div>
+        <div class="chip active" data-prop="armoryRack" id="chipPropArmory">🛡️ Armory Rack</div>
+        <div class="chip active" data-prop="alchemyBench" id="chipPropAlchemy">🧪 Alchemy Table</div>
+        <div class="chip" data-prop="treasureHoard" id="chipPropTreasure">💰 Gold Chest</div>
+        <div class="chip" data-prop="meadCask" id="chipPropMead">🍺 Mead Cask</div>
+        <div class="chip" data-prop="feastBasket" id="chipPropBasket">🧺 Feast Basket</div>
+        <div class="chip active" data-prop="campShelter" id="chipPropShelter">⛺ Shelter</div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid #162914; font-size:11px;">
+        <span id="charTraitInfo" style="color:#bbf766;">🎭 Traits: Lincoln Green Bycocket • Auburn Hair • Fair Rose Skin</span>
+        <div style="display:flex; gap:6px;">
+          <button class="pill-btn" id="btnCastleHeist" style="background:#4a1e1e; color:#ffd700; border:1px solid #e11d48; cursor:pointer; font-weight:bold;">🏰 Castle Vault Heist</button>
+          <button class="pill-btn" id="btnInspectItemArt" style="background:#2a401f; color:#ffd700; border:1px solid #ffd700; cursor:pointer;">🔍 Inspect Item Art</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Preset Showcase (10 Outlaw Roster) -->
+    <div class="presets-box">
+      <div class="presets-title">
+        <span>🎭 Archetypes & Test Seeds:</span>
+        <span style="color:#ffd700; cursor:pointer;" id="btnRandomSeed">🎲 Random Mint</span>
+      </div>
+      <div class="preset-chips">
+        <div class="chip active" data-seed="1">#1 Robin (Archer)</div>
+        <div class="chip" data-seed="2">#2 Little John (Brawler)</div>
+        <div class="chip" data-seed="3">#3 Friar Tuck (Monk)</div>
+        <div class="chip" data-seed="4">#4 Maid Marian (Spy)</div>
+        <div class="chip" data-seed="5">#5 Alan-a-Dale (Minstrel)</div>
+        <div class="chip" data-seed="6">#6 Will Scarlet (Duelist)</div>
+        <div class="chip" data-seed="7">#7 Much the Miller (Scout)</div>
+        <div class="chip" data-seed="8">#8 Mother Meg (Herbalist)</div>
+        <div class="chip" data-seed="9">#9 Guy of Gisborne (Bounty)</div>
+        <div class="chip" data-seed="10">#10 Sheriff of Notts (Pursuer)</div>
+      </div>
+    </div>
+
+    <!-- On-Chain Robinhood Testnet Loot Hub -->
+    <div class="onchain-panel">
+      <div class="onchain-header">
+        <div class="onchain-title">
+          <span class="chain-dot"></span>
+          <span>Robinhood Testnet (Chain ID 46630)</span>
+        </div>
+        <div class="contract-links">
+          <a href="https://explorer.testnet.chain.robinhood.com/address/0xF75323518df7Ce90637e2b93cFd7f7d0627cc205" target="_blank" class="ext-link">📜 Outlaws Contract ↗</a>
+          <a href="https://explorer.testnet.chain.robinhood.com/address/0x0676129B2bF4B06f04AfC7301617b6cE3BB2405c" target="_blank" class="ext-link">🎒 Loot Contract ↗</a>
+        </div>
+      </div>
+
+      <div class="wallet-bar">
+        <input type="text" id="walletInput" value="0xC115C51a1bf9DdE7B1eD0861E18CaA27f24C3Be9" placeholder="Enter 0x address to read wallet loot..." class="wallet-input">
+        <button class="btn" id="btnConnectWallet">🦊 Connect</button>
+        <button class="btn primary" id="btnRefreshLoot">🔄 Read Loot</button>
+      </div>
+
+      <div class="loot-tray-title">
+        <span>⚔️ Inventory & Equipment (Gated by Held Tokens)</span>
+        <span id="lootSyncStatus" style="color:#bbf766; font-size:10px;">● Live from Testnet RPC</span>
+      </div>
+
+      <div class="loot-grid" id="lootGrid">
+        <!-- Dynamically rendered loot cards -->
+      </div>
+
+      <!-- In-Game Sherwood Outfitter / Camp Shop -->
+      <div class="outfitter-box">
+        <div class="outfitter-header">
+          <span>🏪 Sherwood Camp Outfitter (Forge & Brew Gear)</span>
+          <span id="goldBalanceDisplay" style="color:#ffd700; font-family:monospace; font-size:12px;">🪙 0 Gold Held</span>
+        </div>
+        <div class="outfitter-grid">
+          <button class="craft-btn" id="btnCraftFeast" title="Spend 3 Gold Sovereigns for Forest Feast Basket">
+            <span>🧺 Feast Basket</span>
+            <span class="craft-cost">3 🪙 Gold</span>
+          </button>
+          <button class="craft-btn" id="btnCraftMead" title="Spend 5 Gold Sovereigns to brew Nottingham Mead Cask">
+            <span>🍺 Mead Cask</span>
+            <span class="craft-cost">5 🪙 Gold</span>
+          </button>
+          <button class="craft-btn" id="btnCraftElixir" title="Spend 15 Gold Sovereigns to brew Greenwood Alchemical Elixir">
+            <span>🧪 Elixir</span>
+            <span class="craft-cost">15 🪙 Gold</span>
+          </button>
+          <button class="craft-btn" id="btnCraftCloak" title="Spend 25 Gold Sovereigns to tailor Locksley Velvet Cloak">
+            <span>🧥 Velvet Cloak</span>
+            <span class="craft-cost">25 🪙 Gold</span>
+          </button>
+          <button class="craft-btn" id="btnCraftHorn" title="Spend 35 Gold Sovereigns to forge Silver Rallying Horn">
+            <span>📯 Rally Horn</span>
+            <span class="craft-cost">35 🪙 Gold</span>
+          </button>
+          <button class="craft-btn" id="btnCraftBow" title="Spend 50 Gold Sovereigns to commission a Gilded Recurve Bow">
+            <span>🏹 Gilded Bow</span>
+            <span class="craft-cost">50 🪙 Gold</span>
+          </button>
+          <button class="craft-btn" id="btnCraftArrow" title="Spend 100 Gold Sovereigns to forge the Mythic Golden Arrow">
+            <span>✨ Golden Arrow</span>
+            <span class="craft-cost">100 🪙 Gold</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Connected Wallet Outlaw Selector -->
+      <div id="ownedOutlawsRow" style="display:flex; align-items:center; justify-content:space-between; background:#122010; border:1px solid #2e4726; border-radius:6px; padding:6px 10px; font-size:11px;">
+        <span style="color:#bbf766;">👑 Questing Outlaw:</span>
+        <span id="ownedOutlawsList" style="color:#ffd700; font-weight:bold;">#2 (User Owned)</span>
+      </div>
+
+      <div class="heist-action-row">
+        <button class="btn primary heist-btn" id="btnOnchainHeist">👑 Ambush Royal Carriage (Gas Action) ⚔️</button>
+        <button class="btn" id="btnOnchainMint" title="Mint a brand new Robin Hood Outlaw NFT on Robinhood Testnet">🎲 Mint Outlaw</button>
+        <button class="btn" id="btnInspectOnchainSvg" title="View raw SVG output directly from smart contract generateSVG()">🖼️ On-Chain SVG</button>
+        <button class="btn btn-open-nft-gallery" id="btnOpenNftGallery" style="background:#223c20; color:#ffd700; border:1px solid #4a733e;" title="Explore the complete artisan visual catalog for all Companions, Weapons, Relics, and Materials">🎨 NFT Showcase Gallery</button>
+        <button class="btn" id="btnRefreshIndexer" title="Call EIP-4906 refreshMetadata() on-chain to force Blockscout/OpenSea cache invalidation">📡 Refresh Indexer (EIP-4906)</button>
+      </div>
+
+      <!-- Live On-Chain Quest Dispatch & Ambush Dossier -->
+      <div class="quest-dossier" id="questDossier">
+        <div class="quest-dossier-header">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:14px;">🏹</span>
+            <span style="font-weight:bold; color:#ffd700;">Sherwood Quest Dispatch & Heist Log</span>
+          </div>
+          <span id="questCooldownBadge" class="cooldown-pill ready">🟢 Carriage Spotted: Ready</span>
+        </div>
+
+        <div class="quest-stats-grid">
+          <div class="quest-stat-card">
+            <span class="quest-stat-label">Total Heists</span>
+            <span class="quest-stat-value" id="statTotalHeists">0</span>
+          </div>
+          <div class="quest-stat-card">
+            <span class="quest-stat-label">Latest Spoils</span>
+            <span class="quest-stat-value" id="statLatestSpoils" style="color:#ffd700;">None yet</span>
+          </div>
+          <div class="quest-stat-card">
+            <span class="quest-stat-label">Carriage Escort</span>
+            <span class="quest-stat-value" id="statAmbushTarget">Sheriff Guards</span>
+          </div>
+          <div class="quest-stat-card">
+            <span class="quest-stat-label">Cooldown</span>
+            <span class="quest-stat-value" id="statCooldown">60s</span>
+          </div>
+        </div>
+
+        <!-- Live Quest Ambush Chronicle -->
+        <div class="quest-log-box" id="questLogBox">
+          <div class="quest-log-entry intro">
+            <span class="log-time">🌲 Nottingham High Road:</span>
+            <span>The Sheriff of Nottingham's royal convoy moves gold through Sherwood. Launch a heist to ambush the carriage for Gold Sovereigns, Mead Casks, Gilded Bows, or the Mythic Golden Arrow!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live On-Chain Contract SVG Inspector -->
+      <div class="onchain-svg-viewer" id="onchainSvgViewer">
+        <div style="font-size:11px; color:#ffd700; font-weight:bold; width:100%; display:flex; justify-content:space-between;">
+          <span id="onchainViewerTitle">📜 Raw Smart Contract Output (`generateSVG`)</span>
+          <span style="cursor:pointer; color:#8fa789;" id="btnCloseSvgViewer">✕ Close</span>
+        </div>
+        <div class="onchain-svg-frame" id="onchainSvgFrame"></div>
+        <span style="font-size:9px; color:#8fa789; text-align:center;">This is the pure SVG rendered directly by Solidity on Robinhood Chain testnet</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const W = 440, H = 440;
+
+  // --- Sound Synthesizer ---
+  let audioCtx = null;
+  let soundEnabled = true;
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playSound(type) {
+    if (!soundEnabled) return;
+    try {
+      initAudio();
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'shoot') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(750, t);
+        osc.frequency.exponentialRampToValueAtTime(120, t + 0.16);
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.16);
+        osc.start(t);
+        osc.stop(t + 0.16);
+      } else if (type === 'hit') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, t);
+        osc.frequency.exponentialRampToValueAtTime(50, t + 0.12);
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+        osc.start(t);
+        osc.stop(t + 0.12);
+      } else if (type === 'bell') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(987.77, t);
+        osc.frequency.setValueAtTime(1318.51, t + 0.08);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.start(t);
+        osc.stop(t + 0.35);
+      } else if (type === 'fire') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, t);
+        osc.frequency.linearRampToValueAtTime(260, t + 0.15);
+        osc.frequency.linearRampToValueAtTime(70, t + 0.3);
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      } else if (type === 'purr') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, t);
+        osc.frequency.linearRampToValueAtTime(450, t + 0.1);
+        osc.frequency.linearRampToValueAtTime(300, t + 0.2);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+        osc.start(t);
+        osc.stop(t + 0.25);
+      } else if (type === 'munch') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(280, t);
+        osc.frequency.setValueAtTime(400, t + 0.05);
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        osc.start(t);
+        osc.stop(t + 0.15);
+      } else if (type === 'lute') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, t + i * 0.05);
+          g.gain.setValueAtTime(0.12, t + i * 0.05);
+          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.05 + 0.45);
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.start(t + i * 0.05);
+          o.stop(t + i * 0.05 + 0.45);
+        });
+      } else if (type === 'coin') {
+        [1046.50, 1318.51, 1567.98].forEach((freq, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, t + i * 0.06);
+          g.gain.setValueAtTime(0.18, t + i * 0.06);
+          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.25);
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.start(t + i * 0.06);
+          o.stop(t + i * 0.06 + 0.25);
+        });
+      } else if (type === 'fanfare') {
+        [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, t + i * 0.08);
+          g.gain.setValueAtTime(0.2, t + i * 0.08);
+          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.4);
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.start(t + i * 0.08);
+          o.stop(t + i * 0.08 + 0.4);
+        });
+      }
+    } catch(e) {}
+  }
+
+  // --- Robinhood Testnet Integration ---
+  const RH_CHAIN_ID_HEX = '0xb626'; // 46630
+  const RH_CHAIN_ID_DEC = 46630;
+  const RH_RPC_URL = 'https://rpc.testnet.chain.robinhood.com';
+  const OUTLAWS_CONTRACT = '0xF75323518df7Ce90637e2b93cFd7f7d0627cc205';
+  const LOOT_CONTRACT = '0x0676129B2bF4B06f04AfC7301617b6cE3BB2405c';
+
+  const LOOT_DEFS = [
+    { id: 1, name: 'Gold Sovereigns', icon: '🪙', rarity: 'Royal Currency', desc: 'Camp chest & sovereign treasure' },
+    { id: 2, name: 'Mead Cask', icon: '🍺', rarity: 'Uncommon (17%)', desc: 'Hearth ale barrel (5 Gold)' },
+    { id: 3, name: 'Gilded Recurve Bow', icon: '🏹', rarity: 'Rare (13%)', desc: 'Golden weapon upgrade (50 Gold)' },
+    { id: 4, name: 'Golden Arrow', icon: '✨', rarity: 'Mythic (5%)', desc: 'Comet archery trails (100 Gold)' },
+    { id: 5, name: 'Greenwood Elixir', icon: '🧪', rarity: 'Alchemical', desc: 'Emerald aura (15 Gold)' },
+    { id: 6, name: 'Locksley Velvet Cloak', icon: '🧥', rarity: 'Rare', desc: 'Gold-trimmed mantle (25 Gold)' },
+    { id: 7, name: 'Forest Feast Basket', icon: '🧺', rarity: 'Common (15%)', desc: 'Camp feast & provisions (3 Gold)' },
+    { id: 8, name: 'Silver Rallying Horn', icon: '📯', rarity: 'Rare', desc: 'Locksley battle horn (35 Gold)' }
+  ];
+
+  let walletLootBalances = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+  let equippedLoot = { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false };
+  let connectedUserAddress = null;
+  let userOwnedOutlaws = [];
+
+  // --- Seedable PRNG ---
+  function xorshift(seed) {
+    let s = (typeof seed === 'number' ? seed : parseInt(seed, 10)) || 1;
+    return () => {
+      s ^= s << 13;
+      s ^= s >> 17;
+      s ^= s << 5;
+      return ((s >>> 0) % 1000000) / 1000000;
+    };
+  }
+
+  // --- 10 Archetypes Roster ---
+  const ARCHETYPES = [
+    {
+      id: 'archer',
+      title: 'Outlaw Archer',
+      names: ['Robin of Locksley', 'Celandine Green', 'Rory Swiftbow', 'Kestrel the Sharp'],
+      actionText: '🏹 Robin draws his legendary yew longbow!',
+      sound: 'shoot',
+      weapon: 'Longbow & Quiver'
+    },
+    {
+      id: 'brawler',
+      title: 'Giant Brawler',
+      names: ['Little John', 'Giles Ironarm', 'Hal of Sherwood', 'Barrow the Mountain'],
+      actionText: '🪵 Little John raises his massive oak quarterstaff!',
+      sound: 'hit',
+      weapon: 'Heavy Oak Quarterstaff'
+    },
+    {
+      id: 'friar',
+      title: 'Merry Friar',
+      names: ['Friar Tuck', 'Brother Ambrose', 'Father Luke', 'Barnaby the Jovial'],
+      actionText: '🍺 Friar Tuck raises a frothy toast to Sherwood!',
+      sound: 'purr',
+      weapon: 'Frothy Ale Flagon'
+    },
+    {
+      id: 'infiltrator',
+      title: 'Noble Infiltrator',
+      names: ['Maid Marian', 'Lady Genevieve', 'The Silver Fox', 'Alys of the Court'],
+      actionText: '🗡️ Maid Marian twirls a concealed royal silver dagger!',
+      sound: 'hit',
+      weapon: 'Concealed Stilettos'
+    },
+    {
+      id: 'minstrel',
+      title: 'Wandering Minstrel',
+      names: ['Alan-a-Dale', 'Pip the Harper', 'Milo Quickverse', 'Barrow Songmaker'],
+      actionText: '🎵 Alan-a-Dale strums the Ballad of Sherwood!',
+      sound: 'lute',
+      weapon: 'Medieval Rosewood Lute'
+    },
+    {
+      id: 'duelist',
+      title: 'Crimson Duelist',
+      names: ['Will Scarlet', 'Captain Redmaine', 'Darian Swiftblade', 'Valen the Bold'],
+      actionText: '⚔️ Will Scarlet polishes his gleaming steel broadsword!',
+      sound: 'hit',
+      weapon: 'Highland Broadsword'
+    },
+    {
+      id: 'scout',
+      title: 'Youthful Scout',
+      names: ["Much the Miller's Son", 'Pipkin Miller', 'Toby the Flourboy', 'Jem of the Mill'],
+      actionText: '🍏 Much juggles wild forest apples with nimble speed!',
+      sound: 'munch',
+      weapon: 'Scout Slingshot'
+    },
+    {
+      id: 'herbalist',
+      title: 'Greenwood Alchemist',
+      names: ['Mother Meg', 'Old Elda of the Oak', 'Widow Hazel', 'Gwen of the Brier'],
+      actionText: '🧪 Mother Meg stirs her mystical herbal brew!',
+      sound: 'fire',
+      weapon: 'Bubbling Herbal Mortar'
+    },
+    {
+      id: 'bounty',
+      title: 'Dark Bounty Hunter',
+      names: ['Guy of Gisborne', 'The Black Hound', 'Lord Vane', 'Garrick the Shadow'],
+      actionText: '🛡️ Guy of Gisborne checks his blackened chainmail and blade.',
+      sound: 'hit',
+      weapon: 'Blackened Bastard Sword'
+    },
+    {
+      id: 'sheriff',
+      title: 'Royal Pursuer',
+      names: ['Sheriff of Nottingham', 'Baron de Lucy', 'Sir Baldwin the Greedy', 'Chancellor Ralph'],
+      actionText: '💰 The Sheriff nervously counts his heavy gold tax purse!',
+      sound: 'bell',
+      weapon: 'Royal Seal & Tax Purse'
+    }
+  ];
+
+  const COMPANIONS = ['Camp Hound', 'Hunting Falcon', 'Barn Owl'];
+  const CLOAK_PALETTES = [
+    { name: 'Lincoln Green', hex: '#2f6932', hi: '#489f4d', sh: '#1c421e' },
+    { name: 'Autumn Russet', hex: '#944b25', hi: '#c76633', sh: '#592911' },
+    { name: 'Midnight Charcoal', hex: '#293545', hi: '#425570', sh: '#161e29' },
+    { name: 'Sherwood Moss', hex: '#44662d', hi: '#699943', sh: '#253d16' },
+    { name: 'Crimson Scarlet', hex: '#8a2323', hi: '#bd3333', sh: '#521414' },
+    { name: 'Royal Velvet', hex: '#5b264e', hi: '#8c3b77', sh: '#33122b' }
+  ];
+
+  const HAIR_COLORS = [
+    { name: 'Auburn', hex: '#7a3215', hi: '#d97736', sh: '#4a1b0b' },
+    { name: 'Chestnut Brown', hex: '#4a2f1b', hi: '#82522c', sh: '#2b1a0e' },
+    { name: 'Raven Black', hex: '#1e1b18', hi: '#3d3835', sh: '#0d0c0a' },
+    { name: 'Golden Flaxen', hex: '#b5893e', hi: '#e0b25e', sh: '#73541f' },
+    { name: 'Forest Copper', hex: '#963c1a', hi: '#c95828', sh: '#5c220c' },
+    { name: 'Silver Gray', hex: '#8a949e', hi: '#c2cbd4', sh: '#525c66' }
+  ];
+
+  const SKIN_TONES = [
+    { name: 'Fair Rose', base: '#fde8d4', sh: '#ecc195', blush: 'rgba(235, 87, 87, 0.35)', lip: '#d96565' },
+    { name: 'Warm Peach', base: '#fbd3b6', sh: '#dfa87e', blush: 'rgba(220, 80, 80, 0.32)', lip: '#c95b5b' },
+    { name: 'Olive Tan', base: '#e4b48b', sh: '#be895b', blush: 'rgba(195, 75, 75, 0.30)', lip: '#b75353' },
+    { name: 'Weathered Bronze', base: '#c78c58', sh: '#996538', blush: 'rgba(175, 65, 65, 0.28)', lip: '#a64d4d' },
+    { name: 'Deep Umber', base: '#8d5538', sh: '#663820', blush: 'rgba(140, 50, 50, 0.25)', lip: '#7a3838' }
+  ];
+
+  const HAT_PALETTES = [
+    { name: 'Lincoln Green', hex: '#2f6932', hi: '#489f4d', sh: '#1c421e' },
+    { name: 'Royal Burgundy', hex: '#831843', hi: '#be185d', sh: '#500724' },
+    { name: 'Midnight Charcoal', hex: '#1e293b', hi: '#334155', sh: '#0f172a' },
+    { name: 'Autumn Russet', hex: '#944b25', hi: '#c76633', sh: '#592911' },
+    { name: 'Tawny Gold', hex: '#b45309', hi: '#d97706', sh: '#78350f' }
+  ];
+
+  const backdropProps = {
+    target: true,
+    campfire: true,
+    armoryRack: true,
+    alchemyBench: true,
+    treasureHoard: false,
+    meadCask: false,
+    feastBasket: false,
+    campShelter: true
+  };
+
+  // --- Simulation State ---
+  let simulationDay = 0; // 0 to 9125 (25 Years)
+  let careState = 'cared'; // 'cared' or 'dormant'
+  let seasonOverride = 'auto'; // 'auto', 'spring', 'summer', 'autumn', 'winter'
+  let companionOverride = 'auto'; // 'auto', 'Camp Hound', 'Hunting Falcon', 'Barn Owl', 'None'
+  let companionStageOverride = 'auto'; // 'auto', 1, 3, 5
+  let timeMode = 0; // 0 = day, 1 = sunset, 2 = night
+  let currentSeed = 1;
+  let autoPlayTimer = null;
+  let currentToken = null;
+
+  // Visual Entities
+  let arrows = [];
+  let particles = [];
+  let targets = [{ x: 355, y: 235, r: 22, hits: 0, wobble: 0 }];
+  let campfire = { x: 305, y: 350, intensity: 1.0 };
+  let petAnim = { wobble: 0, petTimer: 0 };
+  let charAnim = { actionTimer: 0, munchTimer: 0 };
+
+  function showToast(msg) {
+    const el = document.getElementById('toastMsg');
+    el.innerText = msg;
+    el.style.opacity = '1';
+    setTimeout(() => { el.style.opacity = '0'; }, 2200);
+  }
+
+  // --- Evolution & Aging Logic ---
+  function getStageInfo(days, isDormant) {
+    const years = Math.floor(days / 365);
+    let stageNum = 1, stageName = 'Recruit', title = 'Greenwood Recruit';
+
+    if (days >= 150) {
+      stageNum = 5;
+      stageName = 'Legend';
+      title = years >= 20 ? 'Ancient Greenwood Legend' : (years >= 10 ? 'Grandmaster of Sherwood' : 'Legend of Sherwood');
+    } else if (days >= 75) {
+      stageNum = 4;
+      stageName = 'Master';
+      title = 'Master Outlaw';
+    } else if (days >= 30) {
+      stageNum = 3;
+      stageName = 'Veteran';
+      title = 'Forest Veteran';
+    } else if (days >= 7) {
+      stageNum = 2;
+      stageName = 'Scout';
+      title = 'Sherwood Scout';
+    }
+
+    const seasonIdx = Math.floor((days % 365) / 91.25);
+    const seasonList = ['Spring', 'Summer', 'Autumn', 'Winter'];
+    const autoSeason = seasonList[Math.min(seasonIdx, 3)];
+    const activeSeason = seasonOverride === 'auto' ? autoSeason : seasonOverride;
+
+    return {
+      stageNum,
+      stageName,
+      title,
+      years,
+      days,
+      season: activeSeason,
+      isDormant,
+      hasWhiteStag: (stageNum === 5 && years >= 5)
+    };
+  }
+
+  function generateCharacter(seed) {
+    const rng = xorshift(seed * 27361 + 817);
+    const archIdx = (seed - 1) % ARCHETYPES.length;
+    const arch = ARCHETYPES[archIdx >= 0 ? archIdx : 0];
+    const name = arch.names[Math.floor(rng() * arch.names.length)];
+    const cloak = CLOAK_PALETTES[Math.floor(rng() * CLOAK_PALETTES.length)];
+    const skin = SKIN_TONES[Math.floor(rng() * SKIN_TONES.length)];
+    const hair = HAIR_COLORS[Math.floor(rng() * HAIR_COLORS.length)];
+    const hatColor = HAT_PALETTES[Math.floor(rng() * HAT_PALETTES.length)];
+    const compIdx = Math.floor(rng() * COMPANIONS.length);
+    const companion = COMPANIONS[compIdx];
+
+    // Folklore Paper-Doll Variants: Beggar disguise & Change Cup (for seeds >= 100)
+    const isBeggar = (arch.id === 'friar' || arch.id === 'archer') && (seed >= 100 && (seed % 3) === 0);
+
+    return {
+      seed,
+      archetype: arch,
+      name,
+      cloak,
+      skin,
+      hair,
+      hatColor,
+      isBeggar,
+      companion,
+      rng
+    };
+  }
+
+  function updateHUD() {
+    if (!currentToken) return;
+    const info = getStageInfo(simulationDay, careState === 'dormant');
+    
+    document.getElementById('charName').innerText = currentToken.name;
+    document.getElementById('charMeta').innerText = `${currentToken.archetype.title} • Stage ${info.stageNum}: ${info.title} • ${info.season}`;
+    
+    const yearStr = info.years > 0 ? `Yr ${info.years}, ` : '';
+    document.getElementById('ageDisplay').innerText = `${yearStr}Day ${simulationDay} • ${info.season} (Stage ${info.stageNum})`;
+    document.getElementById('timeSlider').value = simulationDay;
+
+    const btnArchery = document.getElementById('btnArchery');
+    if (btnArchery && currentToken.archetype) {
+      const actionLabels = {
+        infiltrator: '🗡️ Throw Silver Stiletto',
+        archer: '🏹 Shoot Longbow',
+        brawler: '🪵 Staff / Club Toss',
+        friar: '🍺 Fling Ale Tankard',
+        minstrel: '🎵 Strum Sonic Note',
+        duelist: '⚔️ Throw Duelist Blade',
+        scout: '🌰 Slingshot Snipe',
+        herbalist: '🧪 Hurl Mystic Potion',
+        bounty: '🛡️ Throw Iron Cross-Bolt',
+        sheriff: '💰 Hurl Heavy Coin Bag'
+      };
+      btnArchery.innerText = actionLabels[currentToken.archetype.id] || '🎯 Target Action';
+    }
+  }
+
+  // --- Real-Time UTC Universal Countdown Timer ---
+  function updateUniversalClock() {
+    const now = new Date();
+    const utcHours = now.getUTCHours();
+    const utcMinutes = now.getUTCMinutes();
+    const utcSeconds = now.getUTCSeconds();
+    
+    const secUntilMidnight = 86400 - (utcHours * 3600 + utcMinutes * 60 + utcSeconds);
+    const h = Math.floor(secUntilMidnight / 3600);
+    const m = Math.floor((secUntilMidnight % 3600) / 60);
+    const s = secUntilMidnight % 60;
+    
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('utcCountdown').innerText = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  }
+  setInterval(updateUniversalClock, 1000);
+  updateUniversalClock();
+
+  // --- Canvas Rendering Pipeline ---
+  function drawSkyAndEnvironment(info) {
+    // Sky gradient
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    if (timeMode === 0) { // Day
+      if (info.season === 'Winter') {
+        sky.addColorStop(0, '#758896');
+        sky.addColorStop(1, '#9fb0bc');
+      } else if (info.season === 'Autumn') {
+        sky.addColorStop(0, '#536b56');
+        sky.addColorStop(1, '#a67d58');
+      } else {
+        sky.addColorStop(0, '#427845');
+        sky.addColorStop(1, '#7ea86f');
+      }
+    } else if (timeMode === 1) { // Sunset
+      sky.addColorStop(0, '#36233d');
+      sky.addColorStop(0.5, '#873d3b');
+      sky.addColorStop(1, '#e3773b');
+    } else { // Night
+      sky.addColorStop(0, '#0a1017');
+      sky.addColorStop(0.7, '#131e29');
+      sky.addColorStop(1, '#1b2d22');
+    }
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    // Celestial Bodies & Moon
+    if (timeMode === 2) {
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 35; i++) {
+        const sx = (i * 73 + 12) % W;
+        const sy = (i * 47 + 5) % 180;
+        ctx.fillRect(sx, sy, (i % 3 === 0) ? 2 : 1, (i % 3 === 0) ? 2 : 1);
+      }
+      // Moon
+      ctx.fillStyle = '#fdf8db';
+      ctx.beginPath();
+      ctx.arc(380, 50, 18, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (timeMode === 0) {
+      // Sun
+      ctx.fillStyle = info.season === 'Winter' ? '#e2ebf0' : '#ffeaa7';
+      ctx.beginPath();
+      ctx.arc(60, 55, 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Distant Layered Forest Canopy
+    ctx.fillStyle = timeMode === 2 ? '#0a1711' : (timeMode === 1 ? '#24171a' : '#1c3619');
+    ctx.beginPath();
+    ctx.moveTo(0, 200);
+    ctx.bezierCurveTo(80, 160, 150, 190, 220, 165);
+    ctx.bezierCurveTo(290, 140, 360, 180, W, 155);
+    ctx.lineTo(W, 300);
+    ctx.lineTo(0, 300);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = timeMode === 2 ? '#102419' : (timeMode === 1 ? '#332121' : '#274a22');
+    ctx.beginPath();
+    ctx.moveTo(0, 220);
+    ctx.bezierCurveTo(70, 185, 140, 215, 230, 190);
+    ctx.bezierCurveTo(310, 170, 380, 205, W, 180);
+    ctx.lineTo(W, 320);
+    ctx.lineTo(0, 320);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ground Forest Floor
+    const ground = ctx.createLinearGradient(0, 270, 0, H);
+    if (info.season === 'Winter') {
+      ground.addColorStop(0, '#cedae0');
+      ground.addColorStop(1, '#8ea1ab');
+    } else if (info.season === 'Autumn') {
+      ground.addColorStop(0, '#5a3d1c');
+      ground.addColorStop(1, '#332110');
+    } else {
+      ground.addColorStop(0, '#2e5725');
+      ground.addColorStop(1, '#183313');
+    }
+    ctx.fillStyle = ground;
+    ctx.beginPath();
+    ctx.ellipse(220, 390, 310, 140, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Fallen leaves / Snow patches
+    if (info.season === 'Autumn') {
+      ctx.fillStyle = '#9e461a';
+      for (let i = 0; i < 18; i++) {
+        ctx.fillRect(40 + (i * 21) % 360, 340 + (i * 13) % 80, 6, 3);
+      }
+    } else if (info.season === 'Winter') {
+      ctx.fillStyle = '#e8f0f5';
+      for (let i = 0; i < 20; i++) {
+        ctx.fillRect(30 + (i * 22) % 380, 330 + (i * 11) % 90, 12, 4);
+      }
+    }
+  }
+
+  // --- Procedural Ancient Oak Growth (Ages with Years!) ---
+  function drawAncientOak(info) {
+    const years = info.years;
+    // Tree trunk thickness grows gracefully from 26px (Year 0) to 58px (Year 25)
+    const trunkWidth = Math.min(26 + years * 1.3, 58);
+    const treeX = 60;
+    const treeBaseY = 410;
+
+    // Organic Root flare & Trunk
+    ctx.fillStyle = info.stageNum >= 5 ? '#241a12' : '#38261a';
+    ctx.beginPath();
+    ctx.moveTo(treeX - trunkWidth * 0.75, treeBaseY);
+    ctx.quadraticCurveTo(treeX - trunkWidth * 0.4, 280, treeX - trunkWidth * 0.35, 60);
+    ctx.lineTo(treeX + trunkWidth * 0.35, 60);
+    ctx.quadraticCurveTo(treeX + trunkWidth * 0.4, 280, treeX + trunkWidth * 0.75, treeBaseY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Natural Bark Striations
+    ctx.strokeStyle = '#281a11';
+    ctx.lineWidth = 1.5;
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(treeX + i * 7, 90);
+      ctx.quadraticCurveTo(treeX + i * 9 + ((i % 2) ? 4 : -4), 220, treeX + i * 11, 370);
+      ctx.stroke();
+    }
+
+    // Organic Moss Clustered on Bark
+    if (years >= 1) {
+      ctx.fillStyle = '#2d4d1e';
+      ctx.beginPath();
+      ctx.ellipse(treeX - trunkWidth * 0.2, 230, 8, 24, -0.1, 0, Math.PI * 2);
+      ctx.ellipse(treeX + trunkWidth * 0.15, 280, 7, 20, 0.15, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Subtle Outlaw Arrow Notch carved on trunk (proportional to trunk width, never overflows)
+    if (info.stageNum >= 3) {
+      const notchScale = Math.min(trunkWidth * 0.35, 14);
+      ctx.strokeStyle = '#23140a'; // Deep carved incision
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      // Carved Arrowhead mark pointing upward
+      ctx.moveTo(treeX - notchScale * 0.5, 246);
+      ctx.lineTo(treeX, 238);
+      ctx.lineTo(treeX + notchScale * 0.5, 246);
+      // Arrow shaft
+      ctx.moveTo(treeX, 238);
+      ctx.lineTo(treeX, 252);
+      ctx.stroke();
+
+      // Subtle warm wood-carving highlight
+      ctx.strokeStyle = 'rgba(214, 158, 92, 0.4)';
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(treeX - notchScale * 0.5 + 0.8, 247);
+      ctx.lineTo(treeX + 0.8, 239);
+      ctx.lineTo(treeX + notchScale * 0.5 + 0.8, 247);
+      ctx.stroke();
+    }
+
+    // Natural Tapering Curved Branches
+    ctx.fillStyle = info.stageNum >= 5 ? '#241a12' : '#38261a';
+    // Main Branch extending right toward camp canopy
+    ctx.beginPath();
+    ctx.moveTo(treeX - 5, 175);
+    ctx.quadraticCurveTo(treeX + 45, 160, treeX + 115, 125);
+    ctx.lineTo(treeX + 110, 115);
+    ctx.quadraticCurveTo(treeX + 40, 140, treeX + 5, 155);
+    ctx.closePath();
+    ctx.fill();
+
+    if (years >= 4) {
+      // Lower Secondary Branch
+      ctx.beginPath();
+      ctx.moveTo(treeX + 5, 215);
+      ctx.quadraticCurveTo(treeX + 45, 200, treeX + 85, 180);
+      ctx.lineTo(treeX + 80, 172);
+      ctx.quadraticCurveTo(treeX + 40, 190, treeX + 12, 200);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Soft Foliage Canopy Masses
+    let leafColor = '#24521e';
+    if (info.season === 'Autumn') leafColor = '#a8531e';
+    else if (info.season === 'Winter') leafColor = '#4a5e4e';
+    else if (info.season === 'Spring') leafColor = '#347528';
+
+    ctx.fillStyle = leafColor;
+    ctx.beginPath();
+    ctx.arc(treeX - 15, 55, 65, 0, Math.PI * 2);
+    ctx.arc(treeX + 55, 45, 75, 0, Math.PI * 2);
+    ctx.arc(treeX + 130, 75, 60, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Winter Snow Blanket on Foliage
+    if (info.season === 'Winter') {
+      ctx.fillStyle = '#e8f0f5';
+      ctx.beginPath();
+      ctx.arc(treeX - 15, 30, 40, Math.PI * 0.8, Math.PI * 2.2);
+      ctx.arc(treeX + 55, 20, 50, Math.PI * 0.8, Math.PI * 2.2);
+      ctx.arc(treeX + 130, 50, 40, Math.PI * 0.8, Math.PI * 2.2);
+      ctx.fill();
+    }
+  }
+
+  // --- Camp Architecture (Evolves with Stage!) ---
+  function drawCamp(info) {
+    const isDormant = info.isDormant;
+
+    // 1. Camp Shelter (Tent / Lodge)
+    if (backdropProps.campShelter) {
+      if (info.stageNum === 1) {
+        ctx.fillStyle = '#6b5839';
+        ctx.fillRect(115, 362, 34, 10); // burlap bedroll
+      }
+      if (info.stageNum >= 2 && info.stageNum < 4) {
+        ctx.fillStyle = '#a19379';
+        ctx.beginPath();
+        ctx.moveTo(110, 370); ctx.lineTo(150, 295); ctx.lineTo(190, 370);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#3d3023';
+        ctx.beginPath();
+        ctx.moveTo(140, 370); ctx.lineTo(150, 325); ctx.lineTo(160, 370);
+        ctx.closePath(); ctx.fill();
+      }
+      if (info.stageNum >= 4) {
+        ctx.fillStyle = '#3a2717';
+        ctx.fillRect(100, 275, 95, 75);
+        ctx.fillStyle = '#5c4128';
+        for (let i = 0; i < 5; i++) {
+          ctx.fillRect(100, 280 + i * 14, 95, 2);
+        }
+        ctx.fillStyle = info.stageNum === 5 ? '#243b1c' : '#4d2e18';
+        ctx.beginPath();
+        ctx.moveTo(90, 275); ctx.lineTo(147, 230); ctx.lineTo(205, 275);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = isDormant ? '#222' : '#f5c842';
+        ctx.fillRect(122, 292, 16, 18);
+        if (info.stageNum === 5) {
+          ctx.fillStyle = '#7a1924';
+          ctx.fillRect(190, 250, 14, 28);
+          ctx.fillStyle = '#ffd700';
+          ctx.fillText('🏹', 191, 267);
+        }
+      }
+    }
+
+    // 2. Campfire / Hearth
+    if (backdropProps.campfire) {
+      const fx = campfire.x, fy = campfire.y;
+      if (info.stageNum >= 3) {
+        ctx.fillStyle = '#4f5752';
+        for (let a = 0; a < Math.PI * 2; a += 0.9) {
+          ctx.beginPath();
+          ctx.arc(fx + Math.cos(a) * 20, fy + Math.sin(a) * 9, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.strokeStyle = '#1e1e1e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(fx - 18, fy + 4); ctx.lineTo(fx - 18, fy - 22); ctx.lineTo(fx + 18, fy - 22); ctx.lineTo(fx + 18, fy + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#111';
+        ctx.beginPath(); ctx.arc(fx, fy - 14, 7, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = '#574838';
+        ctx.fillRect(fx - 14, fy + 2, 28, 4);
+      }
+
+      if (!isDormant) {
+        const glow = ctx.createRadialGradient(fx, fy, 4, fx, fy, 75 * campfire.intensity);
+        glow.addColorStop(0, 'rgba(255, 170, 40, 0.55)');
+        glow.addColorStop(1, 'rgba(255, 100, 20, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(fx, fy, 75 * campfire.intensity, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ff7b1a';
+        ctx.beginPath(); ctx.arc(fx, fy - 2, 8 * campfire.intensity, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd242';
+        ctx.beginPath(); ctx.arc(fx, fy - 4, 4 * campfire.intensity, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = '#3a3a3a';
+        ctx.beginPath(); ctx.arc(fx, fy, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#8a5024';
+        ctx.fillRect(fx - 6, fy - 2, 12, 4);
+      }
+    }
+
+    // 3. Armory Weapon Rack
+    if (backdropProps.armoryRack) {
+      const rx = 208, ry = 372;
+      ctx.fillStyle = '#4a2f1b';
+      ctx.beginPath();
+      ctx.moveTo(rx - 9, ry); ctx.lineTo(rx - 4, ry - 30); ctx.lineTo(rx + 4, ry - 30); ctx.lineTo(rx + 9, ry);
+      ctx.closePath(); ctx.fill();
+      ctx.fillRect(rx - 13, ry - 19, 26, 3.5);
+      ctx.fillRect(rx - 11, ry - 8, 22, 3);
+      // Upright Yew Longbow
+      ctx.strokeStyle = '#8b5a2b';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(rx - 4, ry - 15, 17, -Math.PI * 0.42, Math.PI * 0.42);
+      ctx.stroke();
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(rx - 4 + Math.cos(-Math.PI * 0.42) * 17, ry - 15 + Math.sin(-Math.PI * 0.42) * 17);
+      ctx.lineTo(rx - 4 + Math.cos(Math.PI * 0.42) * 17, ry - 15 + Math.sin(Math.PI * 0.42) * 17);
+      ctx.stroke();
+      // Shield
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.moveTo(rx + 2, ry - 17); ctx.lineTo(rx + 15, ry - 17); ctx.quadraticCurveTo(rx + 15, ry - 4, rx + 8.5, ry); ctx.quadraticCurveTo(rx + 2, ry - 4, rx + 2, ry - 17);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath(); ctx.arc(rx + 8.5, ry - 9, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 4. Mother Meg's Alchemy Bench & Glowing Elixirs
+    if (backdropProps.alchemyBench || equippedLoot[5]) {
+      const ax = 182, ay = 376;
+      ctx.fillStyle = '#3e2717';
+      ctx.fillRect(ax - 12, ay - 11, 24, 3.5);
+      ctx.fillRect(ax - 10, ay - 7.5, 2.8, 9.5);
+      ctx.fillRect(ax + 7, ay - 7.5, 2.8, 9.5);
+      // Glowing green alchemical flask (Greenwood Elixir)
+      ctx.fillStyle = 'rgba(200, 255, 230, 0.7)';
+      ctx.beginPath(); ctx.arc(ax - 5, ay - 15, 4.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath(); ctx.arc(ax - 5, ay - 14, 3.4, 0, Math.PI); ctx.fill();
+      // Rising steam
+      ctx.fillStyle = 'rgba(52, 211, 153, 0.7)';
+      ctx.font = '9px sans-serif';
+      ctx.fillText('✨', ax - 8, ay - 21);
+      // Stone Mortar
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath(); ctx.roundRect(ax + 3, ay - 16, 6.5, 5, 1); ctx.fill();
+      ctx.fillStyle = '#334155'; ctx.fillRect(ax + 5, ay - 19, 1.8, 4);
+      // Violet Nightshade vial
+      ctx.fillStyle = '#8b5cf6'; ctx.fillRect(ax - 0.5, ay - 16, 2.4, 4.8);
+    }
+
+    // 5. Gold Sovereigns Treasury Hoard
+    const goldCount = walletLootBalances[1] || 0;
+    if (backdropProps.treasureHoard || (equippedLoot[1] && goldCount > 0)) {
+      const cx = 236, cy = 378;
+      ctx.fillStyle = '#3a2010';
+      ctx.fillRect(cx - 14, cy - 8, 28, 16);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - 14, cy - 8, 28, 16);
+      // Gold corner brackets
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(cx - 14, cy - 8, 5, 4);
+      ctx.fillRect(cx + 9, cy - 8, 5, 4);
+      ctx.fillRect(cx - 14, cy + 4, 5, 4);
+      ctx.fillRect(cx + 9, cy + 4, 5, 4);
+      // Open lid
+      ctx.fillStyle = '#522c15';
+      ctx.beginPath();
+      ctx.moveTo(cx - 14, cy - 8); ctx.lineTo(cx - 17, cy - 16); ctx.lineTo(cx + 17, cy - 16); ctx.lineTo(cx + 14, cy - 8);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#ffd700'; ctx.stroke();
+      // Chalice
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.moveTo(cx + 17, cy - 2); ctx.lineTo(cx + 23, cy - 2); ctx.lineTo(cx + 21, cy + 6); ctx.lineTo(cx + 19, cy + 6);
+      ctx.closePath(); ctx.fill();
+      // Coins & gems
+      ctx.fillStyle = '#ffd700';
+      [-10, -6, -2, 2, 6, 10].forEach((dx, i) => {
+        ctx.beginPath(); ctx.arc(cx + dx, cy - 8 - (i % 3), 2.8, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.arc(cx - 1, cy - 6, 2, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 6. Nottingham Mead Cask
+    if (backdropProps.meadCask || equippedLoot[2]) {
+      const bx = 270, by = 376;
+      ctx.fillStyle = '#6d4427';
+      ctx.beginPath(); ctx.ellipse(bx, by, 11, 15, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bx - 10, by - 7); ctx.lineTo(bx + 10, by - 7);
+      ctx.moveTo(bx - 11, by + 5); ctx.lineTo(bx + 11, by + 5);
+      ctx.stroke();
+      ctx.fillStyle = '#f5cd47'; ctx.fillRect(bx - 15, by - 2, 5, 4);
+      ctx.fillStyle = '#4a2f1b'; ctx.fillRect(bx - 23, by + 2, 7, 9);
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(bx - 20, by + 1, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 7. Forest Feast Basket
+    if (backdropProps.feastBasket || equippedLoot[7]) {
+      const fx2 = 250, fy2 = 383;
+      ctx.fillStyle = '#8c5828';
+      ctx.beginPath(); ctx.ellipse(fx2, fy2, 10, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#a46d38'; ctx.fillRect(fx2 - 6, fy2 - 4, 12, 3);
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.arc(fx2 - 2, fy2 - 5, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f39c12';
+      ctx.beginPath(); ctx.ellipse(fx2 + 3, fy2 - 4, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#8e44ad';
+      ctx.beginPath(); ctx.arc(fx2 + 6, fy2 - 2, 2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // --- Character Rendering (10 Archetypes with Aging) ---
+  function drawCharacter(c, info) {
+    const x = 150;
+    const y = 370;
+    const isDormant = info.isDormant;
+    const isActing = charAnim.actionTimer > 0;
+    if (isActing) charAnim.actionTimer--;
+    const archId = (c.archetype && c.archetype.id) || 'archer';
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Ground shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Locksley Velvet Cloak (Equipped Loot)
+    if (equippedLoot[6] && !isDormant) {
+      ctx.fillStyle = '#1b4d24';
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-14, -54);
+      ctx.quadraticCurveTo(-24, -20, -22, 0);
+      ctx.lineTo(-6, 0);
+      ctx.quadraticCurveTo(-12, -22, -6, -54);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Slumber pose if dormant
+    if (isDormant) {
+      ctx.fillStyle = c.cloak.hex;
+      ctx.beginPath();
+      ctx.arc(0, -12, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffd0a6';
+      ctx.fillRect(-6, -24, 12, 10);
+      ctx.fillStyle = '#402a1d';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('💤', 12, -30);
+      ctx.restore();
+      return;
+    }
+
+    const hasSilver = info.years >= 10;
+    // Canonical folklore hair palettes
+    let canonHairHex = '#5c3317', canonHairHi = '#96582e', canonHairSh = '#331a0a';
+    if (archId === 'friar') {
+      canonHairHex = '#382113'; canonHairHi = '#5e3820'; canonHairSh = '#1f1109';
+    } else if (archId === 'infiltrator') {
+      canonHairHex = '#7a3215'; canonHairHi = '#d97736'; canonHairSh = '#4a1b0b';
+    } else if (archId === 'duelist') {
+      canonHairHex = '#3b1d11'; canonHairHi = '#69331e'; canonHairSh = '#200e08';
+    }
+
+    const hairHex = hasSilver ? '#a6adb5' : (c.seed >= 100 && c.hair ? c.hair.hex : canonHairHex);
+    const hairHi = hasSilver ? '#d1d7de' : (c.seed >= 100 && c.hair ? c.hair.hi : canonHairHi);
+    const hairSh = hasSilver ? '#6b727a' : (c.seed >= 100 && c.hair ? c.hair.sh : canonHairSh);
+    const beardColor = hasSilver ? '#a6adb5' : hairHex;
+
+    const isFemale = (archId === 'infiltrator' || archId === 'herbalist');
+    const skinBase = c.skin ? c.skin.base : (isFemale ? '#fde8d4' : '#f5c69b');
+    const skinSh = c.skin ? c.skin.sh : (isFemale ? '#ecc195' : '#e0ab7d');
+    const skinBlush = c.skin ? c.skin.blush : 'rgba(235, 87, 87, 0.35)';
+    const skinLip = c.skin ? c.skin.lip : '#d96565';
+
+    // Canonical headwear
+    let canonHatHex = c.cloak.hex, canonHatHi = c.cloak.hi, canonHatSh = c.cloak.sh;
+    if (archId === 'archer') {
+      canonHatHex = '#2f6932'; canonHatHi = '#489f4d'; canonHatSh = '#1c421e'; // Lincoln Green Bycocket
+    } else if (archId === 'duelist') {
+      canonHatHex = '#991b1b'; canonHatHi = '#dc2626'; canonHatSh = '#5a0d0d'; // Crimson Cavalier
+    }
+    const hatHex = (c.seed >= 100 && c.hatColor) ? c.hatColor.hex : canonHatHex;
+    const hatHi = (c.seed >= 100 && c.hatColor) ? c.hatColor.hi : canonHatHi;
+    const hatSh = (c.seed >= 100 && c.hatColor) ? c.hatColor.sh : canonHatSh;
+
+    if (isFemale) {
+      // ==========================================
+      // --- ARTISAN FEMALE (MAID MARIAN & MEG) ---
+      // ==========================================
+
+      // 1. Back Hair Volume (Behind torso)
+      ctx.fillStyle = hairSh;
+      ctx.beginPath();
+      ctx.arc(0, -68, 8.5, -Math.PI * 0.95, -Math.PI * 0.05);
+      ctx.quadraticCurveTo(14, -56, 13, -36);
+      ctx.quadraticCurveTo(14, -22, 9, -18);
+      ctx.lineTo(4, -18);
+      ctx.quadraticCurveTo(8, -36, 6, -54);
+      ctx.lineTo(-6, -54);
+      ctx.quadraticCurveTo(-8, -36, -4, -18);
+      ctx.lineTo(-9, -18);
+      ctx.quadraticCurveTo(-14, -22, -13, -36);
+      ctx.quadraticCurveTo(-14, -56, 0, -68);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2. Flowing Back Cloak
+      ctx.fillStyle = c.cloak.sh;
+      ctx.beginPath();
+      ctx.moveTo(-10, -52); ctx.quadraticCurveTo(-18, -25, -16, 2); ctx.lineTo(16, 2); ctx.quadraticCurveTo(18, -25, 10, -52);
+      ctx.closePath(); ctx.fill();
+
+      // 3. Pleated Skirt / Gown Hem
+      ctx.fillStyle = c.cloak.hex;
+      ctx.beginPath();
+      ctx.moveTo(-7, -34); ctx.quadraticCurveTo(-14, -15, -16, 0); ctx.lineTo(16, 0); ctx.quadraticCurveTo(14, -15, 7, -34);
+      ctx.closePath(); ctx.fill();
+
+      ctx.strokeStyle = c.cloak.sh; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-5, -32); ctx.quadraticCurveTo(-7, -15, -9, 0);
+      ctx.moveTo(0, -32); ctx.lineTo(0, 0);
+      ctx.moveTo(5, -32); ctx.quadraticCurveTo(7, -15, 9, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = '#26170d';
+      ctx.beginPath(); ctx.roundRect(-6, -2, 5, 4, 1); ctx.roundRect(1, -2, 5, 4, 1); ctx.fill();
+
+      if (info.stageNum >= 3) {
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.stroke();
+      }
+
+      // 4. Fitted Bodice & Corset Lacing
+      ctx.fillStyle = c.cloak.hi;
+      ctx.beginPath();
+      ctx.moveTo(-9, -52); ctx.lineTo(9, -52); ctx.lineTo(7, -34); ctx.lineTo(-7, -34);
+      ctx.closePath(); ctx.fill();
+
+      ctx.fillStyle = '#1e130b'; ctx.fillRect(-3.5, -50, 7, 16);
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(-3, -48); ctx.lineTo(3, -44); ctx.moveTo(3, -48); ctx.lineTo(-3, -44);
+      ctx.moveTo(-3, -44); ctx.lineTo(3, -40); ctx.moveTo(3, -44); ctx.lineTo(-3, -40);
+      ctx.moveTo(-3, -40); ctx.lineTo(3, -36); ctx.moveTo(3, -40); ctx.lineTo(-3, -36);
+      ctx.stroke();
+
+      ctx.fillStyle = '#2b170c'; ctx.fillRect(-7.5, -35, 15, 3.5);
+      ctx.fillStyle = '#ffd700'; ctx.fillRect(-2, -36, 4, 5.5);
+
+      // 5. Slender Graceful Neck
+      ctx.fillStyle = skinSh; ctx.fillRect(-2.5, -60, 5, 9);
+
+      // 6. Sculpted Oval Face
+      ctx.fillStyle = skinBase;
+      ctx.beginPath(); ctx.ellipse(0, -68, 6.2, 7.8, 0, 0, Math.PI * 2); ctx.fill();
+
+      // 7. Expressive Almond Eyes & Lips
+      ctx.fillStyle = '#1e130b';
+      ctx.beginPath(); ctx.ellipse(-2.8, -68, 1.3, 1.8, -0.15, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(2.8, -68, 1.3, 1.8, 0.15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(-3.2, -68.8, 0.7, 0.7); ctx.fillRect(2.4, -68.8, 0.7, 0.7);
+
+      ctx.strokeStyle = '#100a06'; ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-4.5, -69.5); ctx.quadraticCurveTo(-2.8, -70.5, -1.2, -69);
+      ctx.moveTo(1.2, -69); ctx.quadraticCurveTo(2.8, -70.5, 4.5, -69.5);
+      ctx.stroke();
+
+      ctx.fillStyle = skinBlush;
+      ctx.beginPath(); ctx.ellipse(-4.2, -65, 2, 1.2, 0, 0, Math.PI * 2); ctx.ellipse(4.2, -65, 2, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = skinLip;
+      ctx.beginPath(); ctx.ellipse(0, -62.5, 1.4, 0.8, 0, 0, Math.PI * 2); ctx.fill();
+
+      // 8. Seamless Front Hair Locks
+      ctx.fillStyle = hairHex;
+      ctx.beginPath();
+      ctx.moveTo(0, -75);
+      ctx.quadraticCurveTo(-6.5, -74, -7.5, -66);
+      ctx.quadraticCurveTo(-11, -50, -9.5, -34);
+      ctx.quadraticCurveTo(-11, -26, -7, -22);
+      ctx.lineTo(-4, -22);
+      ctx.quadraticCurveTo(-6.5, -34, -5.5, -54);
+      ctx.quadraticCurveTo(-4, -64, 0, -73);
+      ctx.closePath(); ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(0, -75);
+      ctx.quadraticCurveTo(6.5, -74, 7.5, -66);
+      ctx.quadraticCurveTo(11, -50, 9.5, -34);
+      ctx.quadraticCurveTo(11, -26, 7, -22);
+      ctx.lineTo(4, -22);
+      ctx.quadraticCurveTo(6.5, -34, 5.5, -54);
+      ctx.quadraticCurveTo(4, -64, 0, -73);
+      ctx.closePath(); ctx.fill();
+
+      ctx.strokeStyle = hairHi; ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(-1, -74); ctx.quadraticCurveTo(-8, -60, -6.5, -24);
+      ctx.moveTo(1, -74); ctx.quadraticCurveTo(8, -60, 6.5, -24);
+      ctx.stroke();
+
+      if (archId === 'infiltrator') {
+        // Maid Marian: Tiara & Damascus Stiletto
+        ctx.fillStyle = hatHex;
+        ctx.beginPath(); ctx.ellipse(0, -74, 8, 5, 0, Math.PI, 0); ctx.fill();
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(0, -72, 7.2, -Math.PI * 0.85, -Math.PI * 0.15); ctx.stroke();
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath(); ctx.ellipse(0, -73.5, 1.3, 2, 0, 0, Math.PI * 2); ctx.fill();
+
+        const handX = isActing ? 22 : 11;
+        const handY = isActing ? -54 : -36;
+        ctx.strokeStyle = c.cloak.hi; ctx.lineWidth = 3.2;
+        ctx.beginPath(); ctx.moveTo(8, -50); ctx.quadraticCurveTo(12, -44, handX, handY); ctx.stroke();
+
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        if (isActing) { ctx.moveTo(handX - 4, handY + 4); ctx.lineTo(handX + 16, handY - 14); }
+        else { ctx.moveTo(handX, handY); ctx.lineTo(handX + 6, handY + 16); }
+        ctx.stroke();
+        ctx.fillStyle = '#ffd700'; ctx.fillRect(handX - 2, handY - 2, 4, 4);
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(handX, handY, 2.6, 0, Math.PI * 2); ctx.fill();
+
+      } else if (archId === 'herbalist') {
+        // Mother Meg: Silver Crown, Staff & Mortar
+        ctx.strokeStyle = '#d8dce2'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(0, -73, 7.5, -Math.PI * 0.9, -Math.PI * 0.1); ctx.stroke();
+        ctx.fillStyle = '#27ae60'; ctx.fillRect(-6, -78, 3, 2); ctx.fillRect(4, -78, 3, 2);
+
+        ctx.strokeStyle = '#4a2e18'; ctx.lineWidth = 2.8;
+        ctx.beginPath(); ctx.moveTo(-12, -88); ctx.quadraticCurveTo(-14, -50, -12, 2); ctx.stroke();
+        ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.ellipse(-12, -90, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(-12, -48, 2.8, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.roundRect(8, -48, 13, 11, 2); ctx.fill();
+        ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.ellipse(14.5, -48, 5.5, 2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(8, -43, 2.8, 0, Math.PI * 2); ctx.fill();
+      }
+
+    } else {
+      // ==========================================
+      // --- ARTISAN MALE OUTLAWS (ALL 8 MEN) ---
+      // ==========================================
+      const isBroad = (archId === 'brawler');
+      const isMonk = (archId === 'friar');
+      const tunicW = isBroad ? 18 : (isMonk ? 16 : 14);
+
+      // 1. Wool Hosen & Sculpted Ranger Riding Boots
+      ctx.fillStyle = '#1a130e';
+      ctx.beginPath();
+      ctx.moveTo(-tunicW + 5, -28); ctx.lineTo(-1, -28); ctx.lineTo(-1, -14); ctx.lineTo(-tunicW + 4, -14);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(1, -28); ctx.lineTo(tunicW - 5, -28); ctx.lineTo(tunicW - 4, -14); ctx.lineTo(1, -14);
+      ctx.closePath(); ctx.fill();
+
+      // Boots
+      ctx.fillStyle = '#140d09';
+      ctx.beginPath();
+      ctx.moveTo(-tunicW + 4, -14); ctx.lineTo(-1.5, -14); ctx.lineTo(-1.5, 0); ctx.lineTo(-tunicW + 3, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#26170e'; ctx.fillRect(-tunicW + 4, -15.5, tunicW - 4, 3);
+
+      ctx.fillStyle = '#140d09';
+      ctx.beginPath();
+      ctx.moveTo(1.5, -14); ctx.lineTo(tunicW - 4, -14); ctx.lineTo(tunicW - 3, 0); ctx.lineTo(1.5, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#26170e'; ctx.fillRect(1.5, -15.5, tunicW - 4, 3);
+
+      // 2. Sculpted Natural Torso & Sloping Shoulders
+      const robeColor = isMonk ? '#4a2e18' : c.cloak.hex;
+      ctx.fillStyle = robeColor;
+      ctx.beginPath();
+      ctx.moveTo(-tunicW, -24);
+      ctx.quadraticCurveTo(-tunicW + 1, -38, -tunicW + 2, -48);
+      ctx.quadraticCurveTo(-tunicW + 2, -54, -4, -58); // Sloping shoulder
+      ctx.lineTo(4, -58);
+      ctx.quadraticCurveTo(tunicW - 2, -54, tunicW - 2, -48); // Sloping shoulder
+      ctx.quadraticCurveTo(tunicW - 1, -38, tunicW, -24);
+      ctx.lineTo(3.5, -24);
+      ctx.lineTo(0, -30);
+      ctx.lineTo(-3.5, -24);
+      ctx.closePath();
+      ctx.fill();
+
+      // Fold shading
+      ctx.strokeStyle = isMonk ? '#331e0f' : c.cloak.sh;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-tunicW + 5, -24); ctx.lineTo(-4, -46);
+      ctx.moveTo(tunicW - 5, -24); ctx.lineTo(4, -46);
+      ctx.stroke();
+
+      // 3. Belt: Natural Curved Braided Rope for Monk, Leather for Outlaws
+      if (isMonk) {
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(-tunicW + 3, -35);
+        ctx.quadraticCurveTo(0, -32, tunicW - 3, -35);
+        ctx.stroke();
+        // 3 Franciscan Knots
+        ctx.fillStyle = '#f8fafc';
+        [-4, 0, 4].forEach(kx => { ctx.beginPath(); ctx.arc(kx, -33.5, 2.2, 0, Math.PI*2); ctx.fill(); });
+        // Dangling rope tassel
+        ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(4, -33.5); ctx.quadraticCurveTo(6, -26, 5, -18); ctx.stroke();
+      } else {
+        ctx.fillStyle = '#1c0f07'; ctx.fillRect(-tunicW + 2, -35, (tunicW - 2) * 2, 4.5);
+        ctx.fillStyle = info.stageNum >= 3 ? '#ffd700' : '#d4af37';
+        ctx.fillRect(-3, -36, 6, 6.5);
+        ctx.fillStyle = '#120803'; ctx.fillRect(-1.5, -34.5, 3, 3.5);
+        ctx.fillStyle = '#1c0f07'; ctx.fillRect(2, -35, 2.8, 10);
+      }
+
+      // 4. Shaded Neck
+      ctx.fillStyle = skinSh;
+      const neckW = isBroad ? 8.5 : (isMonk ? 8 : 6.8);
+      ctx.fillRect(-neckW/2, -61, neckW, 9);
+
+      // 5. Cranial Dome & Head Geometry
+      ctx.fillStyle = skinBase;
+      ctx.beginPath();
+      if (archId === 'brawler') {
+        ctx.arc(0, -68, 8.8, -Math.PI, 0);
+        ctx.lineTo(8.5, -64);
+        ctx.quadraticCurveTo(6, -58.5, 0, -58.5);
+        ctx.quadraticCurveTo(-6, -58.5, -8.5, -64);
+        ctx.closePath();
+      } else if (archId === 'friar') {
+        ctx.ellipse(0, -66.5, 8.5, 8.8, 0, 0, Math.PI * 2);
+      } else if (archId === 'scout') {
+        ctx.arc(0, -68, 6.8, -Math.PI, 0);
+        ctx.lineTo(6.5, -65);
+        ctx.quadraticCurveTo(4.5, -59, 0, -59);
+        ctx.quadraticCurveTo(-4.5, -59, -6.5, -65);
+        ctx.closePath();
+      } else if (archId === 'sheriff') {
+        ctx.ellipse(0, -66, 8, 8.2, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(0, -68.5, 7.5, -Math.PI, 0);
+        ctx.lineTo(7.2, -65);
+        ctx.quadraticCurveTo(5, -59, 0, -59);
+        ctx.quadraticCurveTo(-5, -59, -7.2, -65);
+        ctx.closePath();
+      }
+      ctx.fill();
+
+      // 6. Facial Features
+      ctx.fillStyle = '#1c130d';
+      if (archId === 'friar') {
+        // Jovial smiling crinkled eyes
+        ctx.strokeStyle = '#1c130d'; ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(-3.4, -67.5, 2.2, -Math.PI * 0.85, -Math.PI * 0.15);
+        ctx.arc(3.4, -67.5, 2.2, -Math.PI * 0.85, -Math.PI * 0.15);
+        ctx.stroke();
+        ctx.fillStyle = skinBlush;
+        ctx.beginPath(); ctx.arc(-4.6, -63.5, 2.4, 0, Math.PI * 2); ctx.arc(4.6, -63.5, 2.4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#1c130d'; ctx.lineWidth = 1.1;
+        ctx.beginPath(); ctx.arc(0, -62.5, 3.2, 0.2, Math.PI - 0.2); ctx.stroke();
+      } else if (archId === 'scout') {
+        ctx.beginPath(); ctx.ellipse(-2.8, -68, 1.4, 1.8, 0, 0, Math.PI * 2); ctx.ellipse(2.8, -68, 1.4, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-3.3, -68.8, 0.8, 0.8); ctx.fillRect(2.3, -68.8, 0.8, 0.8);
+        ctx.strokeStyle = hairSh; ctx.lineWidth = 0.9;
+        ctx.beginPath(); ctx.moveTo(-4.2, -70.8); ctx.lineTo(-1.6, -70.8); ctx.moveTo(1.6, -70.8); ctx.lineTo(4.2, -70.8); ctx.stroke();
+        ctx.fillStyle = 'rgba(160, 82, 45, 0.5)';
+        ctx.fillRect(-4, -64.5, 0.8, 0.8); ctx.fillRect(3.5, -64.5, 0.8, 0.8);
+        ctx.fillStyle = skinLip; ctx.fillRect(-1.2, -62.2, 2.4, 0.8);
+      } else {
+        ctx.beginPath(); ctx.ellipse(-3, -68, 1.3, 1.6, -0.08, 0, Math.PI * 2); ctx.ellipse(3, -68, 1.3, 1.6, 0.08, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-3.3, -68.7, 0.7, 0.7); ctx.fillRect(2.7, -68.7, 0.7, 0.7);
+        ctx.strokeStyle = hairSh; ctx.lineWidth = (archId === 'brawler') ? 1.6 : 1.1;
+        ctx.beginPath(); ctx.moveTo(-4.6, -70.5); ctx.lineTo(-1.5, -69.8); ctx.moveTo(1.5, -69.8); ctx.lineTo(4.6, -70.5); ctx.stroke();
+        ctx.fillStyle = skinSh;
+        ctx.beginPath(); ctx.moveTo(0, -68); ctx.lineTo(-0.8, -64.5); ctx.lineTo(0.8, -64.5); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = skinLip; ctx.fillRect(-1.2, -62.2, 2.4, 0.8);
+      }
+
+      // =======================================================
+      // --- ARTISAN ARCHETYPE SPECIFICS & HAND-HELD WEAPONS ---
+      // =======================================================
+
+      if (archId === 'friar') {
+        // --- FRIAR TUCK (SCULPTED TONSURE RING & TANKARD) ---
+        // 1. Shaved Pale Scalp Crown
+        ctx.fillStyle = skinBase;
+        ctx.beginPath(); ctx.ellipse(0, -73.2, 5.8, 3.8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath(); ctx.ellipse(1.5, -74, 2.8, 1.5, 0.2, 0, Math.PI * 2); ctx.fill();
+
+        // 2. Rich Curled Tonsure Ring (Dark chestnut curls wrapping ears & nape!)
+        ctx.fillStyle = hairSh;
+        // Left Ear & Temple Locks
+        ctx.beginPath();
+        ctx.moveTo(-5.5, -73.5); ctx.quadraticCurveTo(-9.2, -72, -9.6, -66);
+        ctx.quadraticCurveTo(-10.2, -60, -7.5, -59); ctx.lineTo(-5.2, -61);
+        ctx.quadraticCurveTo(-8.2, -65, -5.5, -73.5); ctx.closePath(); ctx.fill();
+
+        // Right Ear & Temple Locks
+        ctx.beginPath();
+        ctx.moveTo(5.5, -73.5); ctx.quadraticCurveTo(9.2, -72, 9.6, -66);
+        ctx.quadraticCurveTo(10.2, -60, 7.5, -59); ctx.lineTo(5.2, -61);
+        ctx.quadraticCurveTo(8.2, -65, 5.5, -73.5); ctx.closePath(); ctx.fill();
+
+        // Nape Hair Ring
+        ctx.fillStyle = hairHex;
+        ctx.beginPath();
+        ctx.arc(0, -72, 8.8, -Math.PI * 0.96, -Math.PI * 0.04);
+        ctx.lineTo(8.5, -66); ctx.quadraticCurveTo(0, -70, -8.5, -66); ctx.closePath(); ctx.fill();
+
+        // Curled fringe tufts
+        ctx.fillStyle = hairHex;
+        ctx.beginPath();
+        ctx.arc(-8.5, -66, 2.5, 0, Math.PI * 2); ctx.arc(-7.5, -61, 2.2, 0, Math.PI * 2);
+        ctx.arc(8.5, -66, 2.5, 0, Math.PI * 2); ctx.arc(7.5, -61, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = hairHi; ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.arc(-8.5, -66, 2.5, -Math.PI * 0.5, Math.PI * 0.5);
+        ctx.arc(8.5, -66, 2.5, Math.PI * 0.5, -Math.PI * 0.5);
+        ctx.stroke();
+
+        // 3. Monastic Habit Cowl Hood
+        ctx.fillStyle = '#3a2110';
+        ctx.beginPath();
+        ctx.moveTo(-11, -54); ctx.quadraticCurveTo(0, -47, 11, -54);
+        ctx.lineTo(8, -61); ctx.quadraticCurveTo(0, -56, -8, -61);
+        ctx.closePath(); ctx.fill();
+
+        // 4. Carved Wooden Ale Tankard in Hand
+        const mugX = isActing ? 12 : 9;
+        const mugY = isActing ? -64 : -50;
+        ctx.fillStyle = '#6b4323';
+        ctx.beginPath(); ctx.roundRect(mugX, mugY, 14, 17, 2); ctx.fill();
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(mugX, mugY + 3, 14, 2); ctx.fillRect(mugX, mugY + 12, 14, 2);
+        ctx.strokeStyle = '#4a2a12'; ctx.lineWidth = 2.2; ctx.strokeRect(mugX + 13, mugY + 4, 4, 9);
+        ctx.fillStyle = '#fffdf0';
+        ctx.beginPath(); ctx.ellipse(mugX + 7, mugY - 1, 8.5, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = skinBase;
+        ctx.beginPath(); ctx.arc(mugX + 14, mugY + 8, 3.2, 0, Math.PI * 2); ctx.fill();
+
+      } else if (archId === 'brawler') {
+        // --- LITTLE JOHN (SCULPTED WARRIOR BEARD & QUARTERSTAFF) ---
+        ctx.fillStyle = hairHex;
+        ctx.beginPath(); ctx.arc(0, -74, 9, -Math.PI, 0); ctx.fill();
+        ctx.fillStyle = '#2b170c'; ctx.fillRect(-8.5, -74, 17, 3.5);
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(-1, -73.5, 2, 2.5);
+
+        // Hand-Sculpted Cascading Beard
+        ctx.fillStyle = beardColor;
+        ctx.beginPath();
+        ctx.moveTo(-8.2, -65);
+        ctx.quadraticCurveTo(-12, -54, -9, -38);
+        ctx.quadraticCurveTo(-4, -28, 0, -28);
+        ctx.quadraticCurveTo(4, -28, 9, -38);
+        ctx.quadraticCurveTo(12, -54, 8.2, -65);
+        ctx.closePath(); ctx.fill();
+
+        ctx.strokeStyle = hairHi; ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-5, -60); ctx.quadraticCurveTo(-7, -45, -3, -32);
+        ctx.moveTo(0, -60); ctx.lineTo(0, -30);
+        ctx.moveTo(5, -60); ctx.quadraticCurveTo(7, -45, 3, -32);
+        ctx.stroke();
+
+        // Massive Oak Quarterstaff gripped in both hands
+        ctx.strokeStyle = '#5a3418'; ctx.lineWidth = 4.2;
+        ctx.beginPath();
+        ctx.moveTo(isActing ? -4 : 8, isActing ? -86 : -84); ctx.lineTo(isActing ? 22 : 14, 2); ctx.stroke();
+        ctx.fillStyle = '#64748b'; ctx.fillRect(isActing ? -6 : 6, isActing ? -86 : -84, 5, 4);
+
+        ctx.fillStyle = skinBase;
+        ctx.beginPath();
+        ctx.arc(isActing ? 6 : 10, isActing ? -56 : -52, 3.5, 0, Math.PI * 2);
+        ctx.arc(isActing ? 14 : 12, isActing ? -36 : -34, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (archId === 'archer') {
+        // --- ROBIN HOOD (AUTHENTIC LINCOLN BYCOCKET & FIST-HELD LONGBOW) ---
+        ctx.fillStyle = hairHex;
+        ctx.beginPath(); ctx.arc(-7.5, -67, 2.5, 0, Math.PI * 2); ctx.arc(7.5, -67, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        // Turned-Brim Lincoln Green Bycocket
+        ctx.fillStyle = hatHex;
+        ctx.beginPath();
+        ctx.moveTo(-10, -72);
+        ctx.quadraticCurveTo(-11, -82, -2, -87);
+        ctx.quadraticCurveTo(8, -84, 14, -72);
+        ctx.lineTo(-10, -72);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = hatSh; ctx.lineWidth = 1.3; ctx.stroke();
+
+        ctx.fillStyle = hatHi;
+        ctx.beginPath();
+        ctx.moveTo(-10, -72); ctx.quadraticCurveTo(0, -74, 12, -71); ctx.lineTo(11, -69); ctx.quadraticCurveTo(0, -72, -9, -69);
+        ctx.closePath(); ctx.fill();
+
+        // Sweeping Pheasant Feather
+        ctx.strokeStyle = '#e11d48'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.moveTo(0, -84); ctx.quadraticCurveTo(14, -98, 23, -93); ctx.stroke();
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 0.9;
+        ctx.beginPath(); ctx.moveTo(0, -84); ctx.quadraticCurveTo(12, -94, 20, -91); ctx.stroke();
+
+        // Van Dyke Goatee
+        ctx.fillStyle = beardColor;
+        ctx.beginPath();
+        ctx.moveTo(-4.5, -63.5); ctx.quadraticCurveTo(0, -62, 4.5, -63.5); ctx.quadraticCurveTo(0, -64.5, -4.5, -63.5); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-2, -61); ctx.lineTo(2, -61); ctx.lineTo(0, -57.5); ctx.closePath(); ctx.fill();
+
+        // Back Quiver
+        ctx.fillStyle = '#4a2f1b'; ctx.fillRect(-17, -62, 6.5, 26);
+        const hasGoldArrow = !!equippedLoot[4];
+        ctx.fillStyle = hasGoldArrow ? '#ffd700' : '#f8fafc';
+        ctx.fillRect(-17, -70, 2, 9); ctx.fillRect(-14, -68, 2, 7); ctx.fillRect(-11.5, -71, 2, 10);
+
+        // FIRM HAND-HELD LONGBOW (PASSES DIRECTLY THROUGH HAND - ZERO FLOATING!)
+        const handX = isActing ? 22 : 15;
+        const handY = isActing ? -50 : -45;
+
+        // Left Arm extending from shoulder to hand
+        ctx.strokeStyle = c.cloak.hi; ctx.lineWidth = 3.2;
+        ctx.beginPath(); ctx.moveTo(9, -52); ctx.lineTo(handX, handY); ctx.stroke();
+        ctx.fillStyle = '#3a2012'; ctx.fillRect(handX - 4, handY - 4, 4.5, 6);
+
+        // Longbow limbs curving through hand grip!
+        const hasGildedBow = !!equippedLoot[3];
+        ctx.strokeStyle = hasGildedBow ? '#ffd700' : (info.stageNum >= 4 ? '#b8860b' : '#613917');
+        ctx.lineWidth = hasGildedBow ? 3.6 : 2.8;
+
+        ctx.beginPath();
+        if (isActing) {
+          // Poised draw pose: tips forward, string pulled back to cheek
+          ctx.moveTo(handX + 6, handY - 26);
+          ctx.quadraticCurveTo(handX - 6, handY, handX + 6, handY + 26);
+          ctx.stroke();
+
+          // Bowstring pulled to cheek at (2, -50)
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 0.9;
+          ctx.beginPath();
+          ctx.moveTo(handX + 6, handY - 26);
+          ctx.lineTo(2, -50);
+          ctx.lineTo(handX + 6, handY + 26);
+          ctx.stroke();
+
+          // Right hand at cheek
+          ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(2, -50, 2.5, 0, Math.PI * 2); ctx.fill();
+        } else {
+          // Idle resting stance: bow curving through fist
+          ctx.moveTo(handX + 5, handY - 24);
+          ctx.quadraticCurveTo(handX - 5, handY, handX + 5, handY + 24);
+          ctx.stroke();
+
+          // Strung bowstring
+          ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(handX + 5, handY - 24);
+          ctx.lineTo(handX + 5, handY + 24);
+          ctx.stroke();
+        }
+
+        // Left Hand Clasping Firmly OVER Bow Riser!
+        ctx.fillStyle = skinBase;
+        ctx.beginPath(); ctx.arc(handX, handY, 3.0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#2b170c'; ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.arc(handX, handY, 3.0, 0, Math.PI * 2); ctx.stroke();
+
+      } else if (archId === 'minstrel') {
+        // --- ALAN-A-DALE (WAVY HAIR & LUTE) ---
+        ctx.fillStyle = hatHex;
+        ctx.beginPath(); ctx.ellipse(1, -76, 13, 6, 0.22, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 2.2;
+        ctx.beginPath(); ctx.moveTo(3, -77); ctx.quadraticCurveTo(16, -92, 24, -86); ctx.stroke();
+        ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(22, -87, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = hairHex;
+        ctx.beginPath(); ctx.moveTo(-7.5, -74); ctx.quadraticCurveTo(-11, -62, -8, -54); ctx.lineTo(-6, -56); ctx.quadraticCurveTo(-8, -64, -6, -72); ctx.closePath(); ctx.fill();
+
+        ctx.save();
+        ctx.translate(isActing ? 11 : 9, isActing ? -48 : -46);
+        ctx.rotate(0.35);
+        ctx.fillStyle = '#9a4f21';
+        ctx.beginPath(); ctx.ellipse(0, 0, 8.5, 12, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(0, -1, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#261205'; ctx.beginPath(); ctx.arc(0, -1, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#3e1d08'; ctx.lineWidth = 3.2;
+        ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(0, -28); ctx.stroke();
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(0, -20, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, 0, 2.8, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+      } else if (archId === 'duelist') {
+        // --- WILL SCARLET (CRIMSON DUELIST) ---
+        ctx.fillStyle = '#991b1b';
+        ctx.beginPath(); ctx.ellipse(0, -76, 13, 5.5, -0.15, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-2, -78); ctx.quadraticCurveTo(12, -94, 20, -88); ctx.stroke();
+
+        ctx.fillStyle = beardColor;
+        ctx.beginPath(); ctx.moveTo(-5, -63.5); ctx.quadraticCurveTo(0, -62, 5, -63.5); ctx.quadraticCurveTo(6, -65, 7, -66); ctx.quadraticCurveTo(0, -63.5, -5, -63.5); ctx.fill();
+
+        const swHandX = isActing ? 12 : 11;
+        const swHandY = isActing ? -46 : -36;
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        if (isActing) { ctx.moveTo(swHandX, swHandY); ctx.lineTo(34, -68); }
+        else { ctx.moveTo(swHandX, swHandY); ctx.lineTo(22, -74); }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(swHandX, swHandY, 4.5, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(swHandX, swHandY, 2.5, 0, Math.PI * 2); ctx.fill();
+
+      } else if (archId === 'scout') {
+        // --- MUCH THE MILLER'S SON (HANDSOME RANGER & SLINGSHOT) ---
+        ctx.fillStyle = hairHex;
+        ctx.beginPath(); ctx.arc(0, -74, 7.5, -Math.PI, 0); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-6, -73); ctx.lineTo(-8, -67); ctx.lineTo(-4, -70); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(6, -73); ctx.lineTo(8, -67); ctx.lineTo(4, -70); ctx.closePath(); ctx.fill();
+
+        // Rolled Undyed Linen Hood (Draped back naturally)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(-8.5, -73); ctx.quadraticCurveTo(0, -78, 8.5, -73);
+        ctx.quadraticCurveTo(10, -66, 7.5, -60);
+        ctx.quadraticCurveTo(0, -63, -7.5, -60);
+        ctx.closePath(); ctx.fill();
+
+        ctx.strokeStyle = '#3a2012'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.moveTo(-11, -54); ctx.lineTo(10, -32); ctx.stroke();
+
+        const slingX = isActing ? 16 : 14;
+        const slingY = isActing ? -52 : -46;
+        ctx.strokeStyle = '#6e3e1a'; ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(slingX, slingY + 8); ctx.lineTo(slingX, slingY);
+        ctx.lineTo(slingX - 4, slingY - 7);
+        ctx.moveTo(slingX, slingY); ctx.lineTo(slingX + 4, slingY - 6);
+        ctx.stroke();
+
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(slingX, slingY + 4, 2.8, 0, Math.PI * 2); ctx.fill();
+        const pullX = isActing ? 6 : 9;
+        const pullY = isActing ? -48 : -40;
+        ctx.fillStyle = '#854d0e'; ctx.beginPath(); ctx.arc(pullX, pullY, 2.8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(pullX - 1, pullY, 2.2, 0, Math.PI * 2); ctx.fill();
+
+      } else if (archId === 'bounty') {
+        // --- GUY OF GISBORNE (BLACKENED STEEL) ---
+        ctx.fillStyle = '#334155';
+        ctx.beginPath(); ctx.moveTo(-12, -54); ctx.quadraticCurveTo(0, -49, 12, -54); ctx.lineTo(8, -62); ctx.quadraticCurveTo(0, -58, -8, -62); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath(); ctx.arc(0, -73, 9, -Math.PI, 0); ctx.lineTo(9, -71); ctx.lineTo(-9, -71); ctx.closePath(); ctx.fill();
+        ctx.fillRect(-1.2, -73, 2.4, 6);
+
+        const swX = isActing ? 13 : 14;
+        const swY = isActing ? -36 : -32;
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        if (isActing) { ctx.moveTo(swX, swY); ctx.lineTo(16, -82); }
+        else { ctx.moveTo(swX, swY); ctx.lineTo(14, -76); }
+        ctx.stroke();
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(swX - 6, swY, 12, 2.8);
+        ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(swX, swY, 3.2, 0, Math.PI * 2); ctx.fill();
+
+      } else if (archId === 'sheriff') {
+        // --- SHERIFF OF NOTTINGHAM (PURSUER) ---
+        ctx.fillStyle = '#831843'; ctx.beginPath(); ctx.ellipse(0, -76, 12, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(4, -76, 2.4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(0, -54, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(-7, -55, 1.8, 2.5); ctx.fillRect(0, -53, 1.8, 2.5); ctx.fillRect(7, -55, 1.8, 2.5);
+
+        ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.ellipse(13, -38, 7, 8, 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd700'; ctx.fillRect(10, -44, 6, 2.5);
+        ctx.fillStyle = skinBase; ctx.beginPath(); ctx.arc(10, -42, 3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    // Gold Bling
+    const charGold = walletLootBalances[1] || 0;
+    if (charGold >= 50 && equippedLoot[1]) {
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath(); ctx.moveTo(-10, -76); ctx.lineTo(-6, -86); ctx.lineTo(0, -80); ctx.lineTo(6, -86); ctx.lineTo(10, -76); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(0, -79, 1.8, 0, Math.PI * 2); ctx.fill();
+    } else if (charGold >= 10 && equippedLoot[1]) {
+      // Subtle refined collar pin
+      const broochY = isFemale ? -53 : -56;
+      ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(0, broochY, isFemale ? 2.0 : 2.2, 0, Math.PI * 2); ctx.fill();
+      if (isFemale) { ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(0, broochY, 0.9, 0, Math.PI * 2); ctx.fill(); }
+    }
+
+    // Legendary Spirit Aura
+    if (info.stageNum === 5) {
+      const aura = ctx.createRadialGradient(0, -42, 8, 0, -42, 54);
+      aura.addColorStop(0, 'rgba(187, 247, 102, 0.28)');
+      aura.addColorStop(0.65, 'rgba(187, 247, 102, 0.09)');
+      aura.addColorStop(1, 'rgba(187, 247, 102, 0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath(); ctx.arc(0, -42, 54, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.restore();
+  }
+// --- Living Pet Companion Rendering (Artisan Vector Illustrated) ---
+  function drawCompanion(c, info) {
+    let petType = companionOverride !== 'auto' ? companionOverride : (c.companion || 'None');
+    if (petType === 'None' || !petType) return;
+
+    if (petType === 'Falcon') petType = 'Hunting Falcon';
+    if (petType === 'Sherwood Hound' || petType === 'White Stag' || petType === 'Red Fox') petType = 'Camp Hound';
+
+    const petStage = companionStageOverride !== 'auto' ? companionStageOverride : info.stageNum;
+    const isAdult = petStage >= 3;
+    const isLegend = petStage >= 5;
+    const isPup = petStage <= 1;
+
+    const px = 240;
+    const py = 368;
+
+    ctx.save();
+    ctx.translate(px, py);
+
+    // Ancient Legend Celestial Spirit Glow & Floating Particles
+    if (isLegend) {
+      const glowGrad = ctx.createRadialGradient(0, -25, 4, 0, -25, 42);
+      glowGrad.addColorStop(0, 'rgba(255, 215, 0, 0.35)');
+      glowGrad.addColorStop(0.6, 'rgba(255, 235, 120, 0.12)');
+      glowGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(0, -25, 42, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Floating golden motes
+      const t = Date.now() * 0.003;
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(Math.sin(t) * 16, -30 + Math.cos(t) * 8, 1.5, 0, Math.PI * 2);
+      ctx.arc(Math.cos(t * 0.7) * 18, -20 + Math.sin(t * 0.7) * 6, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (petType === 'Hunting Falcon') {
+      // 1. Rustic Wood Perch Post
+      ctx.fillStyle = '#422817';
+      ctx.fillRect(-6, -14, 12, 14);
+      ctx.fillStyle = '#2d1a0d';
+      ctx.beginPath();
+      ctx.ellipse(0, -14, 7, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Powerful Talons & Golden Braided Jesses
+      ctx.strokeStyle = '#ffd700'; // Golden leather jesses
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-2, -14); ctx.lineTo(-4, -6);
+      ctx.moveTo(2, -14); ctx.lineTo(4, -6);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f59e0b'; // Talons gripping post
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-4, -14); ctx.lineTo(-1, -14);
+      ctx.moveTo(1, -14); ctx.lineTo(4, -14);
+      ctx.stroke();
+
+      // 3. Sleek Aerodynamic Body & Folded Wing
+      const scale = isLegend ? 1.25 : (isAdult ? 1.15 : (isPup ? 0.72 : 0.88));
+      ctx.scale(scale, scale);
+
+      // Tail Feathers
+      ctx.fillStyle = '#263238';
+      ctx.beginPath();
+      ctx.moveTo(-3, -15);
+      ctx.lineTo(-7, -4);
+      ctx.lineTo(2, -4);
+      ctx.lineTo(-1, -15);
+      ctx.closePath();
+      ctx.fill();
+
+      // Barred Cream Breast
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.ellipse(0, -26, 7, 11, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      // Breast plumage flecks
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(-2, -28, 2, 1.5);
+      ctx.fillRect(1, -25, 2, 1.5);
+      ctx.fillRect(-1, -22, 2, 1.5);
+
+      // Slate-Blue Back & Layered Wing
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.ellipse(-3, -27, 6, 12, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // 4. Fierce Head, Beak & Amber Eye
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.ellipse(3, -37, 5.5, 5, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hooked Predatory Beak
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(6, -38);
+      ctx.quadraticCurveTo(11, -37, 10, -32);
+      ctx.lineTo(6, -34);
+      ctx.closePath();
+      ctx.fill();
+
+      // Sharp Amber Eye
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.arc(4, -38, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(4.3, -38, 1, 0, Math.PI * 2);
+      ctx.fill();
+
+    } else if (petType === 'Barn Owl') {
+      const scale = isLegend ? 1.25 : (isAdult ? 1.15 : (isPup ? 0.72 : 0.88));
+      ctx.scale(scale, scale);
+
+      // 1. Mossy Log Perch
+      ctx.fillStyle = '#3e2723';
+      ctx.beginPath();
+      ctx.roundRect(-10, -10, 20, 10, 3);
+      ctx.fill();
+      ctx.fillStyle = '#2e7d32'; // Moss patch
+      ctx.fillRect(-6, -10, 5, 2);
+
+      // Feathered Talons
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-5, -11, 4, 3);
+      ctx.fillRect(2, -11, 4, 3);
+
+      // 2. Fluffy Round Body
+      ctx.fillStyle = '#d97706'; // Golden buff back
+      ctx.beginPath();
+      ctx.ellipse(0, -22, 10, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Mottled Wing Overlap
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.ellipse(-5, -22, 5, 12, -0.15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef3c7'; // White wing stipples
+      ctx.fillRect(-6, -26, 1.5, 1.5);
+      ctx.fillRect(-4, -22, 1.5, 1.5);
+      ctx.fillRect(-6, -18, 1.5, 1.5);
+
+      // Downy Cream Chest
+      ctx.fillStyle = '#fffbeb';
+      ctx.beginPath();
+      ctx.ellipse(2, -21, 6.5, 10, 0.05, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Iconic Heart-Shaped Facial Disc
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      // Left cheek lobe
+      ctx.arc(-3, -36, 4.5, 0, Math.PI * 2);
+      // Right cheek lobe
+      ctx.arc(3, -36, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Facial Disc Rim Shade
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(-3, -36, 4.5, Math.PI * 0.7, Math.PI * 1.8);
+      ctx.arc(3, -36, 4.5, -Math.PI * 0.8, Math.PI * 0.3);
+      ctx.stroke();
+
+      // Deep Luminous Amber Eyes
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(-2.8, -36, 1.8, 0, Math.PI * 2);
+      ctx.arc(2.8, -36, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fbbf24'; // Iris highlight
+      ctx.fillRect(-3.3, -37, 1, 1);
+      ctx.fillRect(2.3, -37, 1, 1);
+
+      // Curved Hook Beak
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(0, -35);
+      ctx.lineTo(1.2, -31);
+      ctx.lineTo(-0.8, -32);
+      ctx.closePath();
+      ctx.fill();
+
+    } else { // Camp Hound (Faithful Greenwood Bloodhound / Mastiff)
+      const scale = isLegend ? 1.25 : (isAdult ? 1.15 : (isPup ? 0.72 : 0.88));
+      ctx.scale(scale, scale);
+
+      // 1. Wagging Tail
+      const tailWobble = Math.sin(Date.now() * 0.008) * 4;
+      ctx.strokeStyle = '#6d4327';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-8, -14);
+      ctx.quadraticCurveTo(-16 + tailWobble, -20, -18 + tailWobble * 1.5, -26);
+      ctx.stroke();
+
+      // 2. Hind Leg & Haunch (Sitting Stance)
+      ctx.fillStyle = '#55341e';
+      ctx.beginPath();
+      ctx.ellipse(-6, -10, 8, 7, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Front Paws
+      ctx.fillStyle = '#7a4b2c';
+      ctx.beginPath();
+      ctx.roundRect(2, -4, 5, 5, 2);
+      ctx.roundRect(8, -4, 5, 5, 2);
+      ctx.fill();
+
+      // 3. Muscular Hound Body & Chest
+      ctx.fillStyle = '#7a4b2c';
+      ctx.beginPath();
+      ctx.ellipse(2, -16, 9, 12, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Warm Tan Chest Patch
+      ctx.fillStyle = '#d49b6a';
+      ctx.beginPath();
+      ctx.ellipse(4, -16, 5, 8, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Studded Leather Collar with Brass Sherwood Leaf
+      ctx.fillStyle = '#3e2723';
+      ctx.fillRect(0, -28, 9, 3.5);
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(4.5, -24, 2, 0, Math.PI * 2); // Brass tag
+      ctx.fill();
+
+      // 5. Head, Muzzle & Floppy Hound Ears
+      ctx.fillStyle = '#7a4b2c';
+      ctx.beginPath();
+      ctx.ellipse(5, -34, 7, 6.5, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Muzzle & Jowls
+      ctx.fillStyle = '#55341e';
+      ctx.beginPath();
+      ctx.ellipse(9, -32, 4.5, 3.5, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      // Black Wet Nose
+      ctx.fillStyle = '#1a110a';
+      ctx.fillRect(11.5, -34, 2.5, 2.5);
+
+      // Floppy Long Hound Ear
+      ctx.fillStyle = '#4a2914';
+      ctx.beginPath();
+      ctx.moveTo(1, -36);
+      ctx.quadraticCurveTo(-3, -28, -2, -20);
+      ctx.lineTo(2, -21);
+      ctx.quadraticCurveTo(3, -28, 5, -34);
+      ctx.closePath();
+      ctx.fill();
+
+      // Loyal Warm Eye
+      ctx.fillStyle = '#1e130b';
+      ctx.beginPath();
+      ctx.arc(6, -36, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(6.3, -36.6, 0.8, 0.8); // Eye shine
+    }
+
+    ctx.restore();
+  }
+
+  // --- Dynamic Particles (Leaves, Rain, Snow, Fireflies) ---
+  function spawnParticles(info) {
+    if (particles.length > 55) return;
+    if (info.season === 'Winter') {
+      particles.push({
+        x: Math.random() * W,
+        y: -5,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: 0.8 + Math.random() * 0.8,
+        life: 1.0,
+        decay: 0.004,
+        size: 2.5,
+        type: 'snow'
+      });
+    } else if (info.season === 'Autumn') {
+      particles.push({
+        x: Math.random() * W,
+        y: -5,
+        vx: 0.8 + Math.random() * 0.9,
+        vy: 0.6 + Math.random() * 0.6,
+        life: 1.0,
+        decay: 0.005,
+        size: 3.5,
+        type: 'leaf'
+      });
+    } else if (timeMode === 2) {
+      particles.push({
+        x: Math.random() * W,
+        y: 120 + Math.random() * 220,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        life: 1.0,
+        decay: 0.007,
+        size: 2.5,
+        type: 'firefly'
+      });
+    }
+
+    // Campfire sparks if not dormant
+    if (!info.isDormant && Math.random() < 0.6) {
+      particles.push({
+        x: campfire.x + (Math.random() - 0.5) * 16,
+        y: campfire.y - 4,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: -1.2 - Math.random() * 1.5,
+        life: 1.0,
+        decay: 0.025,
+        size: 3,
+        type: 'spark'
+      });
+    }
+
+    // Greenwood Elixir Emerald Aura motes
+    if (equippedLoot[5] && Math.random() < 0.45) {
+      particles.push({
+        x: 150 + (Math.random() - 0.5) * 28,
+        y: 335 + (Math.random() - 0.5) * 45,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: -0.6 - Math.random() * 0.8,
+        life: 1.0,
+        decay: 0.02,
+        size: 2.8,
+        type: 'emerald'
+      });
+    }
+  }
+
+  function updateAndDrawParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      if (p.life <= 0 || p.y > H + 10) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      if (p.type === 'snow') {
+        ctx.fillStyle = `rgba(240, 248, 255, ${p.life * 0.85})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'leaf') {
+        ctx.fillStyle = `rgba(209, 105, 33, ${p.life})`;
+        ctx.fillRect(p.x, p.y, p.size, p.size * 0.7);
+      } else if (p.type === 'firefly') {
+        ctx.fillStyle = `rgba(187, 247, 102, ${p.life * 0.9})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'spark') {
+        ctx.fillStyle = `rgba(255, 180, 50, ${p.life})`;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      } else if (p.type === 'emerald') {
+        ctx.fillStyle = `rgba(46, 204, 113, ${p.life * 0.85})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'heart') {
+        ctx.fillStyle = `rgba(239, 68, 68, ${p.life})`;
+        ctx.font = `${p.size || 13}px sans-serif`;
+        ctx.fillText('❤️', p.x, p.y);
+      } else if (p.type === 'foam') {
+        ctx.fillStyle = `rgba(255, 253, 240, ${p.life * 0.9})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      } else if (p.type === 'magic') {
+        ctx.fillStyle = `rgba(168, 85, 247, ${p.life * 0.85})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      } else if (p.type === 'wood_chip') {
+        ctx.fillStyle = `rgba(139, 69, 19, ${p.life})`;
+        ctx.fillRect(p.x, p.y, p.size, p.size * 1.5);
+      } else if (p.type === 'musical_sparkle') {
+        ctx.fillStyle = `rgba(255, 215, 0, ${p.life})`;
+        ctx.font = 'bold 13px serif';
+        ctx.fillText(p.symbol || '♫', p.x, p.y);
+      }
+      ctx.restore();
+    }
+  }
+
+  // --- Target & Archery Physics ---
+  function drawTarget() {
+    const t = targets[0];
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    if (t.wobble > 0) {
+      ctx.rotate(Math.sin(t.wobble * 0.8) * 0.12);
+      t.wobble--;
+    }
+    ctx.fillStyle = '#4a2f1b';
+    ctx.fillRect(-4, 0, 8, 90);
+    const rings = [
+      { r: t.r, color: '#f2edd9' },
+      { r: t.r * 0.72, color: '#d94b36' },
+      { r: t.r * 0.44, color: '#f2edd9' },
+      { r: t.r * 0.2, color: '#f5c542' }
+    ];
+    rings.forEach(ring => {
+      ctx.fillStyle = ring.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, ring.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#2b1b11';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // Frothy ale drips down target face from tankard smash!
+    if (t.beerDripTimer > 0) {
+      t.beerDripTimer--;
+      ctx.fillStyle = 'rgba(255, 253, 240, 0.88)';
+      ctx.beginPath(); ctx.ellipse(0, -2, t.r * 0.45, t.r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(245, 180, 40, 0.7)';
+      ctx.fillRect(-5, 0, 2.5, 14);
+      ctx.fillRect(1, 2, 2.5, 18);
+      ctx.fillRect(6, -1, 2.2, 10);
+    }
+
+    // Expanding golden harmonic soundwave rings from minstrel lute!
+    if (t.soundwaveTimer > 0) {
+      t.soundwaveTimer--;
+      const waveR = (40 - t.soundwaveTimer) * 1.6;
+      ctx.strokeStyle = `rgba(255, 215, 0, ${t.soundwaveTimer / 40})`;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.arc(0, 0, waveR, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function shootAt(targetX, targetY) {
+    initAudio();
+    const charX = 150, charY = 320;
+    const dx = targetX - charX, dy = targetY - charY;
+    const dist = Math.hypot(dx, dy);
+    const archId = currentToken ? currentToken.archetype.id : 'archer';
+    const isGolden = (archId === 'archer') && !!equippedLoot[4];
+    
+    // Archetype-adaptive weapon projectile physics
+    let speed = 14;
+    let gravity = 0.28;
+    let projType = 'arrow';
+    let soundName = 'shoot';
+    let spinSpeed = 0;
+
+    if (archId === 'infiltrator') {
+      projType = 'stiletto';
+      speed = 15;
+      gravity = 0.24;
+      spinSpeed = 0.38; // Aerodynamic end-over-end spin
+      soundName = 'hit';
+    } else if (archId === 'scout') {
+      projType = 'acorn';
+      speed = 16;
+      gravity = 0.22;
+      spinSpeed = 0.35;
+      soundName = 'munch';
+    } else if (archId === 'brawler') {
+      projType = 'oak_cudgel';
+      speed = 12;
+      gravity = 0.35;
+      spinSpeed = 0.26;
+      soundName = 'hit';
+    } else if (archId === 'friar') {
+      projType = 'ale_mug';
+      speed = 12;
+      gravity = 0.32;
+      spinSpeed = 0.22;
+      soundName = 'purr';
+    } else if (archId === 'herbalist') {
+      projType = 'potion';
+      speed = 13;
+      gravity = 0.26;
+      spinSpeed = 0.28;
+      soundName = 'fire';
+    } else if (archId === 'minstrel') {
+      projType = 'harmonic_note';
+      speed = 13;
+      gravity = 0.12; // Floats on sound resonance
+      spinSpeed = 0;
+      soundName = 'lute';
+    } else if (archId === 'duelist') {
+      projType = 'duelist_blade';
+      speed = 16;
+      gravity = 0.25;
+      spinSpeed = 0.36;
+      soundName = 'hit';
+    } else if (archId === 'bounty') {
+      projType = 'iron_bolt';
+      speed = 15;
+      gravity = 0.27;
+      spinSpeed = 0;
+      soundName = 'hit';
+    } else if (archId === 'sheriff') {
+      projType = 'coin_pouch';
+      speed = 12;
+      gravity = 0.34;
+      spinSpeed = 0.24;
+      soundName = 'bell';
+    } else { // archer
+      projType = 'arrow';
+      speed = isGolden ? 16 : 14;
+      gravity = isGolden ? 0.22 : 0.28;
+      soundName = isGolden ? 'bell' : 'shoot';
+    }
+
+    const flightFrames = Math.max(dist / speed, 1);
+    const vy = (dy / flightFrames) - (0.5 * gravity * flightFrames);
+
+    arrows.push({
+      x: charX,
+      y: charY,
+      vx: dx / flightFrames,
+      vy: vy,
+      gravity: gravity,
+      stuck: false,
+      isGolden: isGolden,
+      type: projType,
+      angle: Math.atan2(vy, dx / flightFrames),
+      spin: 0,
+      spinSpeed: spinSpeed,
+      wobblePhase: 0,
+      destX: targetX,
+      destY: targetY
+    });
+
+    charAnim.actionTimer = 22;
+    playSound(soundName);
+  }
+
+  function updateAndDrawProjectiles() {
+    for (let i = arrows.length - 1; i >= 0; i--) {
+      const a = arrows[i];
+      if (!a.stuck) {
+        a.x += a.vx;
+        a.y += a.vy;
+        a.vy += a.gravity;
+        if (a.spinSpeed !== 0) {
+          a.spin += a.spinSpeed;
+        } else {
+          a.angle = Math.atan2(a.vy, a.vx);
+        }
+        if (a.type === 'harmonic_note') {
+          a.wobblePhase = (a.wobblePhase || 0) + 0.18;
+        }
+
+        // Particle trails
+        if (a.isGolden && Math.random() < 0.75) {
+          particles.push({
+            x: a.x - Math.cos(a.angle) * 8 + (Math.random() - 0.5) * 3,
+            y: a.y - Math.sin(a.angle) * 8 + (Math.random() - 0.5) * 3,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            size: 2.4,
+            type: 'spark',
+            life: 0.85,
+            decay: 0.05
+          });
+        } else if (a.type === 'stiletto' && Math.random() < 0.5) {
+          particles.push({
+            x: a.x + (Math.random() - 0.5) * 4,
+            y: a.y + (Math.random() - 0.5) * 4,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            size: 1.8,
+            type: 'spark',
+            life: 0.6,
+            decay: 0.08
+          });
+        } else if (a.type === 'ale_mug' && Math.random() < 0.6) {
+          particles.push({
+            x: a.x,
+            y: a.y,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: 0.5 + Math.random() * 0.5,
+            size: 2.0,
+            type: 'foam',
+            life: 0.7,
+            decay: 0.06
+          });
+        } else if (a.type === 'potion' && Math.random() < 0.6) {
+          particles.push({
+            x: a.x,
+            y: a.y,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: -0.3 + (Math.random() - 0.5) * 0.3,
+            size: 2.5,
+            type: 'magic',
+            life: 0.8,
+            decay: 0.05
+          });
+        }
+
+        const tgt = targets[0];
+        const dist = Math.hypot(a.x - tgt.x, a.y - tgt.y);
+
+        // Exact collision detection with target face
+        if (dist <= tgt.r || (a.x >= tgt.x - 3 && a.vx > 0 && Math.abs(a.y - tgt.y) <= tgt.r)) {
+          tgt.hits++;
+          tgt.wobble = a.isGolden ? 32 : (a.type === 'oak_cudgel' ? 36 : 22);
+
+          const isPiercing = (a.type === 'arrow' || a.type === 'stiletto' || a.type === 'duelist_blade' || a.type === 'iron_bolt');
+
+          if (isPiercing) {
+            a.stuck = true;
+          } else if (a.type === 'oak_cudgel') {
+            // Rebounds off target with heavy thud and wood splinters!
+            a.vx = -4 - Math.random() * 2;
+            a.vy = -3.5 - Math.random() * 2;
+            a.gravity = 0.45;
+            a.spinSpeed = 0.38;
+            a.bouncing = true;
+            a.bounceLife = 24;
+            for (let k = 0; k < 10; k++) {
+              particles.push({
+                x: a.x, y: a.y,
+                vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3,
+                size: 2.2, type: 'wood_chip', life: 0.9, decay: 0.04
+              });
+            }
+          } else if (a.type === 'ale_mug') {
+            // Smashes into foam explosion! Target gets dripping ale trails!
+            tgt.beerDripTimer = 75;
+            for (let k = 0; k < 18; k++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = 1.6 + Math.random() * 2.6;
+              particles.push({
+                x: a.x, y: a.y,
+                vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+                size: 3.4, type: 'foam', life: 1.0, decay: 0.035
+              });
+            }
+            arrows.splice(i, 1);
+          } else if (a.type === 'potion') {
+            // Shatters into vibrant alchemical mist!
+            for (let k = 0; k < 22; k++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = 1.8 + Math.random() * 3.0;
+              particles.push({
+                x: a.x, y: a.y,
+                vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+                size: 3.2, type: 'magic', life: 1.2, decay: 0.03
+              });
+            }
+            arrows.splice(i, 1);
+          } else if (a.type === 'harmonic_note') {
+            // Detonates into expanding soundwave rings!
+            tgt.soundwaveTimer = 40;
+            for (let k = 0; k < 10; k++) {
+              particles.push({
+                x: a.x + (Math.random() - 0.5) * 16, y: a.y + (Math.random() - 0.5) * 16,
+                vx: (Math.random() - 0.5) * 1.5, vy: -1.2 - Math.random() * 1.5,
+                size: 14, type: 'musical_sparkle', symbol: ['♪', '♫', '♬'][k % 3], life: 1.0, decay: 0.03
+              });
+            }
+            arrows.splice(i, 1);
+          } else if (a.type === 'acorn') {
+            // Ricochets off target!
+            a.vx = -4.5;
+            a.vy = -3;
+            a.gravity = 0.45;
+            a.bouncing = true;
+            a.bounceLife = 20;
+          } else if (a.type === 'coin_pouch') {
+            // Thuds and drops, spilling coins!
+            a.vx = -1.8;
+            a.vy = -1.2;
+            a.gravity = 0.55;
+            a.bouncing = true;
+            a.bounceLife = 24;
+            for (let k = 0; k < 14; k++) {
+              particles.push({
+                x: a.x, y: a.y,
+                vx: (Math.random() - 0.5) * 3, vy: -1 - Math.random() * 2.5,
+                size: 2.8, type: 'spark', life: 1.0, decay: 0.04
+              });
+            }
+          }
+
+          // Archetype-adaptive impact sound & toasts
+          if (a.type === 'stiletto') {
+            playSound(dist <= tgt.r * 0.38 ? 'bell' : 'hit');
+            (window.showToast || console.log)(dist <= tgt.r * 0.38 ? '🗡️🎯 MAID MARIAN STILETTO BULLSEYE! 🔔' : '🗡️ Maid Marian\'s Stiletto Struck the Target!');
+          } else if (a.type === 'oak_cudgel') {
+            playSound('hit');
+            (window.showToast || console.log)('🪵 Little John\'s Oak Cudgel Struck with Mountain Force!');
+          } else if (a.type === 'ale_mug') {
+            playSound('purr');
+            (window.showToast || console.log)('🍺 Friar Tuck\'s Foaming Ale Splashed the Mark!');
+          } else if (a.type === 'potion') {
+            playSound('fire');
+            (window.showToast || console.log)('🧪 Mother Meg\'s Mystic Elixir Engulfed the Target in Vapor!');
+          } else if (a.type === 'harmonic_note') {
+            playSound('lute');
+            (window.showToast || console.log)('🎵 Alan-a-Dale\'s Harmonic Note Resonates Across the Forest!');
+          } else if (a.type === 'duelist_blade') {
+            playSound('hit');
+            (window.showToast || console.log)('⚔️ Will Scarlet\'s Duelist Blade Struck Clean!');
+          } else if (a.type === 'acorn') {
+            playSound('munch');
+            (window.showToast || console.log)('🌰 Much\'s Slingshot Acorn Nailed the Mark!');
+          } else if (a.type === 'iron_bolt') {
+            playSound('hit');
+            (window.showToast || console.log)('🛡️ Guy of Gisborne\'s Heavy Cross-Bolt Pierced the Wood!');
+          } else if (a.type === 'coin_pouch') {
+            playSound('bell');
+            (window.showToast || console.log)('💰 The Sheriff\'s Heavy Tax Purse Smacked the Target with a Clink!');
+          } else { // arrow
+            if (dist <= tgt.r * 0.38) {
+              playSound('bell');
+              (window.showToast || console.log)(a.isGolden ? '✨👑 MYTHIC GOLDEN ARROW BULLSEYE! 🎯🔔' : '🎯 DEAD CENTER BULLSEYE! 🔔');
+            } else {
+              playSound('hit');
+              (window.showToast || console.log)(a.isGolden ? '✨ Golden Arrow Struck Target!' : '🎯 Target Hit!');
+            }
+          }
+        } else if (a.y > 380 || a.x > W + 20) {
+          if (a.bouncing) {
+            arrows.splice(i, 1);
+            continue;
+          } else {
+            a.stuck = true;
+          }
+        }
+        if (a.bouncing) {
+          a.bounceLife--;
+          if (a.bounceLife <= 0) {
+            arrows.splice(i, 1);
+            continue;
+          }
+        }
+      }
+
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      if (a.spinSpeed !== 0 && !a.stuck) {
+        ctx.rotate(a.spin);
+      } else {
+        ctx.rotate(a.angle);
+      }
+
+      if (a.type === 'stiletto') {
+        // --- Maid Marian's Damascus Silver Stiletto ---
+        // Double-edged silver blade
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(9, 0); // Blade tip pointing forward
+        ctx.lineTo(-2, -3);
+        ctx.lineTo(-2, 3);
+        ctx.closePath();
+        ctx.fill();
+        // Fuller ridge
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(8, 0); ctx.lineTo(-2, 0);
+        ctx.stroke();
+        // Gilded quillon crossguard
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(-3, -5, 2.2, 10);
+        // Leather bound grip
+        ctx.fillStyle = '#4a1b0b';
+        ctx.fillRect(-8, -2, 5, 4);
+        // Ruby teardrop pommel
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(-9, 0, 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (a.type === 'oak_cudgel') {
+        // --- Little John's Heavy Oak Throwing Cudgel ---
+        ctx.fillStyle = '#6e3e1a';
+        ctx.beginPath();
+        ctx.ellipse(3, 0, 9, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#4a290f';
+        ctx.fillRect(-10, -2, 8, 4);
+        ctx.fillStyle = '#718093'; // Iron band
+        ctx.fillRect(0, -4.5, 3, 9);
+      } else if (a.type === 'ale_mug') {
+        // --- Friar Tuck's Foaming Ale Tankard ---
+        ctx.fillStyle = '#5c381c';
+        ctx.fillRect(-5, -6, 10, 12);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(-5, -4, 10, 1.5);
+        ctx.fillRect(-5, 2, 10, 1.5);
+        ctx.strokeStyle = '#3d2513';
+        ctx.lineWidth = 1.8;
+        ctx.strokeRect(-8, -4, 4, 8);
+        ctx.fillStyle = '#fffdf0';
+        ctx.beginPath();
+        ctx.ellipse(0, -6, 5.5, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (a.type === 'potion') {
+        // --- Mother Meg's Bubbling Alchemy Flask ---
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.beginPath();
+        ctx.arc(0, 2, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#8b5cf6'; // Mystical elixir
+        ctx.beginPath();
+        ctx.arc(0, 3, 4.5, 0, Math.PI);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fillRect(-2, -6, 4, 4);
+        ctx.fillStyle = '#b45309'; // Cork
+        ctx.fillRect(-2, -8, 4, 2.5);
+      } else if (a.type === 'harmonic_note') {
+        // --- Alan-a-Dale's Glowing Musical Note ---
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.28)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 9 + Math.sin(a.wobblePhase || 0) * 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 16px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('♫', 0, 0);
+      } else if (a.type === 'duelist_blade') {
+        // --- Will Scarlet's Duelist Parrying Blade ---
+        ctx.fillStyle = '#f1f5f9';
+        ctx.beginPath();
+        ctx.moveTo(9, 0); ctx.lineTo(-2, -2.5); ctx.lineTo(-2, 2.5);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(-3, -4, 2, 8);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-4, 0); ctx.quadraticCurveTo(-8, -4, -12, -2);
+        ctx.stroke();
+      } else if (a.type === 'acorn') {
+        // --- Much the Miller's Forest Slingshot Acorn ---
+        ctx.fillStyle = '#854d0e';
+        ctx.beginPath();
+        ctx.ellipse(3, 0, 5, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#451a03';
+        ctx.beginPath();
+        ctx.ellipse(-2, 0, 3.5, 4.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#3a1700';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-5, 0); ctx.lineTo(-8, -1.5);
+        ctx.stroke();
+      } else if (a.type === 'iron_bolt') {
+        // --- Guy of Gisborne's Heavy Iron Cross-Bolt ---
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-12, 0); ctx.lineTo(4, 0);
+        ctx.stroke();
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(-12, 0); ctx.lineTo(-9, -2.5); ctx.lineTo(-7, 0); ctx.lineTo(-9, 2.5);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.moveTo(4, 0); ctx.lineTo(1, -3); ctx.lineTo(7, 0); ctx.lineTo(1, 3);
+        ctx.closePath(); ctx.fill();
+      } else if (a.type === 'coin_pouch') {
+        // --- Sheriff's Heavy Burlap Tax Purse ---
+        ctx.fillStyle = '#b45309';
+        ctx.beginPath();
+        ctx.ellipse(0, 2, 6, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(-2.5, -4, 5, 2);
+        ctx.fillStyle = '#92400e';
+        ctx.beginPath();
+        ctx.moveTo(-4, -6); ctx.lineTo(0, -4); ctx.lineTo(4, -6);
+        ctx.closePath(); ctx.fill();
+      } else {
+        // --- Robin Hood's English Longbow Arrow ---
+        ctx.strokeStyle = a.isGolden ? '#ffd700' : '#4a2f1b';
+        ctx.lineWidth = a.isGolden ? 2.8 : 2;
+        ctx.beginPath();
+        ctx.moveTo(-16, 0);
+        ctx.lineTo(4, 0);
+        ctx.stroke();
+
+        // Feathers (fletching)
+        ctx.fillStyle = a.isGolden ? '#fff385' : '#f8f9fa';
+        ctx.beginPath();
+        ctx.moveTo(-16, 0);
+        ctx.lineTo(-12, -3);
+        ctx.lineTo(-8, 0);
+        ctx.lineTo(-12, 3);
+        ctx.closePath();
+        ctx.fill();
+
+        // Arrowhead
+        ctx.fillStyle = a.isGolden ? '#ffffff' : '#718093';
+        ctx.beginPath();
+        ctx.moveTo(4, 0);
+        ctx.lineTo(1, -2.5);
+        ctx.lineTo(6, 0);
+        ctx.lineTo(1, 2.5);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // --- Main Animation Loop ---
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    const info = getStageInfo(simulationDay, careState === 'dormant');
+
+    drawSkyAndEnvironment(info);
+    drawAncientOak(info);
+    drawCamp(info);
+    if (backdropProps.target) drawTarget();
+    if (currentToken) {
+      drawCharacter(currentToken, info);
+      drawCompanion(currentToken, info);
+    }
+    spawnParticles(info);
+    updateAndDrawParticles();
+    updateAndDrawProjectiles();
+
+    requestAnimationFrame(loop);
+  }
+
+  // --- Event Listeners & Interactive Handlers ---
+  function setSeed(seed) {
+    currentSeed = seed;
+    currentToken = generateCharacter(seed);
+    window.currentToken = currentToken;
+    if (window.updateHUD) window.updateHUD(); else updateHUD();
+    fetchOutlawQuestStats(seed);
+    (window.showToast || console.log)(`Minted / Loaded Outlaw #${seed}`);
+  }
+  window.setSeed = setSeed;
+  window.getCurrentToken = () => currentToken;
+  window.currentToken = currentToken;
+  window.generateCharacter = generateCharacter;
+  window.updateHUD = updateHUD;
+  window.initAudio = initAudio;
+  window.playSound = playSound;
+  window.showToast = showToast;
+
+
+  document.getElementById('btnInteract').addEventListener('click', () => {
+    initAudio();
+    if (careState === 'dormant') {
+      careState = 'cared';
+      document.getElementById('pillCared').classList.add('active');
+      document.getElementById('pillDormant').classList.remove('active');
+      playSound('fire');
+      (window.showToast || console.log)('☀️ Outlaw Awakened from Slumber!');
+      updateHUD();
+      return;
+    }
+    charAnim.actionTimer = 25;
+    playSound(currentToken.archetype.sound || 'shoot');
+    (window.showToast || console.log)(currentToken.archetype.actionText);
+  });
+
+  document.getElementById('btnFeed').addEventListener('click', () => {
+    initAudio();
+    playSound('munch');
+    (window.showToast || console.log)('🍎 Fed roasted forest berries to companion!');
+  });
+
+  document.getElementById('btnCampfire').addEventListener('click', () => {
+    initAudio();
+    campfire.intensity = 1.6;
+    setTimeout(() => { campfire.intensity = 1.0; }, 1200);
+    playSound('fire');
+    (window.showToast || console.log)('🔥 Campfire stoked with dry pine logs!');
+  });
+
+  document.getElementById('btnArchery').addEventListener('click', () => {
+    shootAt(targets[0].x, targets[0].y);
+  });
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const clickX = ((e.clientX - rect.left) / rect.width) * W;
+    const clickY = ((e.clientY - rect.top) / rect.height) * H;
+    
+    // Check if clicked near campfire
+    if (Math.hypot(clickX - campfire.x, clickY - campfire.y) < 30) {
+      document.getElementById('btnCampfire').click();
+    } else if (Math.hypot(clickX - 150, clickY - 330) < 35) { // Click character
+      document.getElementById('btnInteract').click();
+    } else if (Math.hypot(clickX - 240, clickY - 360) < 32) { // Click pet
+      const activePet = companionOverride !== 'auto' ? companionOverride : (currentToken ? currentToken.companion : 'None');
+      if (activePet === 'None' || !activePet) {
+        (window.showToast || console.log)('🐾 No companion in camp! Bond with a beast at Mother Meg\'s Sanctuary.');
+      } else {
+        petAnim.petTimer = 25;
+        for (let k = 0; k < 6; k++) {
+          particles.push({
+            x: 240 + (Math.random() - 0.5) * 16,
+            y: 355 + (Math.random() - 0.5) * 12,
+            vx: (Math.random() - 0.5) * 0.8,
+            vy: -1.2 - Math.random() * 1.2,
+            size: 14,
+            type: 'heart',
+            life: 1.0,
+            decay: 0.04
+          });
+        }
+        initAudio();
+        playSound('purr');
+        (window.showToast || console.log)(`🐾 Petted ${activePet}! (+3 Bond Strengthened)`);
+      }
+    } else {
+      shootAt(clickX, clickY);
+    }
+  });
+
+  // Time Slider
+  const slider = document.getElementById('timeSlider');
+  slider.addEventListener('input', (e) => {
+    simulationDay = parseInt(e.target.value, 10);
+    updateHUD();
+  });
+
+  // Warp Buttons
+  const addDays = (n) => {
+    simulationDay = Math.min(9125, simulationDay + n);
+    updateHUD();
+    (window.showToast || console.log)(`⏩ Fast-forwarded +${n} Days!`);
+  };
+  document.getElementById('warp1d').addEventListener('click', () => addDays(1));
+  document.getElementById('warp7d').addEventListener('click', () => addDays(7));
+  document.getElementById('warp30d').addEventListener('click', () => addDays(30));
+  document.getElementById('warp365d').addEventListener('click', () => addDays(365));
+  document.getElementById('warp5y').addEventListener('click', () => addDays(365 * 5));
+  document.getElementById('warp25y').addEventListener('click', () => {
+    simulationDay = 9125;
+    updateHUD();
+    (window.showToast || console.log)('👑 Reached Max Year 25 (Ancient Legend)!');
+  });
+
+  // Auto-Play
+  const btnPlay = document.getElementById('warpPlay');
+  btnPlay.addEventListener('click', () => {
+    if (autoPlayTimer) {
+      clearInterval(autoPlayTimer);
+      autoPlayTimer = null;
+      btnPlay.innerText = '▶ Auto Play';
+      btnPlay.classList.remove('active');
+    } else {
+      btnPlay.innerText = '⏸ Pause';
+      btnPlay.classList.add('active');
+      autoPlayTimer = setInterval(() => {
+        if (simulationDay >= 9125) {
+          simulationDay = 0;
+        } else {
+          simulationDay += 25; // 25 days per tick
+        }
+        updateHUD();
+      }, 100);
+    }
+  });
+
+  // Care Mode Toggles
+  document.getElementById('pillCared').addEventListener('click', () => {
+    careState = 'cared';
+    document.getElementById('pillCared').classList.add('active');
+    document.getElementById('pillDormant').classList.remove('active');
+    updateHUD();
+  });
+  document.getElementById('pillDormant').addEventListener('click', () => {
+    careState = 'dormant';
+    document.getElementById('pillDormant').classList.add('active');
+    document.getElementById('pillCared').classList.remove('active');
+    (window.showToast || console.log)('💤 Camp enters cozy overgrown slumber...');
+    updateHUD();
+  });
+
+  // Season Selectors
+  const seasonBtns = {
+    sAuto: 'auto',
+    sSpring: 'Spring',
+    sSummer: 'Summer',
+    sAutumn: 'Autumn',
+    sWinter: 'Winter'
+  };
+  Object.keys(seasonBtns).forEach(id => {
+    document.getElementById(id).addEventListener('click', (e) => {
+      seasonOverride = seasonBtns[id];
+      Object.keys(seasonBtns).forEach(k => document.getElementById(k).classList.remove('active'));
+      e.target.classList.add('active');
+      updateHUD();
+    });
+  });
+
+  // Companion Switcher & Evolution Controls
+  const compButtons = document.querySelectorAll('.comp-btn');
+  const petStageButtons = document.querySelectorAll('.pet-stage-btn');
+  const compPerkEl = document.getElementById('companionPerkInfo');
+
+  const compPerkTexts = {
+    'auto': '🐾 Bonded Companion: Independent ERC-721 Evolution',
+    'Camp Hound': '🐕 Camp Hound: +15% Sherwood Yew Drops • +10 DEF (Forest Tracker)',
+    'Hunting Falcon': '🦅 Hunting Falcon: +12% Nottingham Iron Drops • +5% Crit (Aerial Scout)',
+    'Barn Owl': '🦉 Barn Owl: +10% Bonus Gold Looted • +15 Stealth (Silent Shadow)',
+    'None': '🚫 Companion unbonded — resting safely in Hearth Den (0 food / 0 aging)'
+  };
+
+  compButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      compButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      companionOverride = btn.dataset.comp;
+      if (compPerkEl) compPerkEl.innerText = compPerkTexts[companionOverride] || compPerkTexts['auto'];
+      (window.showToast || console.log)(`🐾 Companion: ${btn.innerText}`);
+    });
+  });
+
+  petStageButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      petStageButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      companionStageOverride = btn.dataset.stage === 'auto' ? 'auto' : parseInt(btn.dataset.stage, 10);
+      (window.showToast || console.log)(`🐾 Companion Evolution: ${btn.innerText}`);
+    });
+  });
+
+  // Presets & Random Mint
+  document.querySelectorAll('.preset-chips .chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      document.querySelectorAll('.preset-chips .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const seed = parseInt(chip.getAttribute('data-seed'), 10);
+      if (!isNaN(seed)) setSeed(seed);
+    });
+  });
+
+  document.getElementById('btnRandomSeed').addEventListener('click', () => {
+    const randomSeed = Math.floor(Math.random() * 9999) + 1;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    setSeed(randomSeed);
+  });
+
+  // Time & Sound Toggles
+  document.getElementById('btnSound').addEventListener('click', (e) => {
+    soundEnabled = !soundEnabled;
+    e.target.innerText = soundEnabled ? '🔊' : '🔇';
+  });
+
+  document.getElementById('btnTimeMode').addEventListener('click', (e) => {
+    timeMode = (timeMode + 1) % 3;
+    e.target.innerText = timeMode === 0 ? '☀️' : (timeMode === 1 ? '🌅' : '🌙');
+  });
+
+  document.getElementById('utcBadge').addEventListener('click', () => {
+    (window.showToast || console.log)('⏰ Universal Clock: Resets for all players at 00:00 UTC!');
+  });
+
+  // --- Loot Grid & Web3 Handlers ---
+  const lootGrid = document.getElementById('lootGrid');
+  const lootSyncStatus = document.getElementById('lootSyncStatus');
+  const walletInput = document.getElementById('walletInput');
+  const heistFeedback = document.getElementById('heistFeedback');
+
+  function renderLootGrid() {
+    lootGrid.innerHTML = '';
+    const goldCount = walletLootBalances[1] || 0;
+    const goldDisplay = document.getElementById('goldBalanceDisplay');
+    if (goldDisplay) {
+      goldDisplay.innerText = `🪙 ${goldCount} Gold Held`;
+    }
+
+    // Update craft button enabled states
+    const btnFeast = document.getElementById('btnCraftFeast');
+    const btnMead = document.getElementById('btnCraftMead');
+    const btnElixir = document.getElementById('btnCraftElixir');
+    const btnCloak = document.getElementById('btnCraftCloak');
+    const btnHorn = document.getElementById('btnCraftHorn');
+    const btnBow = document.getElementById('btnCraftBow');
+    const btnArrow = document.getElementById('btnCraftArrow');
+    if (btnFeast) btnFeast.disabled = goldCount < 3;
+    if (btnMead) btnMead.disabled = goldCount < 5;
+    if (btnElixir) btnElixir.disabled = goldCount < 15;
+    if (btnCloak) btnCloak.disabled = goldCount < 25;
+    if (btnHorn) btnHorn.disabled = goldCount < 35;
+    if (btnBow) btnBow.disabled = goldCount < 50;
+    if (btnArrow) btnArrow.disabled = goldCount < 100;
+
+    LOOT_DEFS.forEach(item => {
+      const count = walletLootBalances[item.id] || 0;
+      // Strict inventory gating: cannot be equipped if not owned!
+      if (count <= 0) {
+        equippedLoot[item.id] = false;
+      }
+      const isEquipped = !!equippedLoot[item.id];
+      const isLocked = count <= 0;
+
+      let rarityClass = 'rarity-common';
+      if (item.id === 4) rarityClass = 'rarity-mythic';
+      else if (item.id === 3 || item.id === 6 || item.id === 8) rarityClass = 'rarity-rare';
+      else if (item.id === 2 || item.id === 5) rarityClass = 'rarity-uncommon';
+
+      const card = document.createElement('div');
+      card.className = `loot-card ${isEquipped ? 'equipped' : ''} ${isLocked ? 'locked' : ''}`;
+      card.title = isLocked ? `${item.name} (Locked: 0 in wallet. Heist or craft first!)` : `${item.desc} (Click to toggle equip in diorama)`;
+      card.innerHTML = `
+        <div class="loot-card-icon">${item.icon}</div>
+        <div class="loot-card-name">${item.name}</div>
+        <div class="loot-card-rarity ${rarityClass}">${item.rarity}</div>
+        <div class="loot-card-count">Held: <strong>${count}</strong></div>
+        <div class="loot-card-status">${isLocked ? '🔒 Unowned' : (isEquipped ? '✓ Equipped' : '○ Unequipped')}</div>
+      `;
+      card.addEventListener('click', () => {
+        if (isLocked) {
+          initAudio();
+          playSound('hit');
+          (window.showToast || console.log)(`🔒 ${item.name} is not in your wallet!`);
+          return;
+        }
+        equippedLoot[item.id] = !equippedLoot[item.id];
+        initAudio();
+        if (equippedLoot[item.id]) {
+          playSound('coin');
+          (window.showToast || console.log)(`⚔️ Equipped ${item.name} in diorama!`);
+        } else {
+          playSound('purr');
+          (window.showToast || console.log)(`🎒 Stored ${item.name} in inventory.`);
+        }
+        renderLootGrid();
+      });
+      lootGrid.appendChild(card);
+    });
+  }
+
+  async function fetchWalletLoot(address) {
+    if (!address || !address.startsWith('0x')) return;
+    lootSyncStatus.innerText = '🔄 Querying Robinhood Testnet...';
+    lootSyncStatus.style.color = '#ffd700';
+
+    try {
+      const cleanAddr = address.toLowerCase().replace('0x', '');
+      const selector = '4e1273f4';
+      const off1 = '0000000000000000000000000000000000000000000000000000000000000040';
+      const off2 = '0000000000000000000000000000000000000000000000000000000000000160';
+      const len =  '0000000000000000000000000000000000000000000000000000000000000008';
+      const addrWord = '000000000000000000000000' + cleanAddr;
+      const addrs = addrWord.repeat(8);
+      const ids = [1, 2, 3, 4, 5, 6, 7, 8].map(n => n.toString(16).padStart(64, '0')).join('');
+      const calldata = '0x' + selector + off1 + off2 + len + addrs + len + ids;
+
+      const res = await fetch(RH_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'eth_call',
+          params: [{ to: LOOT_CONTRACT, data: calldata }, 'latest']
+        })
+      });
+      const data = await res.json();
+      if (data && data.result && data.result.length >= 130) {
+        const hex = data.result.slice(2);
+        for (let i = 0; i < 8; i++) {
+          const word = hex.slice((2 + i) * 64, (3 + i) * 64);
+          const val = parseInt(word, 16) || 0;
+          walletLootBalances[i + 1] = val;
+          // Strict gating: unequip if 0, auto-equip if newly acquired
+          if (val <= 0) {
+            equippedLoot[i + 1] = false;
+          } else if (val > 0 && !equippedLoot[i + 1]) {
+            equippedLoot[i + 1] = true;
+          }
+        }
+        lootSyncStatus.innerText = '● Live from Testnet RPC (Synced)';
+        lootSyncStatus.style.color = '#4cd964';
+        renderLootGrid();
+        (window.showToast || console.log)('🎒 Wallet Loot Refreshed from Robinhood Testnet!');
+      } else {
+        lootSyncStatus.innerText = '● Testnet Synced (0 Loot Held)';
+        lootSyncStatus.style.color = '#8fa789';
+        renderLootGrid();
+      }
+    } catch(err) {
+      console.warn('Testnet RPC query error:', err);
+      lootSyncStatus.innerText = '● Offline / Local Sandbox Mode';
+      lootSyncStatus.style.color = '#ffd700';
+    }
+  }
+
+  // Connect Wallet Handler
+  document.getElementById('btnConnectWallet').addEventListener('click', async () => {
+    initAudio();
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts.length > 0) {
+          connectedUserAddress = accounts[0];
+          walletInput.value = connectedUserAddress;
+          playSound('coin');
+          (window.showToast || console.log)(`🦊 Connected: ${connectedUserAddress.slice(0, 6)}...${connectedUserAddress.slice(-4)}`);
+
+          // Attempt switch to Robinhood Testnet
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: RH_CHAIN_ID_HEX }]
+            });
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: RH_CHAIN_ID_HEX,
+                  chainName: 'Robinhood Chain Testnet',
+                  rpcUrls: [RH_RPC_URL],
+                  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                  blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
+                }]
+              });
+            }
+          }
+          await fetchWalletLoot(connectedUserAddress);
+          await fetchUserOwnedOutlaws(connectedUserAddress);
+        }
+      } catch(err) {
+        (window.showToast || console.log)('⚠️ Wallet connection cancelled or failed');
+      }
+    } else {
+      // Injected wallet not available; demonstrate with rehearsal testnet wallet
+      walletInput.value = '0xcc6eB67bdDb5Ec3e8D3EcB18ea7C8C5668790322';
+      playSound('coin');
+      (window.showToast || console.log)('ℹ️ No browser wallet detected. Loaded Testnet Rehearsal Account!');
+      fetchWalletLoot(walletInput.value);
+      fetchUserOwnedOutlaws(walletInput.value);
+    }
+  });
+
+  // Query which Outlaw NFT tokens an address owns
+  async function fetchUserOwnedOutlaws(address) {
+    if (!address || !address.startsWith('0x')) return;
+    const cleanAddr = address.toLowerCase();
+    const selector = '6352211e'; // ownerOf(uint256)
+    userOwnedOutlaws = [];
+
+    for (let id = 1; id <= 10; id++) {
+      try {
+        const calldata = '0x' + selector + id.toString(16).padStart(64, '0');
+        const res = await fetch(RH_RPC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: id,
+            method: 'eth_call',
+            params: [{ to: OUTLAWS_CONTRACT, data: calldata }, 'latest']
+          })
+        });
+        const data = await res.json();
+        if (data && data.result && data.result.length >= 66) {
+          const owner = '0x' + data.result.slice(26, 66).toLowerCase();
+          if (owner === cleanAddr) {
+            userOwnedOutlaws.push(id);
+          }
+        }
+      } catch(e) {}
+    }
+
+    updateOwnedOutlawsUI();
+  }
+
+  function updateOwnedOutlawsUI() {
+    const el = document.getElementById('ownedOutlawsList');
+    if (!el) return;
+    if (userOwnedOutlaws.length === 0) {
+      el.innerHTML = '<span style="color:#8fa789;">None held yet (Click "Mint Outlaw NFT" below!)</span>';
+    } else {
+      el.innerHTML = userOwnedOutlaws.map(id => {
+        const isSel = (currentSeed === id);
+        return `<span style="display:inline-block; margin-left:6px; padding:2px 8px; border-radius:4px; font-size:10px; cursor:pointer; background:${isSel ? '#2e5c26' : '#1b2d18'}; border:1px solid ${isSel ? '#ffd700' : '#3d5c31'}; color:${isSel ? '#ffd700' : '#e6edd9'};" onclick="window.selectOutlaw(${id})">#${id} ${isSel ? '👑 Active' : ''}</span>`;
+      }).join(' ');
+
+      // If current diorama seed isn't owned, switch to the first owned Outlaw!
+      // Keep selected seed active in simulator
+    }
+  }
+  window.selectOutlaw = (id) => {
+    setSeed(id);
+    updateOwnedOutlawsUI();
+    (window.showToast || console.log)(`👑 Selected Outlaw #${id} for questing!`);
+  };
+
+  // Refresh Loot Button
+  document.getElementById('btnRefreshLoot').addEventListener('click', () => {
+    initAudio();
+    playSound('purr');
+    const addr = walletInput.value.trim();
+    fetchWalletLoot(addr);
+    fetchUserOwnedOutlaws(addr);
+    fetchOutlawQuestStats(currentSeed);
+  });
+
+  // --- Real-Time On-Chain Quest & Ambush Tracker ---
+  async function fetchOutlawQuestStats(tokenId) {
+    if (!tokenId) return;
+    try {
+      // 1. Query on-chain outlaws(tokenId)
+      const calldata = '0xbc26484c' + tokenId.toString(16).padStart(64, '0');
+      const res = await fetch(RH_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: tokenId,
+          method: 'eth_call',
+          params: [{ to: OUTLAWS_CONTRACT, data: calldata }, 'latest']
+        })
+      });
+      const data = await res.json();
+      if (data && data.result && data.result.length >= 258) {
+        const hex = data.result.slice(2);
+        const lastHeistTimestamp = parseInt(hex.slice(128, 192), 16);
+        const totalHeists = parseInt(hex.slice(192, 256), 16);
+        
+        const statEl = document.getElementById('statTotalHeists');
+        if (statEl) statEl.innerText = totalHeists;
+        if (currentToken) currentToken.totalHeists = totalHeists;
+
+        // Cooldown calculation (60s cooldown)
+        const nowSec = Math.floor(Date.now() / 1000);
+        const elapsed = nowSec - lastHeistTimestamp;
+        const cooldownRemaining = Math.max(0, 60 - elapsed);
+        const badge = document.getElementById('questCooldownBadge');
+        if (badge) {
+          if (cooldownRemaining > 0 && lastHeistTimestamp > 0) {
+            badge.className = 'cooldown-pill active';
+            badge.innerText = `⏱️ Ambush Cooldown: ${cooldownRemaining}s`;
+          } else {
+            badge.className = 'cooldown-pill ready';
+            badge.innerText = `🟢 Carriage Spotted: Ready to Ambush`;
+          }
+        }
+      }
+
+      // 1b. Query Nottingham Defense Era (Dogecoin disinflationary era)
+      try {
+        const eraRes = await fetch(RH_RPC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 999,
+            method: 'eth_call',
+            params: [{ to: OUTLAWS_CONTRACT, data: '0x2b83028d' }, 'latest']
+          })
+        });
+        const eraData = await eraRes.json();
+        if (eraData && eraData.result && eraData.result.length >= 320) {
+          const hex = eraData.result.slice(2);
+          const eraNum = parseInt(hex.slice(0, 64), 16);
+          const strLen = parseInt(hex.slice(192, 256), 16);
+          const strHex = hex.slice(256, 256 + strLen * 2);
+          let eraStr = '';
+          for (let i = 0; i < strHex.length; i += 2) {
+            eraStr += String.fromCharCode(parseInt(strHex.substr(i, 2), 16));
+          }
+          const targetEl = document.getElementById('statAmbushTarget');
+          if (targetEl) targetEl.innerText = eraStr || `Era ${eraNum}`;
+        }
+      } catch(e) {}
+
+      // 2. Query recent HeistCompleted event logs for this tokenId
+      const tokenIdHex = tokenId.toString(16).padStart(64, '0');
+      const logsRes = await fetch(RH_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'eth_getLogs',
+          params: [{
+            address: OUTLAWS_CONTRACT,
+            topics: ['0x31de42c345b7b87df09977df6d013504abb3a064ffdd151cdaed22c31c571efa', '0x' + tokenIdHex],
+            fromBlock: '0x6fab000'
+          }]
+        })
+      });
+      const logsData = await logsRes.json();
+      if (logsData && logsData.result && logsData.result.length > 0) {
+        const logs = logsData.result;
+        const logBox = document.getElementById('questLogBox');
+        if (logBox) {
+          logBox.innerHTML = '';
+          // Render most recent heists in reverse chronological order
+          logs.slice(-5).reverse().forEach(l => {
+            const dHex = l.data.slice(2);
+            const itemId = parseInt(dHex.slice(0, 64), 16);
+            const amount = parseInt(dHex.slice(64, 128), 16);
+            const def = LOOT_DEFS.find(d => d.id === itemId) || { name: 'Treasure', icon: '🎁', rarity: 'Heist Loot' };
+            const blockNum = parseInt(l.blockNumber, 16);
+            const shortTx = l.transactionHash.slice(0, 8) + '...' + l.transactionHash.slice(-4);
+            
+            const itemEntry = document.createElement('div');
+            itemEntry.className = 'quest-log-entry success';
+            itemEntry.innerHTML = `
+              <span class="log-time">⚔️ Royal Ambush • Block #${blockNum}:</span>
+              <span>Outlaw #${tokenId} ambushed the royal convoy and seized <strong>+${amount} ${def.name} ${def.icon}</strong> (${def.rarity})! 
+              <a href="https://explorer.testnet.chain.robinhood.com/tx/${l.transactionHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">Tx ${shortTx} ↗</a></span>
+            `;
+            logBox.appendChild(itemEntry);
+          });
+        }
+        
+        // Update Latest Spoils card
+        const latest = logs[logs.length - 1];
+        const dHex = latest.data.slice(2);
+        const latestId = parseInt(dHex.slice(0, 64), 16);
+        const latestAmt = parseInt(dHex.slice(64, 128), 16);
+        const latestDef = LOOT_DEFS.find(d => d.id === latestId);
+        const spoilsEl = document.getElementById('statLatestSpoils');
+        if (spoilsEl && latestDef) {
+          spoilsEl.innerText = `${latestDef.icon} +${latestAmt} ${latestDef.name}`;
+        }
+      }
+    } catch(err) {
+      console.warn('Failed to fetch quest stats:', err);
+    }
+  }
+
+  // On-Chain Heist Button
+  document.getElementById('btnOnchainHeist').addEventListener('click', async () => {
+    initAudio();
+    let targetTokenId = currentSeed || 1;
+    const logBox = document.getElementById('questLogBox');
+
+    if (window.ethereum && connectedUserAddress) {
+      // 1. Fetch owned outlaws if not loaded yet
+      if (userOwnedOutlaws.length === 0) {
+        if (logBox) logBox.innerHTML = `<div class="quest-log-entry"><span class="log-time">⏳ Scouting:</span><span>Scanning wallet for owned Outlaw NFTs on Robinhood testnet...</span></div>`;
+        await fetchUserOwnedOutlaws(connectedUserAddress);
+      }
+
+      // 2. If user doesn't own any Outlaws on this contract
+      if (userOwnedOutlaws.length === 0) {
+        playSound('hit');
+        (window.showToast || console.log)(`⚠️ You don't own any Outlaws yet! Click 'Mint Outlaw NFT' first.`);
+        if (logBox) logBox.innerHTML = `<div class="quest-log-entry" style="border-left-color:#e74c3c;"><span class="log-time">⚠️ Ambush Cancelled:</span><span>Your wallet does not own any Outlaws on this contract yet. Click <strong>"🎲 Mint Outlaw NFT"</strong> to recruit your first archer!</span></div>`;
+        return;
+      }
+
+      // 3. Auto-target user's owned Outlaw!
+      if (!userOwnedOutlaws.includes(targetTokenId)) {
+        targetTokenId = userOwnedOutlaws[0];
+        setSeed(targetTokenId);
+        updateOwnedOutlawsUI();
+      }
+
+      const pendingEntry = document.createElement('div');
+      pendingEntry.className = 'quest-log-entry';
+      pendingEntry.innerHTML = `<span class="log-time">🏹 Ambush In Progress:</span><span>Outlaw #${targetTokenId} is ambushing the Sheriff's Royal Gold Carriage... Signing transaction in wallet...</span>`;
+      if (logBox) logBox.prepend(pendingEntry);
+
+      try {
+        const tokenIdHex = targetTokenId.toString(16).padStart(64, '0');
+        const calldata = '0xae59a304' + tokenIdHex;
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: OUTLAWS_CONTRACT,
+            data: calldata,
+            gas: '0x55730' // 350,000 gas limit for multi-mint heist & metadata update
+          }]
+        });
+
+        pendingEntry.innerHTML = `<span class="log-time">⏳ Carriage Surrounded (Tx Broadcast):</span><span>Ambush broadcast to Robinhood testnet! Waiting for block confirmation... <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700;">View Tx ↗</a></span>`;
+        (window.showToast || console.log)('👑 ROYAL HEIST BROADCAST! ⚔️ Awaiting spoils...');
+
+        // Poll for receipt and decode the looted item
+        let receipt = null;
+        for (let i = 0; i < 12; i++) {
+          await new Promise(r => setTimeout(r, 1500));
+          try {
+            receipt = await window.ethereum.request({
+              method: 'eth_getTransactionReceipt',
+              params: [txHash]
+            });
+            if (receipt && receipt.blockNumber) break;
+          } catch(e) {}
+        }
+
+        let lootAnnounce = 'Treasure Looted!';
+        if (receipt && receipt.logs) {
+          const heistLog = receipt.logs.find(l => 
+            l.topics && l.topics[0] && l.topics[0].toLowerCase() === '0x31de42c345b7b87df09977df6d013504abb3a064ffdd151cdaed22c31c571efa'
+          );
+          if (heistLog && heistLog.data) {
+            const hex = heistLog.data.slice(2);
+            const itemId = parseInt(hex.slice(0, 64), 16);
+            const amount = parseInt(hex.slice(64, 128), 16);
+            const def = LOOT_DEFS.find(d => d.id === itemId) || { name: 'Treasure', icon: '🎁', rarity: 'Heist Loot' };
+            lootAnnounce = `+${amount} ${def.name} ${def.icon} (${def.rarity})`;
+            (window.showToast || console.log)(`👑 HEIST VICTORY: Looted ${def.name}!`);
+          }
+        }
+
+        playSound('fanfare');
+        pendingEntry.className = 'quest-log-entry success';
+        pendingEntry.innerHTML = `<span class="log-time">👑 Ambush Victory!</span><span>Outlaw #${targetTokenId} overwhelmed the royal escort and captured <strong>${lootAnnounce}</strong>! <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">Tx Confirmed ↗</a></span>`;
+
+        await fetchWalletLoot(connectedUserAddress);
+        await fetchOutlawQuestStats(targetTokenId);
+      } catch(err) {
+        pendingEntry.className = 'quest-log-entry';
+        pendingEntry.style.borderLeftColor = '#e74c3c';
+        pendingEntry.innerHTML = `<span class="log-time">⚠️ Ambush Interrupted:</span><span>${err.message || err}</span>`;
+      }
+    } else {
+      // Sandbox rehearsal / demonstration simulation
+      const pendingEntry = document.createElement('div');
+      pendingEntry.className = 'quest-log-entry';
+      pendingEntry.innerHTML = `<span class="log-time">⚔️ Ambush Initiated:</span><span>Outlaw #${targetTokenId} is raiding the Sheriff's Royal Coach...</span>`;
+      if (logBox) logBox.prepend(pendingEntry);
+      playSound('shoot');
+
+      setTimeout(() => {
+        const roll = Math.random() * 100;
+        let wonId = 1, amount = 1;
+        if (roll < 5) { wonId = 4; amount = 1; }
+        else if (roll < 18) { wonId = 3; amount = 1; }
+        else if (roll < 35) { wonId = 2; amount = 1; }
+        else if (roll < 50) { wonId = 7; amount = 1; }
+        else { wonId = 1; amount = Math.floor(Math.random() * 4) + 1; }
+
+        walletLootBalances[wonId] = (walletLootBalances[wonId] || 0) + amount;
+        if (wonId !== 1) {
+          walletLootBalances[1] = (walletLootBalances[1] || 0) + 1; // Doge baseline subsidy
+        }
+        equippedLoot[wonId] = true;
+        renderLootGrid();
+        playSound('fanfare');
+
+        const wonDef = LOOT_DEFS.find(d => d.id === wonId);
+        pendingEntry.className = 'quest-log-entry success';
+        pendingEntry.innerHTML = `<span class="log-time">👑 Heist Victory:</span><span>Looted <strong>+${amount} ${wonDef.name} ${wonDef.icon}</strong> (${wonDef.rarity})! Automatically added to camp diorama.</span>`;
+        document.getElementById('statLatestSpoils').innerText = `${wonDef.icon} +${amount} ${wonDef.name}`;
+        (window.showToast || console.log)(`👑 Looted +${amount} ${wonDef.name}!`);
+      }, 700);
+    }
+  });
+
+  // On-Chain Mint Button
+  document.getElementById('btnOnchainMint').addEventListener('click', async () => {
+    initAudio();
+    if (window.ethereum && connectedUserAddress) {
+      heistFeedback.style.display = 'block';
+      heistFeedback.innerHTML = '⏳ Minting new Sherwood Outlaw NFT on Robinhood Testnet...';
+      try {
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: OUTLAWS_CONTRACT,
+            data: '0xb3201950', // mintOutlaw()
+            gas: '0x3d090'
+          }]
+        });
+        playSound('fanfare');
+        heistFeedback.innerHTML = `🎉 <strong>Mint Transaction Broadcast!</strong><br><a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">View Mint on Explorer ↗</a><br>⏳ Confirming block & syncing your new Outlaw...`;
+        (window.showToast || console.log)('🌲 Minting New Outlaw NFT on-chain!');
+
+        // Poll for receipt and refresh owned outlaws
+        setTimeout(async () => {
+          await fetchUserOwnedOutlaws(connectedUserAddress);
+          await fetchWalletLoot(connectedUserAddress);
+        }, 3500);
+      } catch(err) {
+        heistFeedback.innerHTML = `⚠️ Mint failed: ${err.message || err}`;
+      }
+    } else {
+      const nextSeed = Math.floor(Math.random() * 8999) + 1000;
+      setSeed(nextSeed);
+      playSound('fanfare');
+      (window.showToast || console.log)(`🌲 Minted Outlaw #${nextSeed} (Procedural Canvas Sandbox)!`);
+    }
+  });
+
+  // --- Sherwood Outfitter In-Game Crafting (Spends Gold Sovereigns) ---
+  async function craftLootItem(itemId, cost, itemName) {
+    initAudio();
+    const currentGold = walletLootBalances[1] || 0;
+    if (currentGold < cost) {
+      playSound('hit');
+      (window.showToast || console.log)(`⚠️ Need ${cost} Gold Sovereigns to craft ${itemName}! (Held: ${currentGold})`);
+      return;
+    }
+
+    heistFeedback.style.display = 'block';
+
+    if (window.ethereum && connectedUserAddress) {
+      heistFeedback.innerHTML = `⏳ Signing on-chain craft transaction for <strong>${itemName}</strong> (${cost} Gold Sovereigns)...`;
+      try {
+        const itemIdHex = itemId.toString(16).padStart(64, '0');
+        const calldata = '0x7309cbbd' + itemIdHex; // craftItem(uint256)
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: LOOT_CONTRACT,
+            data: calldata,
+            gas: '0x3d090' // 250,000 gas limit
+          }]
+        });
+        playSound('fanfare');
+        heistFeedback.innerHTML = `✨ <strong>Crafted ${itemName}!</strong><br>Tx Hash: <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">${txHash.slice(0, 16)}... ↗ View on Explorer</a>`;
+        (window.showToast || console.log)(`✨ Crafted ${itemName} on-chain!`);
+        setTimeout(() => fetchWalletLoot(connectedUserAddress), 3500);
+      } catch(err) {
+        heistFeedback.innerHTML = `⚠️ Crafting failed: ${err.message || err}`;
+      }
+    } else {
+      // Sandbox rehearsal / demonstration simulation
+      walletLootBalances[1] -= cost;
+      walletLootBalances[itemId] = (walletLootBalances[itemId] || 0) + 1;
+      equippedLoot[itemId] = true;
+      equippedLoot[1] = walletLootBalances[1] > 0;
+      playSound('fanfare');
+      heistFeedback.innerHTML = `✨ <strong>Crafted ${itemName}!</strong> Spent ${cost} Gold Sovereigns.<br><span style="color:#8fa789;">On live testnet, verified craft tx: <a href="https://explorer.testnet.chain.robinhood.com/tx/0xc2fcc65aa446e989b6d322840040b6acccf059ac1fe1480ef41b0d539b364243" target="_blank" style="color:#ffd700;">0xc2fcc... ↗</a></span>`;
+      (window.showToast || console.log)(`✨ Crafted ${itemName}!`);
+      renderLootGrid();
+    }
+  }
+
+  document.getElementById('btnCraftFeast')?.addEventListener('click', () => craftLootItem(7, 3, 'Forest Feast Basket'));
+  document.getElementById('btnCraftMead')?.addEventListener('click', () => craftLootItem(2, 5, 'Nottingham Mead Cask'));
+  document.getElementById('btnCraftElixir')?.addEventListener('click', () => craftLootItem(5, 15, 'Greenwood Alchemical Elixir'));
+  document.getElementById('btnCraftCloak')?.addEventListener('click', () => craftLootItem(6, 25, 'Locksley Velvet Cloak'));
+  document.getElementById('btnCraftHorn')?.addEventListener('click', () => craftLootItem(8, 35, 'Silver Rallying Horn'));
+  document.getElementById('btnCraftBow')?.addEventListener('click', () => craftLootItem(3, 50, 'Gilded Recurve Bow'));
+  document.getElementById('btnCraftArrow')?.addEventListener('click', () => craftLootItem(4, 100, 'The Golden Arrow of Nottingham'));
+
+  // --- EIP-4906 Refresh Metadata Handler ---
+  document.getElementById('btnRefreshIndexer')?.addEventListener('click', async () => {
+    initAudio();
+    playSound('coin');
+    const targetTokenId = currentSeed || (userOwnedOutlaws[0] || 2);
+    heistFeedback.style.display = 'block';
+
+    if (window.ethereum && connectedUserAddress) {
+      heistFeedback.innerHTML = `📡 Broadcasting on-chain EIP-4906 <code>MetadataUpdate(${targetTokenId})</code> to notify Blockscout & indexers...`;
+      try {
+        const tokenIdHex = targetTokenId.toString(16).padStart(64, '0');
+        const calldata = '0xd95ba42f' + tokenIdHex; // refreshMetadata(uint256)
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: OUTLAWS_CONTRACT,
+            data: calldata,
+            gas: '0x186a0'
+          }]
+        });
+        playSound('fanfare');
+        heistFeedback.innerHTML = `📡 <strong>EIP-4906 Signal Broadcast!</strong><br>Tx Hash: <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">${txHash.slice(0, 16)}... ↗ View on Explorer</a><br><span style="color:#8fa789;">Emitted <code>MetadataUpdate(${targetTokenId})</code>. Blockscout will invalidate its PostgreSQL cache!</span>`;
+        (window.showToast || console.log)(`📡 Sent EIP-4906 refresh signal!`);
+      } catch(err) {
+        heistFeedback.innerHTML = `⚠️ Refresh signal failed: ${err.message || err}`;
+      }
+    } else {
+      playSound('fanfare');
+      heistFeedback.innerHTML = `📡 <strong>Simulated EIP-4906 MetadataUpdate(${targetTokenId})</strong><br><span style="color:#8fa789;">Connect your wallet on Robinhood Testnet to emit live on-chain.</span>`;
+      (window.showToast || console.log)(`📡 Sent EIP-4906 signal for Outlaw #${targetTokenId}!`);
+    }
+  });
+
+  // --- On-Chain Contract SVG Inspector ---
+  const onchainSvgViewer = document.getElementById('onchainSvgViewer');
+  const onchainSvgFrame = document.getElementById('onchainSvgFrame');
+  const btnCloseSvgViewer = document.getElementById('btnCloseSvgViewer');
+
+  if (btnCloseSvgViewer) {
+    btnCloseSvgViewer.addEventListener('click', () => {
+      onchainSvgViewer.style.display = 'none';
+    });
+  }
+
+  document.getElementById('btnInspectOnchainSvg').addEventListener('click', async () => {
+    initAudio();
+    playSound('coin');
+    const targetTokenId = currentSeed || (userOwnedOutlaws[0] || 1);
+    onchainSvgViewer.style.display = 'flex';
+    onchainSvgFrame.innerHTML = `<div style="color:#ffd700; padding:20px; font-size:12px; text-align:center;">⏳ Querying smart contract generateSVG(${targetTokenId}) on Robinhood testnet RPC...</div>`;
+    
+    try {
+      const calldata = '0x6dcee4ca' + targetTokenId.toString(16).padStart(64, '0');
+      const res = await fetch(RH_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'eth_call',
+          params: [{ to: OUTLAWS_CONTRACT, data: calldata }, 'latest']
+        })
+      });
+      const data = await res.json();
+      if (data && data.result) {
+        let hex = data.result;
+        if (hex.startsWith('0x')) hex = hex.slice(2);
+        const len = parseInt(hex.slice(64, 128), 16);
+        const bytesHex = hex.slice(128, 128 + len * 2);
+        const byteArray = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          byteArray[i] = parseInt(bytesHex.substr(i * 2, 2), 16);
+        }
+        const svgContent = new TextDecoder().decode(byteArray);
+        onchainSvgFrame.innerHTML = svgContent;
+        const vTitle = document.getElementById('onchainViewerTitle');
+        if (vTitle) vTitle.innerText = `📜 Smart Contract Output: Outlaw #${targetTokenId} (\`generateSVG\`)`;
+        (window.showToast || console.log)(`📜 Fetched Outlaw #${targetTokenId} On-Chain Contract SVG!`);
+      } else {
+        onchainSvgFrame.innerHTML = '<div style="color:#ff6b6b; padding:10px; font-size:11px;">Error loading on-chain SVG</div>';
+      }
+    } catch(err) {
+      console.error('On-chain SVG fetch error:', err);
+      onchainSvgFrame.innerHTML = `<div style="color:#ff6b6b; padding:10px; font-size:11px;">Error: ${err.message}</div>`;
+    }
+  });
+
+  // Initial Boot
+  renderLootGrid();
+  fetchWalletLoot(walletInput.value);
+  fetchUserOwnedOutlaws(walletInput.value);
+  setSeed(1);
+  loop();
+})();
+</script>
+<!-- Nottingham Castle Vault Heist Modal -->
+  <div id="castleHeistModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#141217; border:2px solid #e11d48; border-radius:14px; max-width:520px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative; color:#e2e8f0; font-family:inherit;">
+      <button id="btnCloseCastleModal" style="position:absolute; top:12px; right:14px; background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
+      <h2 style="color:#f43f5e; font-size:18px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">🏰 The Great Nottingham Castle Vault Heist</h2>
+      <p style="color:#fda4af; font-size:12px; margin-bottom:12px;">Annual Flagship World Event • Days 318–325 • Liberate The Golden Arrow (Slots 0–19)</p>
+
+      <!-- Vault Community Progress Bar -->
+      <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:10px 12px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;">
+          <span style="color:#cbd5e1; font-weight:bold;">🛡️ Nottingham Vault Keep Breach Progress:</span>
+          <span id="vaultBreachPercent" style="color:#fbbf24; font-weight:bold; font-family:monospace;">64% Breached</span>
+        </div>
+        <div style="width:100%; height:10px; background:#1e293b; border-radius:5px; overflow:hidden;">
+          <div id="vaultBreachBar" style="width:64%; height:100%; background:linear-gradient(90deg, #e11d48, #fbbf24); transition:width 0.4s ease;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; margin-top:4px;">
+          <span>Breach Threshold: 10,000 Pts</span>
+          <span id="renownDisplay" style="color:#38bdf8;">Your Renown: 0 Pts</span>
+          <span id="maneuversDisplay" style="color:#4ade80;">Maneuvers: 5 / 5</span>
+        </div>
+      </div>
+
+      <!-- Outlaw Tactical Alignment -->
+      <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;" id="heistHeroAffinity">
+        ⚔️ <strong>Current Hero:</strong> <span id="heistHeroName" style="color:#fff;">Robin Hood</span> • Role: <span id="heistHeroRole" style="color:#a7f3d0;">Archer</span> (<span id="heistAffinityText" style="color:#fbbf24;">+20% Watchtowers</span>)
+      </div>
+
+      <!-- 5 Tactical Sectors -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px;">
+        <button class="heist-sector-btn" data-sector="sniping" style="background:#1e1b2e; border:1px solid #4338ca; color:#c7d2fe; border-radius:6px; padding:8px; font-size:11px; text-align:left; cursor:pointer;">
+          🏹 <strong>Watchtowers</strong><br><span style="font-size:9px; color:#94a3b8;">Sniping (Archers/Scouts)</span>
+        </button>
+        <button class="heist-sector-btn" data-sector="gatehouse" style="background:#26181b; border:1px solid #881337; color:#fecdd3; border-radius:6px; padding:8px; font-size:11px; text-align:left; cursor:pointer;">
+          🪵 <strong>Gate Portcullis</strong><br><span style="font-size:9px; color:#94a3b8;">Breach (Brawlers/Duelists)</span>
+        </button>
+        <button class="heist-sector-btn" data-sector="lockpick" style="background:#18231c; border:1px solid #166534; color:#bbf7d0; border-radius:6px; padding:8px; font-size:11px; text-align:left; cursor:pointer;">
+          🗡️ <strong>Vault Tumblers</strong><br><span style="font-size:9px; color:#94a3b8;">Lockpick (Infiltrators/Spies)</span>
+        </button>
+        <button class="heist-sector-btn" data-sector="diversion" style="background:#262115; border:1px solid #854d0e; color:#fef08a; border-radius:6px; padding:8px; font-size:11px; text-align:left; cursor:pointer;">
+          🍺 <strong>Tavern Riot</strong><br><span style="font-size:9px; color:#94a3b8;">Diversion (Monks/Minstrels)</span>
+        </button>
+      </div>
+      <button class="heist-sector-btn" data-sector="smokescreen" style="width:100%; background:#192622; border:1px solid #0d9488; color:#99f6e4; border-radius:6px; padding:7px; font-size:11px; text-align:center; cursor:pointer; margin-bottom:12px;">
+        🧪 <strong>Greenwood Smokescreen</strong> (Herbalists/Alchemists cover extraction)
+      </button>
+
+      <!-- Heist Activity Log -->
+      <div id="heistConsoleLog" style="background:#09090b; border:1px solid #27272a; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:10px; color:#a1a1aa; height:70px; overflow-y:auto; line-height:1.4;">
+        [Delayed L2 Entropy ArbSys 0x64]: Ready for infiltration assignment. Choose an assault sector above.
+      </div>
+    </div>
+  </div>
+
+<!-- Item Art Inspector Modal -->
+  <div id="itemArtModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#131c11; border:2px solid #ffd700; border-radius:14px; max-width:440px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative;">
+      <button id="btnCloseItemModal" style="position:absolute; top:12px; right:14px; background:none; border:none; color:#9cb894; font-size:20px; cursor:pointer;">✕</button>
+      <h2 id="itemModalTitle" style="color:#ffd700; font-size:18px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">🧪 Greenwood Elixir of Vigor</h2>
+      <p id="itemModalType" style="color:#88b04b; font-size:12px; margin-bottom:12px;">ERC-1155 Loot • Token ID #5 • Consumable Alchemical Draft</p>
+      
+      <div style="width:100%; aspect-ratio:1.2; background:#0a1009; border-radius:10px; border:1px solid #2d4522; margin-bottom:14px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        <canvas id="itemArtCanvas" width="360" height="300" style="width:100%; height:100%;"></canvas>
+      </div>
+
+      <div id="itemModalDesc" style="color:#d1e0ca; font-size:12px; line-height:1.5; background:rgba(0,0,0,0.4); padding:10px; border-radius:8px; border-left:3px solid #ffd700; margin-bottom:14px;">
+        Brewed by Mother Meg in the deepest hollow of the Greenwood using moonlit belladonna, wild elderberry juice, and ancient spring water. Restores vitality and protects against winter sloth.
+      </div>
+
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="pill-btn item-sel-btn active" data-item="elixir">🧪 Elixir</button>
+        <button class="pill-btn item-sel-btn" data-item="bow">🏹 Gilded Bow</button>
+        <button class="pill-btn item-sel-btn" data-item="arrow">✨ Gold Arrow</button>
+        <button class="pill-btn item-sel-btn" data-item="cask">🍺 Mead Cask</button>
+        <button class="pill-btn item-sel-btn" data-item="gold">💰 Sovereign</button>
+        <button class="pill-btn item-sel-btn" data-item="stiletto">🗡️ Stilettos</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+<script src="nft_gallery.js"></script>
+<script>
+  // Safe accessor for currentToken across script tags
+  function getActiveToken() {
+    return window.currentToken || (window.getCurrentToken ? window.getCurrentToken() : null);
+  }
+  // --- Backdrop Prop Toggle Logic ---
+  document.querySelectorAll('#backdropChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const prop = chip.getAttribute('data-prop');
+      backdropProps[prop] = !backdropProps[prop];
+      if (backdropProps[prop]) {
+        chip.classList.add('active');
+        (window.showToast || console.log)(`🌲 Enabled ${chip.innerText.trim()} in camp scene`);
+      } else {
+        chip.classList.remove('active');
+        (window.showToast || console.log)(`🌲 Hidden ${chip.innerText.trim()} from camp scene`);
+      }
+    });
+  });
+
+  // --- Item Art Inspector Canvas Rendering ---
+  function renderItemArt(itemKey) {
+    const cvs = document.getElementById('itemArtCanvas');
+    if (!cvs) return;
+    const ictx = cvs.getContext('2d');
+    const iw = cvs.width, ih = cvs.height;
+    ictx.clearRect(0, 0, iw, ih);
+
+    // Dark moody greenwood vignette
+    const bgGrad = ictx.createRadialGradient(iw/2, ih/2, 20, iw/2, ih/2, iw*0.6);
+    bgGrad.addColorStop(0, '#152412');
+    bgGrad.addColorStop(1, '#080d06');
+    ictx.fillStyle = bgGrad;
+    ictx.fillRect(0, 0, iw, ih);
+
+    ictx.save();
+    ictx.translate(iw/2, ih/2);
+
+    if (itemKey === 'elixir') {
+      document.getElementById('itemModalTitle').innerText = '🧪 Greenwood Elixir of Vigor';
+      document.getElementById('itemModalType').innerText = 'ERC-1155 Loot • Token ID #5 • Alchemical Consumable';
+      document.getElementById('itemModalDesc').innerText = 'Distilled by Mother Meg beneath ancient hollow oaks. Swirling emerald effervescence grants swift recovery and woodland vigor on Robinhood Chain.';
+      
+      // Radiant emerald glow
+      const aura = ictx.createRadialGradient(0, 0, 5, 0, 0, 80);
+      aura.addColorStop(0, 'rgba(16, 185, 129, 0.45)');
+      aura.addColorStop(1, 'rgba(16, 185, 129, 0)');
+      ictx.fillStyle = aura;
+      ictx.beginPath(); ictx.arc(0, 0, 80, 0, Math.PI*2); ictx.fill();
+
+      // Ornate Alchemical Glass Flask
+      ictx.fillStyle = 'rgba(230, 255, 245, 0.25)';
+      ictx.strokeStyle = '#6ee7b7';
+      ictx.lineWidth = 2.5;
+      ictx.beginPath();
+      ictx.moveTo(-12, -45); ictx.lineTo(12, -45); ictx.lineTo(10, -25);
+      ictx.quadraticCurveTo(45, 0, 36, 45);
+      ictx.quadraticCurveTo(0, 68, -36, 45);
+      ictx.quadraticCurveTo(-45, 0, -10, -25);
+      ictx.closePath();
+      ictx.fill();
+      ictx.stroke();
+
+      // Bubbling Emerald Liquid
+      ictx.fillStyle = '#10b981';
+      ictx.beginPath();
+      ictx.moveTo(-32, 38);
+      ictx.quadraticCurveTo(0, 62, 32, 38);
+      ictx.quadraticCurveTo(36, 15, 24, 0);
+      ictx.quadraticCurveTo(0, -6, -24, 0);
+      ictx.quadraticCurveTo(-36, 15, -32, 38);
+      ictx.closePath();
+      ictx.fill();
+
+      // Rising bubbles
+      ictx.fillStyle = '#a7f3d0';
+      ictx.beginPath();
+      ictx.arc(-10, 25, 4, 0, Math.PI*2);
+      ictx.arc(12, 18, 3.5, 0, Math.PI*2);
+      ictx.arc(0, 5, 2.5, 0, Math.PI*2);
+      ictx.fill();
+
+      // Golden Filigree Collar & Wax Seal
+      ictx.fillStyle = '#ffd700';
+      ictx.fillRect(-15, -28, 30, 6);
+      ictx.fillStyle = '#831843';
+      ictx.beginPath(); ictx.arc(0, -25, 7, 0, Math.PI*2); ictx.fill();
+      // Crystal Stopper
+      ictx.fillStyle = '#9333ea';
+      ictx.fillRect(-6, -58, 12, 14);
+
+    } else if (itemKey === 'bow') {
+      document.getElementById('itemModalTitle').innerText = '🏹 Gilded Recurve Longbow';
+      document.getElementById('itemModalType').innerText = 'ERC-1155 Loot • Token ID #3 • Masterwork Outlaw Weapon';
+      document.getElementById('itemModalDesc').innerText = 'Carved from 100-year cured English yew, adorned with 24k gold leaf leaf-inlays and wrapped in supple doe leather. Adds +10 Marksman precision.';
+
+      // Golden aura
+      const aura = ictx.createRadialGradient(0, 0, 5, 0, 0, 90);
+      aura.addColorStop(0, 'rgba(255, 215, 0, 0.35)');
+      aura.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      ictx.fillStyle = aura;
+      ictx.beginPath(); ictx.arc(0, 0, 90, 0, Math.PI*2); ictx.fill();
+
+      // Recurve Bow Curve
+      ictx.strokeStyle = '#ffd700';
+      ictx.lineWidth = 6;
+      ictx.beginPath();
+      ictx.arc(-20, 0, 85, -Math.PI*0.35, Math.PI*0.35);
+      ictx.stroke();
+
+      ictx.strokeStyle = '#78350f';
+      ictx.lineWidth = 4;
+      ictx.beginPath();
+      ictx.arc(-20, 0, 85, -Math.PI*0.35, Math.PI*0.35);
+      ictx.stroke();
+
+      // Bowstring
+      ictx.strokeStyle = '#ffffff';
+      ictx.lineWidth = 1.4;
+      ictx.beginPath();
+      ictx.moveTo(-20 + Math.cos(-Math.PI*0.35)*85, Math.sin(-Math.PI*0.35)*85);
+      ictx.lineTo(-20 + Math.cos(Math.PI*0.35)*85, Math.sin(Math.PI*0.35)*85);
+      ictx.stroke();
+
+      // Leather grip
+      ictx.fillStyle = '#27170e';
+      ictx.fillRect(52, -14, 12, 28);
+      ictx.fillStyle = '#ffd700';
+      ictx.fillRect(54, -14, 2, 28);
+      ictx.fillRect(60, -14, 2, 28);
+
+    } else if (itemKey === 'arrow') {
+      document.getElementById('itemModalTitle').innerText = '✨ Mythic Golden Arrow of Nottingham';
+      document.getElementById('itemModalType').innerText = 'ERC-1155 Loot • Token ID #4 • Legendary Tournament Prize';
+      document.getElementById('itemModalDesc').innerText = 'The eponymous Golden Arrow won by Robin Hood at the Sheriff’s tournament. Forged of solid aurum with enchanted fletching that never wavers.';
+
+      ictx.rotate(-Math.PI / 4);
+      // Shaft
+      ictx.fillStyle = '#ffd700';
+      ictx.fillRect(-90, -2.5, 180, 5);
+      // Gilded Broadhead
+      ictx.beginPath();
+      ictx.moveTo(90, 0); ictx.lineTo(70, -12); ictx.lineTo(75, 0); ictx.lineTo(70, 12);
+      ictx.closePath(); ictx.fill();
+      // Phoenix Fletching
+      ictx.fillStyle = '#ffffff';
+      ictx.fillRect(-85, -12, 28, 6);
+      ictx.fillRect(-85, 6, 28, 6);
+      ictx.fillStyle = '#f59e0b';
+      ictx.fillRect(-80, -10, 20, 2);
+      ictx.fillRect(-80, 8, 20, 2);
+
+    } else if (itemKey === 'cask') {
+      document.getElementById('itemModalTitle').innerText = '🍺 Nottingham Royal Mead Cask';
+      document.getElementById('itemModalType').innerText = 'ERC-1155 Loot • Token ID #2 • Sherwood Camp Amenity';
+      document.getElementById('itemModalDesc').innerText = 'Heisted directly from the Sheriff’s private cellar. Aged heather-honey mead keeps outlaws warm and merry during cold winter slumbers.';
+
+      // Barrel Body
+      ictx.fillStyle = '#78350f';
+      ictx.beginPath();
+      ictx.ellipse(0, 0, 55, 68, 0, 0, Math.PI*2);
+      ictx.fill();
+      // Iron hoops
+      ictx.strokeStyle = '#334155';
+      ictx.lineWidth = 7;
+      ictx.beginPath();
+      ictx.moveTo(-50, -32); ictx.lineTo(50, -32);
+      ictx.moveTo(-54, 0); ictx.lineTo(54, 0);
+      ictx.moveTo(-50, 32); ictx.lineTo(50, 32);
+      ictx.stroke();
+      // Brass Spigot Tap
+      ictx.fillStyle = '#ffd700';
+      ictx.fillRect(45, 5, 22, 10);
+      // Frothing tankard beside cask
+      ictx.fillStyle = '#5c381c';
+      ictx.fillRect(68, 12, 20, 24);
+      ictx.fillStyle = '#ffffff';
+      ictx.beginPath(); ictx.ellipse(78, 11, 12, 7, 0, 0, Math.PI*2); ictx.fill();
+
+    } else if (itemKey === 'gold') {
+      document.getElementById('itemModalTitle').innerText = '💰 Robinhood Gold Sovereign';
+      document.getElementById('itemModalType').innerText = 'ERC-1155 Loot • Token ID #1 • Greenwood Standard Currency';
+      document.getElementById('itemModalDesc').innerText = 'Stolen from royal tax carriages and distributed among Sherwood outlaws. Stamped with the Greenwood Oak Leaf and royal crown seal.';
+
+      // Gold coin
+      ictx.fillStyle = '#ffd700';
+      ictx.beginPath(); ictx.arc(0, 0, 65, 0, Math.PI*2); ictx.fill();
+      ictx.strokeStyle = '#b45309';
+      ictx.lineWidth = 4;
+      ictx.stroke();
+      // Inner rim
+      ictx.strokeStyle = '#fef08a';
+      ictx.lineWidth = 2;
+      ictx.beginPath(); ictx.arc(0, 0, 55, 0, Math.PI*2); ictx.stroke();
+      // Embossed Oak Leaf
+      ictx.fillStyle = '#b45309';
+      ictx.beginPath();
+      ictx.ellipse(0, 0, 22, 38, 0.2, 0, Math.PI*2);
+      ictx.fill();
+      ictx.fillStyle = '#ffd700';
+      ictx.beginPath();
+      ictx.ellipse(0, 0, 16, 32, 0.2, 0, Math.PI*2);
+      ictx.fill();
+
+    } else if (itemKey === 'stiletto') {
+      document.getElementById('itemModalTitle').innerText = '🗡️ Maid Marian’s Damascus Stilettos';
+      document.getElementById('itemModalType').innerText = 'Bespoke Weapon • Dual Folded Starlight Blades';
+      document.getElementById('itemModalDesc').innerText = 'Concealed by Lady Marian beneath her royal court sleeves. Balanced to perfection for lightning-fast throws and silent infiltration.';
+
+      // Left Stiletto
+      ictx.save();
+      ictx.translate(-24, 0);
+      ictx.rotate(0.2);
+      ictx.fillStyle = '#e2e8f0';
+      ictx.beginPath(); ictx.moveTo(0, -65); ictx.lineTo(10, 15); ictx.lineTo(-10, 15); ictx.closePath(); ictx.fill();
+      ictx.fillStyle = '#ffd700'; ictx.fillRect(-18, 15, 36, 6);
+      ictx.fillStyle = '#3e2717'; ictx.fillRect(-6, 21, 12, 24);
+      ictx.fillStyle = '#e74c3c'; ictx.beginPath(); ictx.arc(0, 48, 6, 0, Math.PI*2); ictx.fill();
+      ictx.restore();
+
+      // Right Stiletto
+      ictx.save();
+      ictx.translate(24, 0);
+      ictx.rotate(-0.2);
+      ictx.fillStyle = '#e2e8f0';
+      ictx.beginPath(); ictx.moveTo(0, -65); ictx.lineTo(10, 15); ictx.lineTo(-10, 15); ictx.closePath(); ictx.fill();
+      ictx.fillStyle = '#ffd700'; ictx.fillRect(-18, 15, 36, 6);
+      ictx.fillStyle = '#3e2717'; ictx.fillRect(-6, 21, 12, 24);
+      ictx.fillStyle = '#e74c3c'; ictx.beginPath(); ictx.arc(0, 48, 6, 0, Math.PI*2); ictx.fill();
+      ictx.restore();
+    }
+
+    ictx.restore();
+  }
+
+  // Modal open/close listeners
+  const btnInspect = document.getElementById('btnInspectItemArt');
+  const itemModal = document.getElementById('itemArtModal');
+  const btnCloseModal = document.getElementById('btnCloseItemModal');
+
+  if (btnInspect && itemModal) {
+    btnInspect.addEventListener('click', () => {
+      itemModal.style.display = 'flex';
+      renderItemArt('elixir');
+    });
+  }
+  if (btnCloseModal && itemModal) {
+    btnCloseModal.addEventListener('click', () => {
+      itemModal.style.display = 'none';
+    });
+  }
+  document.querySelectorAll('.item-sel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.item-sel-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderItemArt(btn.getAttribute('data-item'));
+    });
+  });
+
+  // Update Trait Info in HUD
+  function updateTraitHUD() {
+    const el = document.getElementById('charTraitInfo');
+    const token = getActiveToken();
+    if (!el || !token) return;
+    const skinName = token.skin ? token.skin.name : 'Fair';
+    const hairName = token.hair ? token.hair.name : 'Auburn';
+    const hatName = token.hatColor ? token.hatColor.name : 'Lincoln Green';
+    const varText = token.isBeggar ? ' • 🎭 Beggar Disguise (with Change Cup!)' : '';
+    el.innerText = `🎭 Traits: ${hatName} • ${hairName} Hair • ${skinName}${varText}`;
+  }
+
+  // Hook into updateHUD
+  const prevUpdateHUD = window.updateHUD || function() {};
+  window.updateHUD = function() {
+    prevUpdateHUD();
+    updateTraitHUD();
+  };
+  updateTraitHUD();
+
+  // --- The Great Nottingham Castle Vault Heist Logic ---
+  let vaultBreachPoints = 6400; // 64%
+  let personalRenown = 0;
+  let remainingManeuvers = 5;
+
+  const btnCastleHeist = document.getElementById('btnCastleHeist');
+  const castleModal = document.getElementById('castleHeistModal');
+  const btnCloseCastle = document.getElementById('btnCloseCastleModal');
+
+  if (btnCastleHeist && castleModal) {
+    btnCastleHeist.addEventListener('click', () => {
+      castleModal.style.display = 'flex';
+      updateHeistUI();
+    });
+  }
+
+  if (btnCloseCastle && castleModal) {
+    btnCloseCastle.addEventListener('click', () => {
+      castleModal.style.display = 'none';
+    });
+  }
+
+  function updateHeistUI() {
+    if (!currentToken) return;
+    const arch = (currentToken.archetype && currentToken.archetype.id) || 'archer';
+    const heroName = (currentToken.generatedName || 'Rory Swiftbow');
+    
+    document.getElementById('heistHeroName').innerText = heroName;
+    document.getElementById('heistHeroRole').innerText = currentToken.archetype.name;
+    document.getElementById('renownDisplay').innerText = `Your Renown: ${personalRenown} Pts`;
+    document.getElementById('maneuversDisplay').innerText = `Maneuvers: ${remainingManeuvers} / 5`;
+    
+    const pct = Math.min(100, Math.floor((vaultBreachPoints / 10000) * 100));
+    document.getElementById('vaultBreachPercent').innerText = `${pct}% Breached`;
+    document.getElementById('vaultBreachBar').style.width = `${pct}%`;
+
+    const affinities = {
+      archer: '+20% Watchtowers',
+      scout: '+20% Watchtowers & Scouting',
+      brawler: '+20% Gatehouse Portcullis Breach',
+      duelist: '+20% Gatehouse & Halberd Parries',
+      infiltrator: '+25% Vault Lockpick',
+      friar: '+25% Tavern Diversion',
+      minstrel: '+25% Crowd Distraction',
+      herbalist: '+25% Greenwood Smokescreen',
+      bounty: '+15% Gatehouse Ambush',
+      sheriff: '+15% Inside Knowledge'
+    };
+    document.getElementById('heistAffinityText').innerText = affinities[arch] || '+15% General';
+  }
+
+  document.querySelectorAll('.heist-sector-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (remainingManeuvers <= 0) {
+        (window.showToast || console.log)('⚔️ No infiltration maneuvers left this week! Rations replenish next cycle.');
+        return;
+      }
+      
+      const sector = btn.getAttribute('data-sector');
+      const token = getActiveToken();
+      const arch = (token && token.archetype && token.archetype.id) || 'archer';
+      const heroName = (token && token.generatedName) || 'Robin Hood';
+      
+      // Calculate success probability based on archetype matching
+      let bonus = 0;
+      if (sector === 'sniping' && (arch === 'archer' || arch === 'scout')) bonus = 25;
+      else if (sector === 'gatehouse' && (arch === 'brawler' || arch === 'duelist')) bonus = 25;
+      else if (sector === 'lockpick' && (arch === 'infiltrator')) bonus = 30;
+      else if (sector === 'diversion' && (arch === 'friar' || arch === 'minstrel')) bonus = 30;
+      else if (sector === 'smokescreen' && (arch === 'herbalist')) bonus = 30;
+      
+      const roll = Math.floor(Math.random() * 100) + 1;
+      const success = (roll + bonus) >= 45;
+      remainingManeuvers--;
+
+      const log = document.getElementById('heistConsoleLog');
+      const blockNum = 419200 + Math.floor(Math.random() * 800);
+      
+      if (success) {
+        const addedBreach = 120 + Math.floor(Math.random() * 60);
+        const addedRenown = 25 + Math.floor(Math.random() * 15);
+        vaultBreachPoints += addedBreach;
+        personalRenown += addedRenown;
+        
+        log.innerHTML = `<span style="color:#4ade80;">[L2 ArbSys 0x64 #${blockNum}]: SUCCESS! ${heroName} penetrated ${sector.toUpperCase()} (Roll: ${roll}+${bonus}). +${addedBreach} Vault Pts, +${addedRenown} Renown!</span><br>` + log.innerHTML;
+        if (window.initAudio) window.initAudio();
+        if (window.playSound) window.playSound('fanfare');
+        (window.showToast || console.log)(`🏰 Breach Success! +${addedBreach} Vault Pts, +${addedRenown} Renown!`);
+      } else {
+        log.innerHTML = `<span style="color:#f87171;">[L2 ArbSys 0x64 #${blockNum}]: Royal guards detected movement at ${sector}! Maneuver repelled. 0 pts gained.</span><br>` + log.innerHTML;
+        if (window.initAudio) window.initAudio();
+        if (window.playSound) window.playSound('miss');
+        (window.showToast || console.log)('🛡️ Sector defended by Royal Guards! Try an archetype-favored role.');
+      }
+      updateHeistUI();
+    });
+  });
+
+</script>
+  
+  
