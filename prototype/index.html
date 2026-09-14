@@ -5905,6 +5905,7 @@
         const qrDataUrl = await window.QRCode.toDataURL(uri, { width: 220, margin: 1 });
         const encodedUri = encodeURIComponent(uri);
         const dappUrl = (window.location.origin + window.location.pathname).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+        const fullHref = window.location.href;
 
         if (isMobile) {
           document.getElementById('wcQrBox').innerHTML = `
@@ -5912,11 +5913,14 @@
               <div style="font-size:12px; font-weight:bold; color:#38bdf8; text-align:center; margin-bottom:2px;">
                 ⚡ Tap your wallet to connect & sign:
               </div>
+              <a href="robinhood://wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#15803d; border:1px solid #22c55e; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
+                <span>🪙 Robinhood Wallet</span>
+              </a>
               <a href="https://metamask.app.link/wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#ea580c; border:1px solid #fb923c; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
                 <span>🦊 MetaMask Mobile</span>
               </a>
-              <a href="robinhood://wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#15803d; border:1px solid #22c55e; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
-                <span>🪙 Robinhood Wallet</span>
+              <a href="phantom://wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#582c8b; border:1px solid #ab9ff2; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
+                <span>👻 Phantom</span>
               </a>
               <a href="https://rnbwapp.com/wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#2563eb; border:1px solid #60a5fa; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
                 <span>🌈 Rainbow</span>
@@ -5927,9 +5931,15 @@
             </div>
 
             <div style="margin-top:10px; border-top:1px solid #1e3a1f; padding-top:10px;">
-              <a href="https://metamask.app.link/dapp/${dappUrl}" style="display:block; text-align:center; font-size:11px; color:#f97316; text-decoration:underline; font-weight:bold; margin-bottom:10px;">
-                🚀 Or Open HoodQuest in MetaMask In-App Browser
-              </a>
+              <div style="font-size:10.5px; color:#94a3b8; text-align:center; margin-bottom:6px; font-weight:bold;">🚀 Or Open in App Browser:</div>
+              <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                <a href="https://metamask.app.link/dapp/${dappUrl}" style="font-size:11px; color:#f97316; text-decoration:underline; font-weight:bold;">
+                  🦊 MetaMask Browser
+                </a>
+                <a href="https://phantom.app/ul/browse/${encodeURIComponent(fullHref)}?ref=${encodeURIComponent(fullHref)}" style="font-size:11px; color:#ab9ff2; text-decoration:underline; font-weight:bold;">
+                  👻 Phantom Browser
+                </a>
+              </div>
               <details style="text-align:left; background:#080e09; border:1px solid #1a2f1c; border-radius:8px; padding:6px 10px;">
                 <summary style="font-size:11px; color:#94a3b8; cursor:pointer; user-select:none; font-weight:bold;">
                   📷 Show QR Code (scan from another device)
@@ -5945,7 +5955,7 @@
           document.getElementById('wcQrBox').innerHTML = `
             <img src="${qrDataUrl}" style="border-radius:8px; display:block; margin:0 auto; width:220px; height:220px;" alt="WalletConnect QR Code" />
             <div style="font-size:11px; color:#94a3b8; margin-top:8px; text-align:center;">
-              📲 Point camera or scan in <strong>MetaMask Mobile</strong>, <strong>Rainbow</strong>, or <strong>Robinhood Wallet</strong>
+              📲 Point camera or scan in <strong>Robinhood Wallet</strong>, <strong>MetaMask</strong>, or <strong>Phantom</strong>
             </div>
           `;
           document.getElementById('wcStatusText').innerText = '📲 Scan with your mobile wallet app';
@@ -6143,9 +6153,10 @@
 
   function getWalletEmoji(name = '') {
     const n = (name || '').toLowerCase();
+    if (n.includes('phantom')) return '👻';
+    if (n.includes('robinhood')) return '🪙';
     if (n.includes('metamask')) return '🦊';
     if (n.includes('compass')) return '🧭';
-    if (n.includes('phantom')) return '👻';
     if (n.includes('coinbase')) return '🔵';
     if (n.includes('rabby')) return '🐰';
     if (n.includes('brave')) return '🦁';
@@ -6157,13 +6168,25 @@
   function getCanonicalWalletKey(info, provider) {
     const rdns = (info && info.rdns ? info.rdns : '').toLowerCase().trim();
     const name = (info && info.name ? info.name : '').toLowerCase().trim();
-    if (rdns.includes('metamask') || name.includes('metamask') || (provider && provider.isMetaMask && !provider.isCompass && !provider.isPhantom)) return 'metamask';
-    if (rdns.includes('compass') || name.includes('compass') || (provider && provider.isCompass)) return 'compass';
-    if (rdns.includes('phantom') || name.includes('phantom') || (provider && provider.isPhantom)) return 'phantom';
-    if (rdns.includes('coinbase') || name.includes('coinbase') || (provider && provider.isCoinbaseWallet)) return 'coinbase';
-    if (rdns.includes('rabby') || name.includes('rabby') || (provider && provider.isRabby)) return 'rabby';
-    if (rdns.includes('brave') || name.includes('brave') || (provider && provider.isBraveWallet)) return 'brave';
+
+    // 1. Phantom check first (Phantom sets isMetaMask: true for dApp compatibility)
+    if ((provider && provider.isPhantom) || rdns.includes('phantom') || name.includes('phantom')) return 'phantom';
+    // 2. Robinhood Wallet
+    if ((provider && provider.isRobinhood) || rdns.includes('robinhood') || name.includes('robinhood')) return 'robinhood';
+    // 3. Compass
+    if ((provider && provider.isCompass) || rdns.includes('compass') || name.includes('compass')) return 'compass';
+    // 4. Coinbase Wallet
+    if ((provider && provider.isCoinbaseWallet) || rdns.includes('coinbase') || name.includes('coinbase')) return 'coinbase';
+    // 5. Rabby
+    if ((provider && provider.isRabby) || rdns.includes('rabby') || name.includes('rabby')) return 'rabby';
+    // 6. Brave
+    if ((provider && provider.isBraveWallet) || rdns.includes('brave') || name.includes('brave')) return 'brave';
+    // 7. Rainbow
     if (rdns.includes('rainbow') || name.includes('rainbow')) return 'rainbow';
+
+    // 8. MetaMask (only if not another wallet that spoofed isMetaMask)
+    if ((provider && provider.isMetaMask) || rdns.includes('metamask') || name.includes('metamask')) return 'metamask';
+
     if (rdns) return rdns;
     if (name) return name;
     return 'injected';
@@ -6182,9 +6205,16 @@
       }
     }
     
-    const cleanName = (info.name && !info.name.includes('window.ethereum') && !info.name.includes('Injected Wallet'))
+    let defaultCleanName = 'Browser Wallet';
+    if (canonKey === 'phantom') defaultCleanName = 'Phantom';
+    else if (canonKey === 'robinhood') defaultCleanName = 'Robinhood Wallet';
+    else if (canonKey === 'metamask') defaultCleanName = 'MetaMask';
+    else if (canonKey === 'compass') defaultCleanName = 'Compass Wallet';
+    else if (canonKey === 'coinbase') defaultCleanName = 'Coinbase Wallet';
+
+    const cleanName = (info.name && !info.name.includes('window.ethereum') && !info.name.includes('Injected Wallet') && !(canonKey === 'phantom' && info.name.toLowerCase().includes('metamask')))
       ? info.name
-      : (canonKey === 'metamask' ? 'MetaMask' : (existingKey && discoveredWallets.get(existingKey).info.name) || 'Browser Wallet');
+      : defaultCleanName;
 
     if (existingKey) {
       const prev = discoveredWallets.get(existingKey);
@@ -6216,40 +6246,75 @@
     window.dispatchEvent(new Event('eip6963:requestProvider'));
   } catch (_) {}
 
-  // 2. Scan window.ethereum and window.ethereum.providers array
+  // 2. Scan window.ethereum, window.phantom, window.robinhood, and providers array
   function scanWindowEthereum() {
     try {
+      function checkAndRegister(p, fallbackKey, fallbackName, fallbackRdns) {
+        if (!p) return false;
+        if (p.isPhantom) {
+          registerDiscoveredWallet('phantom', { name: 'Phantom', rdns: 'app.phantom' }, p);
+          return true;
+        }
+        if (p.isRobinhood) {
+          registerDiscoveredWallet('robinhood', { name: 'Robinhood Wallet', rdns: 'com.robinhood.wallet' }, p);
+          return true;
+        }
+        if (p.isCompass) {
+          registerDiscoveredWallet('compass', { name: 'Compass Wallet', rdns: 'io.compass' }, p);
+          return true;
+        }
+        if (p.isCoinbaseWallet) {
+          registerDiscoveredWallet('coinbase', { name: 'Coinbase Wallet', rdns: 'com.coinbase.wallet' }, p);
+          return true;
+        }
+        if (p.isRabby) {
+          registerDiscoveredWallet('rabby', { name: 'Rabby', rdns: 'io.rabby' }, p);
+          return true;
+        }
+        if (p.isBraveWallet) {
+          registerDiscoveredWallet('brave', { name: 'Brave Wallet', rdns: 'com.brave.wallet' }, p);
+          return true;
+        }
+        if (p.isMetaMask) {
+          registerDiscoveredWallet('metamask', { name: 'MetaMask', rdns: 'io.metamask' }, p);
+          return true;
+        }
+        if (fallbackKey && fallbackName) {
+          registerDiscoveredWallet(fallbackKey, { name: fallbackName, rdns: fallbackRdns || fallbackKey }, p);
+          return true;
+        }
+        return false;
+      }
+
+      // Check window.phantom.ethereum
+      try {
+        if (typeof window !== 'undefined' && window.phantom && window.phantom.ethereum) {
+          checkAndRegister(window.phantom.ethereum, 'phantom', 'Phantom', 'app.phantom');
+        }
+      } catch(_) {}
+
+      // Check window.robinhood.ethereum
+      try {
+        if (typeof window !== 'undefined' && window.robinhood && window.robinhood.ethereum) {
+          checkAndRegister(window.robinhood.ethereum, 'robinhood', 'Robinhood Wallet', 'com.robinhood.wallet');
+        }
+      } catch(_) {}
+
+      // Check window.ethereum & providers array
       if (typeof window !== 'undefined' && window.ethereum) {
         if (Array.isArray(window.ethereum.providers)) {
           window.ethereum.providers.forEach((p, idx) => {
-            if (p.isCompass) {
-              registerDiscoveredWallet('compass', { name: 'Compass Wallet', rdns: 'io.compass' }, p);
-            } else if (p.isMetaMask && !p.isCompass && !p.isPhantom) {
-              registerDiscoveredWallet('metamask', { name: 'MetaMask', rdns: 'io.metamask' }, p);
-            } else if (p.isPhantom) {
-              registerDiscoveredWallet('phantom', { name: 'Phantom', rdns: 'app.phantom' }, p);
-            } else if (p.isCoinbaseWallet) {
-              registerDiscoveredWallet('coinbase', { name: 'Coinbase Wallet', rdns: 'com.coinbase.wallet' }, p);
-            } else if (p.isRabby) {
-              registerDiscoveredWallet('rabby', { name: 'Rabby', rdns: 'io.rabby' }, p);
-            } else {
-              registerDiscoveredWallet(`injected_${idx}`, { name: p.name || 'Extension Wallet', rdns: `injected.${idx}` }, p);
-            }
+            checkAndRegister(p, `injected_${idx}`, p.name || 'Extension Wallet', `injected.${idx}`);
           });
         } else {
-          const p = window.ethereum;
-          if (p.isCompass) {
-            registerDiscoveredWallet('compass', { name: 'Compass Wallet', rdns: 'io.compass' }, p);
-          } else if (p.isMetaMask) {
-            registerDiscoveredWallet('metamask', { name: 'MetaMask', rdns: 'io.metamask' }, p);
-          } else {
-            registerDiscoveredWallet('ethereum', { name: 'Injected Wallet', rdns: 'window.ethereum' }, p);
-          }
+          checkAndRegister(window.ethereum, 'ethereum', 'Injected Wallet', 'window.ethereum');
         }
       }
+
+      // Check parent iframe provider if sandboxed
       try {
         if (window.parent && window.parent !== window && window.parent.ethereum) {
-          registerDiscoveredWallet('parent_eth', { name: 'Parent Frame Wallet', rdns: 'parent.ethereum' }, window.parent.ethereum);
+          checkAndRegister(window.parent.ethereum, 'parent_eth', 'Parent Frame Wallet', 'parent.ethereum');
         }
       } catch(_) {}
     } catch (_) {}
@@ -6261,13 +6326,29 @@
   function getInjectedProvider() {
     if (activeInjectedProvider) return activeInjectedProvider;
     for (const [_, w] of discoveredWallets) {
+      if ((w.info.name || '').toLowerCase().includes('phantom')) return w.provider;
+    }
+    for (const [_, w] of discoveredWallets) {
+      if ((w.info.name || '').toLowerCase().includes('robinhood')) return w.provider;
+    }
+    for (const [_, w] of discoveredWallets) {
       if ((w.info.name || '').toLowerCase().includes('metamask')) return w.provider;
     }
     if (discoveredWallets.size > 0) {
       return [...discoveredWallets.values()][0].provider;
     }
+    if (typeof window !== 'undefined' && window.phantom && window.phantom.ethereum) {
+      return window.phantom.ethereum;
+    }
+    if (typeof window !== 'undefined' && window.robinhood && window.robinhood.ethereum) {
+      return window.robinhood.ethereum;
+    }
     if (typeof window !== 'undefined' && window.ethereum) {
       if (Array.isArray(window.ethereum.providers)) {
+        const ph = window.ethereum.providers.find(p => p.isPhantom);
+        if (ph) return ph;
+        const rh = window.ethereum.providers.find(p => p.isRobinhood);
+        if (rh) return rh;
         const mm = window.ethereum.providers.find(p => p.isMetaMask && !p.isCompass && !p.isPhantom);
         if (mm) return mm;
         return window.ethereum.providers[0];
@@ -6300,7 +6381,7 @@
             params: [{ chainId: RH_CHAIN_ID_HEX }]
           });
         } catch (switchError) {
-          if (switchError.code === 4902) {
+          if (switchError.code === 4902 || switchError.code === -32603) {
             try {
               await provider.request({
                 method: 'wallet_addEthereumChain',
@@ -6312,7 +6393,17 @@
                   blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
                 }]
               });
-            } catch (_) {}
+            } catch (addErr) {
+              const msg = ((addErr && addErr.message) || '').toLowerCase();
+              if (name.toLowerCase().includes('phantom') || msg.includes('testnet')) {
+                (window.showToast || console.log)('💡 Phantom: In Phantom Settings > Developer Settings, toggle ON "Testnet Mode" to connect to Robinhood Testnet!');
+              }
+            }
+          } else {
+            const msg = ((switchError && switchError.message) || '').toLowerCase();
+            if (name.toLowerCase().includes('phantom') || msg.includes('testnet')) {
+              (window.showToast || console.log)('💡 Phantom: In Phantom Settings > Developer Settings, toggle ON "Testnet Mode" to connect to Robinhood Testnet!');
+            }
           }
         }
 
@@ -6538,7 +6629,15 @@
         const name = w.info.name || 'Wallet';
         const emoji = getWalletEmoji(name);
         b.textContent = `${emoji} Connect ${name}`;
-        if (name.toLowerCase().includes('metamask')) {
+        if (name.toLowerCase().includes('phantom')) {
+          b.style.background = '#582c8b';
+          b.style.borderColor = '#ab9ff2';
+          b.style.color = '#fff';
+        } else if (name.toLowerCase().includes('robinhood')) {
+          b.style.background = '#15803d';
+          b.style.borderColor = '#22c55e';
+          b.style.color = '#fff';
+        } else if (name.toLowerCase().includes('metamask')) {
           b.style.background = '#ea580c';
           b.style.borderColor = '#fb923c';
           b.style.color = '#fff';
@@ -6558,16 +6657,17 @@
     } else {
       // No injected wallet detected
       if (isMobile) {
-        // Mobile browser without injected provider: offer 1-tap open in MetaMask Mobile app
+        // Mobile browser without injected provider:
+        // Offer direct 1-tap browser launchers for MetaMask and Phantom
         const mmBtn = document.createElement('button');
         mmBtn.className = 'btn';
         mmBtn.id = 'btnOpenMetaMaskApp';
-        mmBtn.textContent = '🦊 Open in MetaMask App';
+        mmBtn.textContent = '🦊 MetaMask';
         mmBtn.style.background = '#ea580c';
         mmBtn.style.borderColor = '#fb923c';
         mmBtn.style.color = '#fff';
         mmBtn.style.fontWeight = 'bold';
-        mmBtn.title = 'Launch MetaMask Mobile directly into HoodQuest';
+        mmBtn.title = 'Launch MetaMask Mobile in-app browser';
         mmBtn.addEventListener('click', () => {
           initAudio();
           playSound('coin');
@@ -6575,6 +6675,23 @@
           window.location.href = `https://metamask.app.link/dapp/${dappUrl}`;
         });
         cluster.appendChild(mmBtn);
+
+        const phBtn = document.createElement('button');
+        phBtn.className = 'btn';
+        phBtn.id = 'btnOpenPhantomApp';
+        phBtn.textContent = '👻 Phantom';
+        phBtn.style.background = '#582c8b';
+        phBtn.style.borderColor = '#ab9ff2';
+        phBtn.style.color = '#fff';
+        phBtn.style.fontWeight = 'bold';
+        phBtn.title = 'Launch Phantom Mobile in-app browser';
+        phBtn.addEventListener('click', () => {
+          initAudio();
+          playSound('coin');
+          const fullHref = window.location.href;
+          window.location.href = `https://phantom.app/ul/browse/${encodeURIComponent(fullHref)}?ref=${encodeURIComponent(fullHref)}`;
+        });
+        cluster.appendChild(phBtn);
       } else {
         const b = document.createElement('button');
         b.className = 'btn';
