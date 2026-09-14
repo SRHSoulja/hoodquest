@@ -150,6 +150,34 @@ HoodQuest intentionally avoids runaway RPG level inflation (e.g. Level 1 to Leve
 └───────────────────────────────────────────────┴───────────────────────────────────────────────┘
 ```
 
+### 7.2 Awake vs. Sleeping Progression: The Permanent Rank Floor Architecture
+
+To keep the game challenging yet compassionate, progression distinguishes between **Active Wakefulness** and **Slumber**:
+
+```text
+       [ RANK 1 FLOOR ] ──────▶ [ RANK 2 FLOOR ] ──────▶ [ RANK 3 FLOOR ]
+             ▲                        ▲                        ▲
+             │                        │                        │
+       (Permanent Save)         (Permanent Save)         (Permanent Save)
+             │                        │                        │
+             └── In-progress climb    └── In-progress climb    └── In-progress climb
+                 falls back only          falls back only          falls back only
+                 to Rank 1 floor          to Rank 2 floor          to Rank 3 floor
+```
+
+1. **While AWAKE (Active Adventuring & Care):**
+   * The hero and companion accumulate active biological wakefulness and XP toward the next rank milestone.
+   * Day-by-day progress climbs smoothly between floors.
+2. **While SLEEPING (Slumber / Absence):**
+   * If a hero enters deep slumber mid-climb (e.g. 60% of the way between Rank 2 and Rank 3), sleeping can reset or pause the uncommitted in-between progress back to the **current rank floor (Rank 2)**.
+   * **The Invariant Guarantee:** Sleeping **NEVER drops a character or companion below their achieved rank floor**. 
+   * Once you reach Rank 2, you are Rank 2 forever. Once you cross 90 Days Awake (+4% Gold), you can sleep for a decade and you will *never* drop back to 30 Days or 0 Days.
+3. **The Psychology:**
+   * It creates an exciting incentive to push for the next milestone before taking a long break.
+   * It completely eliminates "punishment depression"—players never log in after a hiatus to find their account ruined or their ranks stripped away. You always wake up safe on solid ground at your highest earned floor.
+
+
+
 ---
 
 ## 8. Secondary Market Gating: Native Bazaar vs. OpenSea
