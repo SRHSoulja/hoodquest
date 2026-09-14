@@ -176,6 +176,18 @@ To keep the game challenging yet compassionate, progression distinguishes betwee
    * It creates an exciting incentive to push for the next milestone before taking a long break.
    * It completely eliminates "punishment depression"—players never log in after a hiatus to find their account ruined or their ranks stripped away. You always wake up safe on solid ground at your highest earned floor.
 
+### 7.3 Conditioning & Devotion Streak: "The Rest & Rust" Graceful Decay Model
+* **The Distinction:**
+  - **Lifetime Biological Age:** Permanent on-chain record of total wakeful lifetime. **Never decays under any circumstance.**
+  - **Active Devotion Conditioning:** Represents peak physical readiness and combat sharpness (+2% to +10% Gold Bonus).
+* **The Rest & Rust Rule:**
+  - While actively awake and maintained, conditioning days accumulate $+1$ per day toward Devotion Milestones (30, 90, 180, 360 days).
+  - When the hero enters Slumber (inactivity without food/care), conditioning gracefully decays by $-1$ day for each day asleep ("gathering rust").
+  - **Example:** An Outlaw who earned 90 days of conditioning and slumbers for 10 days wakes up with **80 days of conditioning**. Within 10 days of resuming active play, they are back to 90 days!
+  - **Anti-Exploit Security:** Prevents a player from reaching 90 days once, going inactive for 2 years, and expecting to wake up with permanent, max-tier combat conditioning without shaking off the rust.
+  - **Player Dignity:** A short vacation or busy work week only costs a few days of rust, easily brushed off upon returning to camp.
+
+
 
 
 ---
