@@ -5877,85 +5877,132 @@ tslib/tslib.es6.js:
     startWalletConnect();
   });
 
-  // Injected Provider Discovery (EIP-6963 + window.ethereum.providers multi-wallet filter)
-  let metamaskProvider = null;
-  const detectedEip6963 = {};
+  // ---- Wallet Discovery & Dynamic Multi-Wallet Selector (EIP-6963 + window.ethereum) ----
+  // Matches rh-airdrop pattern: senses all announced browser extensions (MetaMask, Compass, Phantom, etc.),
+  // displays dedicated buttons for each wallet plus Phone Wallet · WalletConnect, and lets the user choose explicitly.
+  const discoveredWallets = new Map();
+  let activeInjectedProvider = null;
+  let activeWalletName = '';
 
+  function getWalletEmoji(name = '') {
+    const n = (name || '').toLowerCase();
+    if (n.includes('metamask')) return '🦊';
+    if (n.includes('compass')) return '🧭';
+    if (n.includes('phantom')) return '👻';
+    if (n.includes('coinbase')) return '🔵';
+    if (n.includes('rabby')) return '🐰';
+    if (n.includes('brave')) return '🦁';
+    if (n.includes('rainbow')) return '🌈';
+    return '👛';
+  }
+
+  function registerDiscoveredWallet(key, info, provider) {
+    if (!info || !provider) return;
+    const name = info.name || 'Browser Wallet';
+    discoveredWallets.set(key, { info: { ...info, name }, provider });
+    renderWalletChoice();
+  }
+
+  // 1. EIP-6963 Standard Discovery Event Listener
   window.addEventListener('eip6963:announceProvider', (event) => {
-    if (event && event.detail && event.detail.info && event.detail.provider) {
-      const rdns = (event.detail.info.rdns || '').toLowerCase();
-      detectedEip6963[rdns] = event.detail.provider;
-      if (rdns === 'io.metamask') {
-        metamaskProvider = event.detail.provider;
+    try {
+      const d = event && event.detail;
+      if (d && d.info && d.provider) {
+        const key = d.info.uuid || d.info.rdns || d.info.name;
+        registerDiscoveredWallet(key, d.info, d.provider);
       }
-    }
+    } catch (_) {}
   });
   try {
     window.dispatchEvent(new Event('eip6963:requestProvider'));
-  } catch(_) {}
+  } catch (_) {}
+
+  // 2. Scan window.ethereum and window.ethereum.providers array
+  function scanWindowEthereum() {
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        if (Array.isArray(window.ethereum.providers)) {
+          window.ethereum.providers.forEach((p, idx) => {
+            if (p.isCompass) {
+              registerDiscoveredWallet('compass', { name: 'Compass Wallet', rdns: 'io.compass' }, p);
+            } else if (p.isMetaMask && !p.isCompass && !p.isPhantom) {
+              registerDiscoveredWallet('metamask', { name: 'MetaMask', rdns: 'io.metamask' }, p);
+            } else if (p.isPhantom) {
+              registerDiscoveredWallet('phantom', { name: 'Phantom', rdns: 'app.phantom' }, p);
+            } else if (p.isCoinbaseWallet) {
+              registerDiscoveredWallet('coinbase', { name: 'Coinbase Wallet', rdns: 'com.coinbase.wallet' }, p);
+            } else if (p.isRabby) {
+              registerDiscoveredWallet('rabby', { name: 'Rabby', rdns: 'io.rabby' }, p);
+            } else {
+              registerDiscoveredWallet(`injected_${idx}`, { name: p.name || 'Extension Wallet', rdns: `injected.${idx}` }, p);
+            }
+          });
+        } else {
+          const p = window.ethereum;
+          if (p.isCompass) {
+            registerDiscoveredWallet('compass', { name: 'Compass Wallet', rdns: 'io.compass' }, p);
+          } else if (p.isMetaMask) {
+            registerDiscoveredWallet('metamask', { name: 'MetaMask', rdns: 'io.metamask' }, p);
+          } else {
+            registerDiscoveredWallet('ethereum', { name: 'Injected Wallet', rdns: 'window.ethereum' }, p);
+          }
+        }
+      }
+      try {
+        if (window.parent && window.parent !== window && window.parent.ethereum) {
+          registerDiscoveredWallet('parent_eth', { name: 'Parent Frame Wallet', rdns: 'parent.ethereum' }, window.parent.ethereum);
+        }
+      } catch(_) {}
+    } catch (_) {}
+  }
+  scanWindowEthereum();
+  setTimeout(scanWindowEthereum, 300);
+  setTimeout(scanWindowEthereum, 1000);
 
   function getInjectedProvider() {
-    // 1. Prioritize explicit EIP-6963 MetaMask provider
-    if (metamaskProvider) return metamaskProvider;
-    if (detectedEip6963['io.metamask']) return detectedEip6963['io.metamask'];
-
-    // 2. Check window.ethereum.providers array (handles multiple wallets like MetaMask + Compass)
+    if (activeInjectedProvider) return activeInjectedProvider;
+    for (const [_, w] of discoveredWallets) {
+      if ((w.info.name || '').toLowerCase().includes('metamask')) return w.provider;
+    }
+    if (discoveredWallets.size > 0) {
+      return [...discoveredWallets.values()][0].provider;
+    }
     if (typeof window !== 'undefined' && window.ethereum) {
       if (Array.isArray(window.ethereum.providers)) {
-        // Prioritize actual MetaMask and exclude Compass/Phantom overwrites
         const mm = window.ethereum.providers.find(p => p.isMetaMask && !p.isCompass && !p.isPhantom);
         if (mm) return mm;
-        const anyMm = window.ethereum.providers.find(p => p.isMetaMask);
-        if (anyMm) return anyMm;
+        return window.ethereum.providers[0];
       }
-
-      // 3. Check single window.ethereum: if it's MetaMask and not Compass
-      if (window.ethereum.isMetaMask && !window.ethereum.isCompass) {
-        return window.ethereum;
-      }
-
-      // 4. Fallback to window.ethereum if only one extension is present
       return window.ethereum;
     }
-
-    try {
-      if (window.parent && window.parent !== window && window.parent.ethereum) return window.parent.ethereum;
-    } catch(e) {}
-    try {
-      if (window.top && window.top !== window && window.top.ethereum) return window.top.ethereum;
-    } catch(e) {}
     return null;
   }
 
-  // Connect Laptop MetaMask / Injected Extension Handler
-  document.getElementById('btnConnectWallet')?.addEventListener('click', async () => {
+  async function connectWithInjected(provider, name) {
     initAudio();
-    const provider = getInjectedProvider();
-    if (provider) {
-      try {
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
-        if (accounts && accounts.length > 0) {
-          const userAddr = accounts[0];
-          await window.setConnectedWallet(userAddr);
-          playSound('coin');
-          (window.showToast || console.log)(`🦊 MetaMask Connected: ${userAddr.slice(0, 6)}...${userAddr.slice(-4)}`);
+    if (!provider) {
+      (window.showToast || console.log)('⚠️ Wallet provider not available');
+      return;
+    }
+    try {
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      if (accounts && accounts.length > 0) {
+        const userAddr = accounts[0];
+        activeInjectedProvider = provider;
+        activeWalletName = name || 'Injected Wallet';
+        playSound('coin');
+        (window.showToast || console.log)(`✅ Connected ${activeWalletName}: ${userAddr.slice(0, 6)}...${userAddr.slice(-4)}`);
+        await window.setConnectedWallet(userAddr);
 
-          const metaBtn = document.getElementById('btnConnectWallet');
-          if (metaBtn) {
-            metaBtn.innerText = `🦊 ${userAddr.slice(0, 6)}...${userAddr.slice(-4)}`;
-            metaBtn.style.background = '#ea580c';
-            metaBtn.style.borderColor = '#fb923c';
-            metaBtn.style.color = '#fff';
-          }
-
-          // Attempt switch to Robinhood Testnet
-          try {
-            await provider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: RH_CHAIN_ID_HEX }]
-            });
-          } catch (switchError) {
-            if (switchError.code === 4902) {
+        // Switch or prompt to add Robinhood Chain Testnet
+        try {
+          await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: RH_CHAIN_ID_HEX }]
+          });
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            try {
               await provider.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
@@ -5966,25 +6013,190 @@ tslib/tslib.es6.js:
                   blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
                 }]
               });
-            }
+            } catch (_) {}
           }
         }
-      } catch(err) {
-        playSound('hit');
-        (window.showToast || console.log)('⚠️ MetaMask connection cancelled: ' + (err.message || err));
+
+        // Keep session responsive to account or chain changes in this wallet
+        if (provider.on) {
+          provider.on('accountsChanged', async (accts) => {
+            if (accts && accts.length > 0) {
+              await window.setConnectedWallet(accts[0]);
+              renderWalletChoice();
+            } else {
+              disconnectWallet();
+            }
+          });
+          provider.on('chainChanged', () => {
+            if (connectedUserAddress) {
+              fetchUserOwnedOutlaws(connectedUserAddress);
+              fetchWalletLoot(connectedUserAddress);
+            }
+          });
+        }
+        renderWalletChoice();
       }
-    } else {
-      // Injected wallet not detected in this window/frame (e.g. Blockscout sandboxed iframe)
-      playSound('coin');
-      const inIframe = (window.self !== window.top);
-      if (inIframe) {
-        (window.showToast || console.log)('📱 Explorer sandbox isolates browser extensions. Opening WalletConnect for mobile/desktop wallet pairing...');
-      } else {
-        (window.showToast || console.log)('📱 Browser extension not detected. Opening WalletConnect...');
-      }
-      startWalletConnect();
+    } catch (err) {
+      playSound('hit');
+      (window.showToast || console.log)('⚠️ Wallet connection cancelled: ' + (err.message || err));
     }
-  });
+  }
+
+  function disconnectWallet() {
+    activeInjectedProvider = null;
+    activeWalletName = '';
+    connectedUserAddress = '';
+    if (walletInput) walletInput.value = '';
+    if (wcClient && wcSession) {
+      try { wcClient.disconnect({ topic: wcSession.topic, reason: { code: 6000, message: 'User disconnected' } }); } catch(_) {}
+      wcClient = null;
+      wcSession = null;
+    }
+    updateRosterUI();
+    updateOwnedOutlawsUI();
+    renderWalletChoice();
+    (window.showToast || console.log)('🔌 Disconnected. Choose a wallet to connect.');
+  }
+  window.disconnectWallet = disconnectWallet;
+
+  // Dynamic Multi-Wallet Selector UI renderer
+  function renderWalletChoice() {
+    const bar = document.querySelector('.wallet-bar');
+    if (!bar) return;
+
+    let cluster = document.getElementById('walletButtonsCluster');
+    if (!cluster) {
+      cluster = document.createElement('span');
+      cluster.id = 'walletButtonsCluster';
+      cluster.style.display = 'inline-flex';
+      cluster.style.gap = '6px';
+      cluster.style.flexWrap = 'wrap';
+      cluster.style.alignItems = 'center';
+
+      const oldMm = document.getElementById('btnConnectWallet');
+      const oldWc = document.getElementById('btnWalletConnect');
+      const refreshBtn = document.getElementById('btnRefreshLoot');
+
+      if (oldMm) oldMm.remove();
+      if (oldWc) oldWc.remove();
+
+      if (refreshBtn) {
+        bar.insertBefore(cluster, refreshBtn);
+      } else {
+        bar.appendChild(cluster);
+      }
+    }
+
+    cluster.innerHTML = '';
+
+    if (connectedUserAddress) {
+      const shortAddr = connectedUserAddress.slice(0, 6) + '...' + connectedUserAddress.slice(-4);
+      const emoji = activeWalletName ? getWalletEmoji(activeWalletName) : (wcSession ? '📱' : '👛');
+      const label = activeWalletName || (wcSession ? 'Phone Wallet' : 'Connected');
+
+      const pill = document.createElement('span');
+      pill.className = 'btn';
+      pill.style.background = '#15803d';
+      pill.style.borderColor = '#22c55e';
+      pill.style.color = '#fff';
+      pill.style.cursor = 'default';
+      pill.style.fontWeight = 'bold';
+      pill.textContent = `${emoji} ${shortAddr} (${label})`;
+      cluster.appendChild(pill);
+
+      const disBtn = document.createElement('button');
+      disBtn.className = 'btn';
+      disBtn.style.background = '#334155';
+      disBtn.style.borderColor = '#64748b';
+      disBtn.style.color = '#cbd5e1';
+      disBtn.title = 'Disconnect or switch wallet';
+      disBtn.textContent = 'Change wallet';
+      disBtn.addEventListener('click', disconnectWallet);
+      cluster.appendChild(disBtn);
+      return;
+    }
+
+    // Not connected: render detected injected wallets + Phone Wallet · WalletConnect
+    if (discoveredWallets.size > 1) {
+      for (const [key, w] of discoveredWallets) {
+        const b = document.createElement('button');
+        b.className = 'btn';
+        const name = w.info.name || 'Wallet';
+        const emoji = getWalletEmoji(name);
+        b.textContent = `${emoji} ${name}`;
+        if (name.toLowerCase().includes('metamask')) {
+          b.style.background = '#ea580c';
+          b.style.borderColor = '#fb923c';
+          b.style.color = '#fff';
+        } else if (name.toLowerCase().includes('compass')) {
+          b.style.background = '#0284c7';
+          b.style.borderColor = '#38bdf8';
+          b.style.color = '#fff';
+        } else {
+          b.style.background = '#223e27';
+          b.style.borderColor = '#4a7c59';
+          b.style.color = '#bbf766';
+        }
+        b.style.fontWeight = 'bold';
+        b.addEventListener('click', () => connectWithInjected(w.provider, name));
+        cluster.appendChild(b);
+      }
+    } else if (discoveredWallets.size === 1) {
+      const [key, w] = [...discoveredWallets.entries()][0];
+      const name = w.info.name || 'Wallet';
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.id = 'btnConnectWallet';
+      b.textContent = `${getWalletEmoji(name)} Connect ${name}`;
+      if (name.toLowerCase().includes('metamask')) {
+        b.style.background = '#ea580c';
+        b.style.borderColor = '#fb923c';
+        b.style.color = '#fff';
+      } else {
+        b.style.background = '#0284c7';
+        b.style.borderColor = '#38bdf8';
+        b.style.color = '#fff';
+      }
+      b.style.fontWeight = 'bold';
+      b.addEventListener('click', () => connectWithInjected(w.provider, name));
+      cluster.appendChild(b);
+    } else {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.id = 'btnConnectWallet';
+      b.textContent = '🦊 Connect Laptop Wallet';
+      b.addEventListener('click', () => {
+        const p = getInjectedProvider();
+        if (p) {
+          connectWithInjected(p, 'Injected Wallet');
+        } else {
+          const inIframe = (window.self !== window.top);
+          if (inIframe) {
+            (window.showToast || console.log)('📱 Sandboxed explorer detected. Opening Phone Wallet / standalone pairing...');
+          } else {
+            (window.showToast || console.log)('📱 Extension wallet not detected. Opening WalletConnect...');
+          }
+          startWalletConnect();
+        }
+      });
+      cluster.appendChild(b);
+    }
+
+    // Always include Phone Wallet · WalletConnect button
+    const wcBtn = document.createElement('button');
+    wcBtn.className = 'btn';
+    wcBtn.id = 'btnWalletConnect';
+    wcBtn.style.background = '#1d4ed8';
+    wcBtn.style.borderColor = '#3b82f6';
+    wcBtn.style.color = '#fff';
+    wcBtn.style.fontWeight = 'bold';
+    wcBtn.textContent = '📱 Phone Wallet · WalletConnect';
+    wcBtn.addEventListener('click', startWalletConnect);
+    cluster.appendChild(wcBtn);
+  }
+  window.renderWalletChoice = renderWalletChoice;
+  renderWalletChoice();
+
 
   // Automatically recognize wallet when typed or pasted into the wallet bar
   walletInput?.addEventListener('input', async () => {
@@ -6142,6 +6354,7 @@ tslib/tslib.es6.js:
     await fetchWalletLoot(addr);
     updateRosterUI();
     updateOwnedOutlawsUI();
+    if (typeof renderWalletChoice === 'function') renderWalletChoice();
   };
 
   document.getElementById('btnPrevHero')?.addEventListener('click', () => {
@@ -6437,7 +6650,7 @@ tslib/tslib.es6.js:
     if (!connectedUserAddress) {
       throw new Error('Please connect your wallet first (via Injected or WalletConnect)');
     }
-    const provider = getInjectedProvider();
+    const provider = activeInjectedProvider || getInjectedProvider();
     if (wcClient && wcSession) {
       let targetChain = 'eip155:46630';
       try {
