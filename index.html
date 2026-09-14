@@ -5526,14 +5526,25 @@ tslib/tslib.es6.js:
       name: 'Camp Hound',
       emoji: '🐕',
       role: 'Forest Tracker',
+      cost: '20 🪙 Gold',
       perk: '+15% Sherwood Yew Drops • +10 DEF',
       desc: 'Loyal woodland mastiff. Detects ambushes & fallen ancient yew.'
+    },
+    {
+      id: 'Sherwood Cat',
+      name: 'Sherwood Cat',
+      emoji: '🐈',
+      role: 'Greenwood Mouser',
+      cost: '25 🪙 Gold',
+      perk: '+8 Stealth • +4% Crit',
+      desc: 'Sleek feline hunter bringing luck and fire warmth to outlaws.'
     },
     {
       id: 'Hunting Falcon',
       name: 'Hunting Falcon',
       emoji: '🦅',
       role: 'Aerial Scout',
+      cost: '30 🪙 Gold',
       perk: '+12% Nottingham Iron Drops • +5% Crit',
       desc: 'High-altitude raptor spotting royal tax carriages from above.'
     },
@@ -5542,22 +5553,16 @@ tslib/tslib.es6.js:
       name: 'Barn Owl',
       emoji: '🦉',
       role: 'Silent Shadow',
+      cost: '40 🪙 Gold',
       perk: '+10% Bonus Gold Looted • +15 Stealth',
       desc: 'Silent nocturnal stalker gliding unseen past castle guards.'
-    },
-    {
-      id: 'Sherwood Cat',
-      name: 'Sherwood Cat',
-      emoji: '🐈',
-      role: 'Greenwood Mouser',
-      perk: '+8 Stealth • +4% Crit',
-      desc: 'Sleek feline hunter bringing luck and fire warmth to outlaws.'
     },
     {
       id: 'None',
       name: 'Hearth Den',
       emoji: '🏡',
       role: 'Camp Rest',
+      cost: 'Free',
       perk: 'Safe resting in camp • 0 rations needed',
       desc: 'Companions rest peacefully by the warm camp fire.'
     }
@@ -5590,14 +5595,14 @@ tslib/tslib.es6.js:
           <div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
               <span style="font-size:22px;">${b.emoji}</span>
-              ${isBonded ? '<span style="font-size:8.5px; background:#15803d; color:#fff; font-weight:bold; padding:1px 5px; border-radius:3px;">✓ BONDED</span>' : ''}
+              ${isBonded ? '<span style="font-size:8.5px; background:#15803d; color:#fff; font-weight:bold; padding:1px 5px; border-radius:3px;">✓ BONDED</span>' : `<span style="font-size:8.5px; color:#ffd700; font-weight:bold; background:#1e293b; padding:1px 5px; border-radius:3px;">${b.cost}</span>`}
             </div>
             <div style="font-size:11px; font-weight:bold; color:${isBonded ? '#fef08a' : '#e2e8f0'};">${b.name}</div>
             <div style="font-size:9px; color:#86efac; margin-bottom:4px;">${b.role}</div>
             <div style="font-size:8.5px; color:#94a3b8; line-height:1.3; margin-bottom:6px;">${b.perk}</div>
           </div>
           <button class="btn comp-btn ${isBonded ? 'active' : ''}" data-comp="${b.id}" style="width:100%; font-size:9.5px; font-weight:bold; padding:4px 6px; border-radius:4px; cursor:pointer; background:${isBonded ? '#15803d' : '#1b2f1c'}; border:1px solid ${isBonded ? '#4ade80' : '#2d502f'}; color:${isBonded ? '#fff' : '#86efac'};">
-            ${isBonded ? 'Bonded ✓' : (b.id === 'None' ? 'Rest Pet 🏡' : `Adopt ${b.name.split(' ')[0]} 🐾`)}
+            ${isBonded ? 'Bonded ✓' : (b.id === 'None' ? 'Rest Pet 🏡' : `Adopt (${b.cost}) 🐾`)}
           </button>
         </div>
       `;
@@ -5665,12 +5670,9 @@ tslib/tslib.es6.js:
           <span style="font-size:18px;">🐾</span>
           <div>
             <div style="font-weight:bold; color:#86efac; font-size:13px; letter-spacing:0.5px;">Mother Meg's Animal Adoption Sanctuary</div>
-            <div style="font-size:10px; color:#94a3b8;">Adopt & Bond Greenwood Companions • Live Outlaw Combat & Drop Perks</div>
+            <div style="font-size:10px; color:#94a3b8;">Bond Greenwood Companions • Canonical ERC-721 On-Chain Pet System</div>
           </div>
         </div>
-        <button id="btnRandomCompanion" class="btn" style="background:#064e3b; border:1px solid #10b981; color:#a7f3d0; font-size:10px; padding:5px 10px; border-radius:6px; cursor:pointer; font-weight:bold; display:flex; align-items:center; gap:4px;" title="Encounter a wild forest beast to rescue & adopt">
-          <span>🎲</span><span>Wild Rescue</span>
-        </button>
       </div>
 
       <!-- Active Bond Banner -->
@@ -5740,26 +5742,6 @@ tslib/tslib.es6.js:
         const labels = { 1: 'Young Pup/Kitten', 3: 'Adult Hunter', 5: 'Ancient Celestial Legend' };
         (window.showToast || console.log)(`✨ Evolution Stage: ${labels[s]}!`);
       });
-    });
-
-    sanctuary.querySelector('#btnRandomCompanion')?.addEventListener('click', () => {
-      const list = ['Camp Hound', 'Hunting Falcon', 'Barn Owl', 'Sherwood Cat'];
-      const pick = list[Math.floor(Math.random() * list.length)];
-      const stages = [1, 3, 5];
-      const randStg = stages[Math.floor(Math.random() * stages.length)];
-      companionOverride = pick;
-      window.companionOverride = pick;
-      companionStageOverride = randStg;
-      window.companionStageOverride = randStg;
-      companionTraitOverride = 'auto';
-      window.companionTraitOverride = 'auto';
-      try { localStorage.setItem('hoodquest_adopted_companion', pick); } catch(_) {}
-      if (window.initAudio) window.initAudio();
-      if (window.playSound) playSound('purr');
-      updateSanctuaryUI();
-      if (typeof renderCompanionTraitChips === 'function') renderCompanionTraitChips();
-      if (window.updateHUD) window.updateHUD();
-      (window.showToast || console.log)(`🎲 Rescued Wild ${pick} (Stage ${randStg}) in deep Greenwood!`);
     });
 
     updateSanctuaryUI();
