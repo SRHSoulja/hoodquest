@@ -107,10 +107,76 @@ To protect the secondary market and combat integrity, the following cooldowns ar
 
 ---
 
-## 5. SOP: Making Changes & Preventing Regression
+## 6. Consumable Balance & Anti-Inflation Ceilings
+
+### 6.1 The 1-Elixir-Per-Day Rule (Audited Invariant)
+* **Rule:** An Outlaw can consume **at most 1 Greenwood Elixir per UTC day** (`lastElixirDay[hoodId] >= today` reverts).
+* **Stamina Mechanics:**
+  - Base Stamina: 5 heists per day (free, resets 00:00 UTC).
+  - Elixir Stamina: Exactly +5 bonus heists per day.
+  - Hard Ceiling: Maximum **10 heists per day per Outlaw** under all circumstances.
+  - A player cannot "whale farm" by drinking 50 elixirs in one day on one character.
+
+### 6.2 Hard Statutory Stat Ceilings
+To guarantee early 2026 Genesis gear is never rendered obsolete by future expansions:
+* **Max Attack:** 45 (statutory ceiling in `HoodQuest.sol`).
+* **Max Defense:** 30.
+* **Max Stealth:** 30.
+* **Max Gold Bonus (`goldBonusBps`):** Hard capped at **4000 BPS (+40.0% max)** across all weapons, cloaks, and devotion bonuses combined.
+  - Gilded Bow: +2000 BPS (+20%).
+  - 360-Day Devotion: +1000 BPS (+10%).
+  - Even with future gear expansions, code enforces: `if (goldBonusBps > 4000) goldBonusBps = 4000;`.
+  - This is why companion animals do NOT have +15% gold buffs in the contract—it would pierce the macro-economic ceiling!
+
+---
+
+## 7. Progression & Leveling: "What Actually Levels Up?"
+
+HoodQuest intentionally avoids runaway RPG level inflation (e.g. Level 1 to Level 99 with +5000% stats) because infinite stat inflation ruins 25-year game economies. Instead, progression is grounded in **biological time and craftsmanship**:
+
+```text
+┌───────────────────────────────────────────────┬───────────────────────────────────────────────┐
+│           CHARACTER PROGRESSION (HQ)          │          COMPANION PROGRESSION (HQPET)        │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ • Level: NO traditional arbitrary levels.     │ • Level: NO traditional arbitrary levels.     │
+│ • Age: Effective Biological Age (Wakefulness) │ • Bond Rank: Ranks 1 to 5 based on XP.        │
+│ • Devotion Milestones:                        │ • XP Source: +10 XP per daily forage.         │
+│     - 30 Days Awake:  +2% Gold Bonus          │     - Rank 1: 0–299 XP (Novice)               │
+│     - 90 Days Awake:  +4% Gold Bonus          │     - Rank 2: 300–899 XP (Trained)            │
+│     - 180 Days Awake: +6% Gold Bonus          │     - Rank 3: 900–1799 XP (Loyal)             │
+│     - 360 Days Awake: +10% Gold Bonus         │     - Rank 4: 1800–3649 XP (Devoted)          │
+│ • Gear Loadout: Horizontal weapon choice      │     - Rank 5: 3650+ XP (Eternal Companion)    │
+│   (Slots 0..5: Bow/Dagger/Staff, Cloak, Horn) │ • Output: Forages Yew & Iron for Blacksmith.  │
+└───────────────────────────────────────────────┴───────────────────────────────────────────────┘
+```
+
+---
+
+## 8. Secondary Market Gating: Native Bazaar vs. OpenSea
+
+### 8.1 Native Camp Bazaar (`HoodQuestBazaar.sol`)
+* Fully on-chain, zero external dependencies.
+* Consults `canList(hoodId)`:
+  - If `pendingGameplayCount != 0` (raid in flight) ➔ **Blocked.**
+  - If `pendingUnequipCount != 0` (gear unequip timer running) ➔ **Blocked.**
+  - If `pendingDebondMaturesAt != 0` (companion debond running) ➔ **Blocked.**
+  - If `activeSolsticeCommitmentCount != 0` ➔ **Blocked.**
+* **Result:** Zero race conditions or bait-and-switch trades possible in the Camp Bazaar.
+
+### 8.2 External Marketplaces (OpenSea, Seaport, Blur)
+* External platforms use off-chain EIP-712 order signatures.
+* **Why Sellers Cannot Exploit Raids on External Markets:**
+  1. Heist durations on Arbitrum Nitro L2 target `currentBlock + 2` (~0.5 seconds), so combat resolves before an external sale could confirm.
+  2. If a seller transfers an Outlaw while a heist is pending, **rewards are delivered to the seller's wallet**, not the buyer.
+  3. Transferring the Outlaw immediately cancels any pending unequip/debond timers and locks unequipping for 24 hours on the buyer.
+
+
+---
+
+## 9. SOP: Making Changes & Preventing Regression
 
 Whenever proposing or implementing changes to HoodQuest:
-1. **Check Against `HOODQUEST_MASTER_BLUEPRINT.md`:** Does this change contradict any protocol-frozen invariant (constants, supply modes, split caps, 25-year pillars)?
+1. **Check Against HOODQUEST_MASTER_BLUEPRINT.md:** Does this change contradict any protocol-frozen invariant (constants, supply modes, split caps, 25-year pillars)?
 2. **Respect the Three-Tier Architecture:**
    - Never put mutable game rules or raid math into Tier 1 (`HoodQuest.sol`, `HoodQuestTreasures.sol`, `HoodQuestCompanions.sol`).
    - Put all gameplay logic, raid formulas, and seasonal events into Tier 2 (`HoodQuestRaids.sol`).
