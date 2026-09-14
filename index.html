@@ -5894,6 +5894,7 @@ tslib/tslib.es6.js:
     if (n.includes('rabby')) return '🐰';
     if (n.includes('brave')) return '🦁';
     if (n.includes('rainbow')) return '🌈';
+    if (n.includes('frame')) return '🖥️';
     return '👛';
   }
 
@@ -6047,6 +6048,8 @@ tslib/tslib.es6.js:
     activeInjectedProvider = null;
     activeWalletName = '';
     connectedUserAddress = '';
+    frameConnected = false;
+    frameAddress = '';
     if (walletInput) walletInput.value = '';
     if (wcClient && wcSession) {
       try { wcClient.disconnect({ topic: wcSession.topic, reason: { code: 6000, message: 'User disconnected' } }); } catch(_) {}
@@ -6059,6 +6062,100 @@ tslib/tslib.es6.js:
     (window.showToast || console.log)('🔌 Disconnected. Choose a wallet to connect.');
   }
   window.disconnectWallet = disconnectWallet;
+
+  // ---- Frame Wallet · Loopback JSON-RPC Provider (127.0.0.1:1248) ----
+  // Frame (frame.sh) is a desktop wallet app that exposes a system-wide JSON-RPC
+  // at http://127.0.0.1:1248. This works from sandboxed data: iframes because:
+  // - 127.0.0.1 is "potentially trustworthy" (W3C spec) — exempt from mixed-content
+  // - Only needs fetch() — no extension injection, no popups, no navigation
+  // - Frame sends Access-Control-Allow-Origin: * — CORS passes with Origin: null
+  const FRAME_RPC_URL = 'http://127.0.0.1:1248';
+  let frameConnected = false;
+  let frameAddress = '';
+
+  // Frame provider object — mimics EIP-1193 provider.request() interface
+  // so sendOnchainTx can use it interchangeably with injected providers
+  const frameProvider = {
+    isFrame: true,
+    _rpcId: 1,
+    async request({ method, params }) {
+      const resp = await fetch(FRAME_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: this._rpcId++, method, params: params || [] })
+      });
+      if (!resp.ok) throw new Error(`Frame RPC error: HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message || 'Frame RPC error');
+      return data.result;
+    }
+  };
+
+  async function probeFrameAvailable() {
+    try {
+      const resp = await fetch(FRAME_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 0, method: 'web3_clientVersion', params: [] })
+      });
+      return resp.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function connectFrameWallet() {
+    initAudio();
+    (window.showToast || console.log)('🖥️ Connecting to Frame (127.0.0.1:1248)...');
+    try {
+      const accounts = await frameProvider.request({ method: 'eth_requestAccounts' });
+      if (!accounts || accounts.length === 0) {
+        throw new Error('Frame returned no accounts — approve the request in Frame');
+      }
+      const addr = accounts[0];
+      frameConnected = true;
+      frameAddress = addr;
+      activeInjectedProvider = frameProvider;
+      activeWalletName = 'Frame';
+      playSound('coin');
+      (window.showToast || console.log)(`✅ Frame Connected: ${addr.slice(0, 6)}...${addr.slice(-4)}`);
+      await window.setConnectedWallet(addr);
+
+      // Ask Frame to switch to Robinhood Chain Testnet
+      try {
+        await frameProvider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: RH_CHAIN_ID_HEX }]
+        });
+      } catch (switchErr) {
+        // Frame may not support wallet_addEthereumChain but try
+        try {
+          await frameProvider.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: RH_CHAIN_ID_HEX,
+              chainName: 'Robinhood Chain Testnet',
+              rpcUrls: [getActiveRpcUrl()],
+              nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+              blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
+            }]
+          });
+        } catch (_) {}
+      }
+      renderWalletChoice();
+    } catch (err) {
+      frameConnected = false;
+      frameAddress = '';
+      playSound('hit');
+      const msg = (err.message || '').toLowerCase();
+      if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('econnrefused')) {
+        (window.showToast || console.log)('⚠️ Frame not detected on localhost:1248. Is Frame running? Install from frame.sh');
+      } else {
+        (window.showToast || console.log)('⚠️ Frame connection failed: ' + (err.message || err));
+      }
+    }
+  }
+  window.connectFrameWallet = connectFrameWallet;
 
   // Dynamic Multi-Wallet Selector UI renderer
   function renderWalletChoice() {
@@ -6182,6 +6279,30 @@ tslib/tslib.es6.js:
       });
       cluster.appendChild(b);
     }
+
+    // Frame Desktop Wallet button (loopback 127.0.0.1:1248)
+    const frameBtn = document.createElement('button');
+    frameBtn.className = 'btn';
+    frameBtn.id = 'btnFrameWallet';
+    frameBtn.style.background = '#7c3aed';
+    frameBtn.style.borderColor = '#a78bfa';
+    frameBtn.style.color = '#fff';
+    frameBtn.style.fontWeight = 'bold';
+    frameBtn.textContent = '🖥️ Frame · Desktop';
+    frameBtn.title = 'Connect via Frame desktop wallet (frame.sh) — works from sandboxed explorers';
+    frameBtn.addEventListener('click', connectFrameWallet);
+    cluster.appendChild(frameBtn);
+
+    // Probe Frame availability in background and update button label
+    probeFrameAvailable().then(available => {
+      if (available) {
+        frameBtn.textContent = '🖥️ Frame · Desktop ✓';
+        frameBtn.style.background = '#6d28d9';
+      } else {
+        frameBtn.textContent = '🖥️ Frame · Desktop';
+        frameBtn.style.opacity = '0.7';
+      }
+    });
 
     // Always include Phone Wallet · WalletConnect button
     const wcBtn = document.createElement('button');
@@ -6351,11 +6472,11 @@ tslib/tslib.es6.js:
   window.setConnectedWallet = async function(addr) {
     connectedUserAddress = addr;
     if (walletInput) walletInput.value = addr;
+    if (typeof renderWalletChoice === 'function') renderWalletChoice();
     await fetchUserOwnedOutlaws(addr);
     await fetchWalletLoot(addr);
     updateRosterUI();
     updateOwnedOutlawsUI();
-    if (typeof renderWalletChoice === 'function') renderWalletChoice();
   };
 
   document.getElementById('btnPrevHero')?.addEventListener('click', () => {
@@ -6868,6 +6989,7 @@ tslib/tslib.es6.js:
       throw new Error('No wallet connected. Please click 📱 WalletConnect first.');
     }
   }
+  window.sendOnchainTx = sendOnchainTx;
 
   // Universal Public RPC Transaction Receipt Poller
   async function waitForTxReceipt(txHash, maxAttempts = 15) {
