@@ -5877,14 +5877,17 @@ tslib/tslib.es6.js:
     startWalletConnect();
   });
 
-  // Injected Provider Discovery (EIP-6963 + window.ethereum + frame parent)
-  let injectedProvider = null;
-  if (typeof window !== 'undefined' && window.ethereum) {
-    injectedProvider = window.ethereum;
-  }
+  // Injected Provider Discovery (EIP-6963 + window.ethereum.providers multi-wallet filter)
+  let metamaskProvider = null;
+  const detectedEip6963 = {};
+
   window.addEventListener('eip6963:announceProvider', (event) => {
-    if (event && event.detail && event.detail.provider) {
-      injectedProvider = event.detail.provider;
+    if (event && event.detail && event.detail.info && event.detail.provider) {
+      const rdns = (event.detail.info.rdns || '').toLowerCase();
+      detectedEip6963[rdns] = event.detail.provider;
+      if (rdns === 'io.metamask') {
+        metamaskProvider = event.detail.provider;
+      }
     }
   });
   try {
@@ -5892,8 +5895,29 @@ tslib/tslib.es6.js:
   } catch(_) {}
 
   function getInjectedProvider() {
-    if (injectedProvider) return injectedProvider;
-    if (typeof window !== 'undefined' && window.ethereum) return window.ethereum;
+    // 1. Prioritize explicit EIP-6963 MetaMask provider
+    if (metamaskProvider) return metamaskProvider;
+    if (detectedEip6963['io.metamask']) return detectedEip6963['io.metamask'];
+
+    // 2. Check window.ethereum.providers array (handles multiple wallets like MetaMask + Compass)
+    if (typeof window !== 'undefined' && window.ethereum) {
+      if (Array.isArray(window.ethereum.providers)) {
+        // Prioritize actual MetaMask and exclude Compass/Phantom overwrites
+        const mm = window.ethereum.providers.find(p => p.isMetaMask && !p.isCompass && !p.isPhantom);
+        if (mm) return mm;
+        const anyMm = window.ethereum.providers.find(p => p.isMetaMask);
+        if (anyMm) return anyMm;
+      }
+
+      // 3. Check single window.ethereum: if it's MetaMask and not Compass
+      if (window.ethereum.isMetaMask && !window.ethereum.isCompass) {
+        return window.ethereum;
+      }
+
+      // 4. Fallback to window.ethereum if only one extension is present
+      return window.ethereum;
+    }
+
     try {
       if (window.parent && window.parent !== window && window.parent.ethereum) return window.parent.ethereum;
     } catch(e) {}
