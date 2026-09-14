@@ -6306,19 +6306,20 @@ tslib/tslib.es6.js:
     frameBtn.style.borderColor = '#a78bfa';
     frameBtn.style.color = '#fff';
     frameBtn.style.fontWeight = 'bold';
+    frameBtn.style.display = 'none'; // Hidden unless detected running
     frameBtn.textContent = '🖥️ Frame · Desktop';
-    frameBtn.title = 'Connect via Frame desktop wallet (frame.sh) — works from sandboxed explorers';
+    frameBtn.title = 'Connect via Frame desktop wallet (frame.sh)';
     frameBtn.addEventListener('click', connectFrameWallet);
     cluster.appendChild(frameBtn);
 
-    // Probe Frame availability in background and update button label
+    // Probe Frame availability in background and show ONLY if running
     probeFrameAvailable().then(available => {
       if (available) {
+        frameBtn.style.display = 'inline-block';
         frameBtn.textContent = '🖥️ Frame · Desktop ✓';
         frameBtn.style.background = '#6d28d9';
       } else {
-        frameBtn.textContent = '🖥️ Frame · Desktop';
-        frameBtn.style.opacity = '0.7';
+        frameBtn.style.display = 'none';
       }
     });
 
@@ -7547,17 +7548,17 @@ tslib/tslib.es6.js:
       </div>
 
       <!-- Direct Laptop MetaMask Web Portal Banner -->
-      <div style="margin-top:12px; background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:10px 12px; text-align:left; font-size:11px;">
+      <div style="margin-top:12px; background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:12px; text-align:left; font-size:11px;">
         <div style="color:#38bdf8; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
           <span>🦊 Playing on Laptop with Desktop MetaMask?</span>
         </div>
         <div style="color:#cbd5e1; font-size:10px; line-height:1.4; margin-bottom:8px;">
-          Blockscout explorer iframes isolate browser extensions. Open the official web portal in a browser tab for direct 1-click desktop MetaMask signing (no phone needed)!
+          Blockscout explorer iframes isolate browser extensions. Open the official web portal in a regular browser tab for direct 1-click desktop MetaMask signing (no phone needed)!
         </div>
-        <div style="display:flex; gap:6px;">
-          <input id="publicWebPortalUrl" type="text" readonly value="https://srhsoulja.github.io/hoodquest/" style="flex:1; background:#020617; border:1px solid #334155; border-radius:6px; padding:5px 8px; color:#38bdf8; font-family:monospace; font-size:10px; cursor:pointer;" onclick="this.select(); window.copyPortalUrl(document.getElementById('btnCopyPortalUrl'))" title="Click to copy portal URL" />
-          <button type="button" id="btnCopyPortalUrl" class="btn" style="background:#0284c7; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="window.copyPortalUrl(this)">📋 Copy Portal</button>
+        <div id="portalDisplayBox" style="background:#020617; border:1px solid #38bdf8; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:11px; color:#38bdf8; word-break:break-all; user-select:all; cursor:pointer; text-align:center; margin-bottom:8px;" onclick="window.copyPortalUrl(document.getElementById('btnCopyPortalUrl'))" title="Click to copy full URL">
+          https://srhsoulja.github.io/hoodquest/
         </div>
+        <button type="button" id="btnCopyPortalUrl" class="btn" style="width:100%; background:#0284c7; border:1px solid #38bdf8; color:#fff; font-size:11px; font-weight:bold; padding:8px; border-radius:6px; cursor:pointer;" onclick="window.copyPortalUrl(this)">📋 Copy Portal URL (Paste in New Tab)</button>
       </div>
 
       <!-- Configurable Infrastructure Drawer -->
