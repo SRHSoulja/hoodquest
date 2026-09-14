@@ -5680,11 +5680,29 @@
         const copyBtn = document.getElementById('btnCopyWcUri');
         if (copyBtn) {
           copyBtn.onclick = () => {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(uri);
+            let copied = false;
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = uri;
+              ta.style.position = 'fixed';
+              ta.style.left = '-9999px';
+              document.body.appendChild(ta);
+              ta.focus();
+              ta.select();
+              copied = document.execCommand('copy');
+              document.body.removeChild(ta);
+            } catch(_) {}
+            if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(uri).catch(() => {});
             }
             copyBtn.innerText = '✅ Copied!';
-            setTimeout(() => { copyBtn.innerText = '📋 Copy Pairing URI'; }, 2000);
+            copyBtn.style.background = '#15803d';
+            copyBtn.style.borderColor = '#22c55e';
+            setTimeout(() => {
+              copyBtn.innerText = '📋 Copy Pairing URI';
+              copyBtn.style.background = '#1e293b';
+              copyBtn.style.borderColor = '#475569';
+            }, 2500);
             (window.showToast || console.log)('📋 Copied pairing URI! (Paste in MetaMask Mobile QR scanner)');
           };
         }
@@ -6468,15 +6486,44 @@
 
   window.copyPortalUrl = function(btn) {
     const url = 'https://srhsoulja.github.io/hoodquest/';
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url);
+    let copied = false;
+    const inp = document.getElementById('publicWebPortalUrl');
+    if (inp) {
+      inp.focus();
+      inp.select();
+      inp.setSelectionRange(0, 99999);
+      try {
+        copied = document.execCommand('copy');
+      } catch(_) {}
+    }
+    if (!copied) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch(_) {}
+    }
+    if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).catch(() => {});
     }
     if (btn) {
       const orig = btn.innerText;
       btn.innerText = '✓ Copied!';
-      setTimeout(() => { btn.innerText = orig; }, 2500);
+      btn.style.background = '#15803d';
+      btn.style.borderColor = '#22c55e';
+      setTimeout(() => {
+        btn.innerText = orig;
+        btn.style.background = '#0284c7';
+        btn.style.borderColor = '#38bdf8';
+      }, 3000);
     }
-    (window.showToast || console.log)('📋 Copied https://srhsoulja.github.io/hoodquest/! Paste in a new tab for direct laptop MetaMask.');
+    (window.showToast || console.log)('📋 Copied portal URL! Press Ctrl+T and Ctrl+V to open in a new browser tab.');
   };
 
   window.selectOutlaw = (id) => {
@@ -7425,7 +7472,7 @@
           Blockscout explorer iframes isolate browser extensions. Open the official web portal in a browser tab for direct 1-click desktop MetaMask signing (no phone needed)!
         </div>
         <div style="display:flex; gap:6px;">
-          <input id="publicWebPortalUrl" type="text" readonly value="https://srhsoulja.github.io/hoodquest/" style="flex:1; background:#020617; border:1px solid #334155; border-radius:6px; padding:5px 8px; color:#38bdf8; font-family:monospace; font-size:10px;" />
+          <input id="publicWebPortalUrl" type="text" readonly value="https://srhsoulja.github.io/hoodquest/" style="flex:1; background:#020617; border:1px solid #334155; border-radius:6px; padding:5px 8px; color:#38bdf8; font-family:monospace; font-size:10px; cursor:pointer;" onclick="this.select(); window.copyPortalUrl(document.getElementById('btnCopyPortalUrl'))" title="Click to copy portal URL" />
           <button type="button" id="btnCopyPortalUrl" class="btn" style="background:#0284c7; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="window.copyPortalUrl(this)">📋 Copy Portal</button>
         </div>
       </div>
