@@ -5437,8 +5437,256 @@
     return el;
   }
 
+  const BEASTS_CATALOG = [
+    {
+      id: 'Camp Hound',
+      name: 'Camp Hound',
+      emoji: '🐕',
+      role: 'Forest Tracker',
+      perk: '+15% Sherwood Yew Drops • +10 DEF',
+      desc: 'Loyal woodland mastiff. Detects ambushes & fallen ancient yew.'
+    },
+    {
+      id: 'Hunting Falcon',
+      name: 'Hunting Falcon',
+      emoji: '🦅',
+      role: 'Aerial Scout',
+      perk: '+12% Nottingham Iron Drops • +5% Crit',
+      desc: 'High-altitude raptor spotting royal tax carriages from above.'
+    },
+    {
+      id: 'Barn Owl',
+      name: 'Barn Owl',
+      emoji: '🦉',
+      role: 'Silent Shadow',
+      perk: '+10% Bonus Gold Looted • +15 Stealth',
+      desc: 'Silent nocturnal stalker gliding unseen past castle guards.'
+    },
+    {
+      id: 'Sherwood Cat',
+      name: 'Sherwood Cat',
+      emoji: '🐈',
+      role: 'Greenwood Mouser',
+      perk: '+8 Stealth • +4% Crit',
+      desc: 'Sleek feline hunter bringing luck and fire warmth to outlaws.'
+    },
+    {
+      id: 'None',
+      name: 'Hearth Den',
+      emoji: '🏡',
+      role: 'Camp Rest',
+      perk: 'Safe resting in camp • 0 rations needed',
+      desc: 'Companions rest peacefully by the warm camp fire.'
+    }
+  ];
+
+  function updateSanctuaryUI() {
+    const grid = document.getElementById('sanctuaryCardsGrid');
+    if (!grid) return;
+    const curComp = (typeof companionOverride !== 'undefined' && companionOverride !== 'auto')
+      ? companionOverride
+      : ((typeof currentToken !== 'undefined' && currentToken && currentToken.companion) ? currentToken.companion : 'Camp Hound');
+
+    const bannerEmoji = document.getElementById('activePetEmoji');
+    const bannerName = document.getElementById('activePetName');
+    const bannerStageTag = document.getElementById('activePetStageTag');
+    const bannerPerk = document.getElementById('companionPerkInfo');
+
+    const activeData = BEASTS_CATALOG.find(b => b.id === curComp) || BEASTS_CATALOG[0];
+    if (bannerEmoji) bannerEmoji.innerText = activeData.emoji;
+    if (bannerName) bannerName.innerText = activeData.name;
+    const stg = (typeof companionStageOverride !== 'undefined' && companionStageOverride !== 'auto') ? companionStageOverride : 3;
+    const stgLabels = { 1: 'Young Pup/Kitten', 3: 'Adult Hunter', 5: 'Celestial Legend' };
+    if (bannerStageTag) bannerStageTag.innerText = stgLabels[stg] || 'Adult';
+    if (bannerPerk) bannerPerk.innerText = `${activeData.emoji} ${activeData.name}: ${activeData.perk}`;
+
+    grid.innerHTML = BEASTS_CATALOG.map(b => {
+      const isBonded = (b.id === curComp);
+      return `
+        <div class="beast-card" style="background:${isBonded ? '#0e2b14' : '#081209'}; border:1.5px solid ${isBonded ? '#22c55e' : '#1e381f'}; border-radius:8px; padding:8px 10px; display:flex; flex-direction:column; justify-content:space-between; text-align:center; box-shadow:${isBonded ? '0 0 10px rgba(34,197,94,0.3)' : 'none'};">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:22px;">${b.emoji}</span>
+              ${isBonded ? '<span style="font-size:8.5px; background:#15803d; color:#fff; font-weight:bold; padding:1px 5px; border-radius:3px;">✓ BONDED</span>' : ''}
+            </div>
+            <div style="font-size:11px; font-weight:bold; color:${isBonded ? '#fef08a' : '#e2e8f0'};">${b.name}</div>
+            <div style="font-size:9px; color:#86efac; margin-bottom:4px;">${b.role}</div>
+            <div style="font-size:8.5px; color:#94a3b8; line-height:1.3; margin-bottom:6px;">${b.perk}</div>
+          </div>
+          <button class="btn comp-btn ${isBonded ? 'active' : ''}" data-comp="${b.id}" style="width:100%; font-size:9.5px; font-weight:bold; padding:4px 6px; border-radius:4px; cursor:pointer; background:${isBonded ? '#15803d' : '#1b2f1c'}; border:1px solid ${isBonded ? '#4ade80' : '#2d502f'}; color:${isBonded ? '#fff' : '#86efac'};">
+            ${isBonded ? 'Bonded ✓' : (b.id === 'None' ? 'Rest Pet 🏡' : `Adopt ${b.name.split(' ')[0]} 🐾`)}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.comp-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const compId = btn.getAttribute('data-comp');
+        companionOverride = compId;
+        window.companionOverride = compId;
+        companionTraitOverride = 'auto';
+        window.companionTraitOverride = 'auto';
+        try { localStorage.setItem('hoodquest_adopted_companion', compId); } catch(_) {}
+
+        if (window.initAudio) window.initAudio();
+        if (window.playSound) {
+          if (compId === 'Sherwood Cat') playSound('purr');
+          else if (compId === 'Camp Hound') playSound('hit');
+          else if (compId === 'None') playSound('bell');
+          else playSound('lute');
+        }
+        updateSanctuaryUI();
+        if (typeof renderCompanionTraitChips === 'function') renderCompanionTraitChips();
+        if (window.updateHUD) window.updateHUD();
+        const found = BEASTS_CATALOG.find(x => x.id === compId);
+        (window.showToast || console.log)(`🐾 Bonded with ${found ? found.name : compId}! Active combat perk applied.`);
+      });
+    });
+
+    const stageBtns = document.querySelectorAll('#sanctuaryStageButtons .stage-btn');
+    stageBtns.forEach(btn => {
+      const s = parseInt(btn.getAttribute('data-stage'), 10);
+      const isActive = (s === stg);
+      btn.style.background = isActive ? '#15803d' : '#132014';
+      btn.style.borderColor = isActive ? '#22c55e' : '#234324';
+      btn.style.fontWeight = isActive ? 'bold' : 'normal';
+    });
+  }
+
+  function renderBeastAdoptionSanctuary() {
+    let sanctuary = document.getElementById('animalAdoptionSanctuary');
+    if (sanctuary) return sanctuary;
+    const outfitter = document.querySelector('.outfitter-box');
+    if (!outfitter) return null;
+
+    try {
+      const saved = localStorage.getItem('hoodquest_adopted_companion');
+      if (saved && ['Camp Hound', 'Hunting Falcon', 'Barn Owl', 'Sherwood Cat', 'None'].includes(saved)) {
+        companionOverride = saved;
+        window.companionOverride = saved;
+      }
+    } catch(_) {}
+
+    sanctuary = document.createElement('div');
+    sanctuary.id = 'animalAdoptionSanctuary';
+    sanctuary.className = 'sanctuary-box';
+    sanctuary.style.cssText = 'background:#0b150c; border:1.5px solid #166534; border-radius:12px; padding:12px; width:100%; box-sizing:border-box; margin-top:14px; box-shadow:0 6px 20px rgba(0,0,0,0.6);';
+
+    outfitter.parentNode.insertBefore(sanctuary, outfitter.nextSibling);
+
+    sanctuary.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e3a1f; padding-bottom:8px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🐾</span>
+          <div>
+            <div style="font-weight:bold; color:#86efac; font-size:13px; letter-spacing:0.5px;">Mother Meg's Animal Adoption Sanctuary</div>
+            <div style="font-size:10px; color:#94a3b8;">Adopt & Bond Greenwood Companions • Live Outlaw Combat & Drop Perks</div>
+          </div>
+        </div>
+        <button id="btnRandomCompanion" class="btn" style="background:#064e3b; border:1px solid #10b981; color:#a7f3d0; font-size:10px; padding:5px 10px; border-radius:6px; cursor:pointer; font-weight:bold; display:flex; align-items:center; gap:4px;" title="Encounter a wild forest beast to rescue & adopt">
+          <span>🎲</span><span>Wild Rescue</span>
+        </button>
+      </div>
+
+      <!-- Active Bond Banner -->
+      <div id="activeBondBanner" style="background:radial-gradient(ellipse at 15% 50%, #153819 0%, #06150a 100%); border:1px solid #22c55e; border-radius:8px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; box-shadow:inset 0 0 12px rgba(34,197,94,0.15);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span id="activePetEmoji" style="font-size:26px; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">🐕</span>
+          <div>
+            <div style="font-size:12px; font-weight:bold; color:#fef08a; display:flex; align-items:center; gap:6px;">
+              <span>Bonded:</span>
+              <span id="activePetName" style="color:#4ade80;">Camp Hound</span>
+              <span id="activePetStageTag" style="font-size:9px; background:#042f1a; border:1px solid #22c55e; color:#86efac; padding:1px 6px; border-radius:4px;">Adult</span>
+            </div>
+            <div id="companionPerkInfo" style="font-size:10px; color:#86efac; margin-top:3px;">🐕 Camp Hound: +15% Sherwood Yew Drops • +10 DEF (Forest Tracker)</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button id="btnFeedBerries" class="btn" style="background:linear-gradient(180deg, #9d174d, #831843); border:1px solid #f43f5e; color:#ffe4e6; font-size:10.5px; padding:5px 12px; border-radius:6px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(244,63,94,0.3);" title="Feed sweet forest berries to your pet (+Affection)">
+            <span>🫐</span><span>Feed Treats</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Adoption Grid -->
+      <div style="font-size:11px; font-weight:bold; color:#cbd5e1; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+        <span>🌲</span><span>Adopt a Greenwood Companion:</span>
+      </div>
+      <div class="adoption-grid" id="sanctuaryCardsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:12px;">
+      </div>
+
+      <!-- Evolution & Genetics -->
+      <div style="background:#061007; border:1px solid #142817; border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <div style="font-size:10px; font-weight:bold; color:#86efac; text-transform:uppercase; letter-spacing:0.5px;">🐾 Life Stage:</div>
+          <div style="display:flex; gap:4px;" id="sanctuaryStageButtons">
+            <button class="stage-btn" data-stage="1" style="background:#132014; border:1px solid #234324; color:#a7f3d0; font-size:9.5px; padding:3px 8px; border-radius:4px; cursor:pointer;">🐾 Young Pup</button>
+            <button class="stage-btn active" data-stage="3" style="background:#15803d; border:1px solid #22c55e; color:#fff; font-size:9.5px; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">⚔️ Adult Hunter</button>
+            <button class="stage-btn" data-stage="5" style="background:#132014; border:1px solid #234324; color:#fef08a; font-size:9.5px; padding:3px 8px; border-radius:4px; cursor:pointer;">✨ Legend</button>
+          </div>
+        </div>
+        
+        <div id="companionTraitRow" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; border-top:1px solid #0e1e10; padding-top:6px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:10px; font-weight:bold; color:#86efac; text-transform:uppercase; letter-spacing:0.5px;">🧬 Breed / Trait:</span>
+            <button id="btnRandomAnimalTrait" class="btn" style="background:#164e63; border:1px solid #06b6d4; color:#a5f3fc; font-size:9px; padding:2px 7px; border-radius:4px; cursor:pointer;" title="Randomize species coat/breed pattern">🎲 Mutate</button>
+          </div>
+          <div id="companionTraitChips" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+        </div>
+      </div>
+    `;
+
+    sanctuary.querySelector('#btnFeedBerries')?.addEventListener('click', () => {
+      if (window.initAudio) window.initAudio();
+      if (window.playSound) { playSound('munch'); setTimeout(() => playSound('purr'), 200); }
+      const cur = (typeof companionOverride !== 'undefined' && companionOverride !== 'auto') ? companionOverride : 'Companion';
+      (window.showToast || console.log)(`🫐 Fed sweet forest berries to ${cur}! (Camp Affection ❤️)`);
+    });
+
+    sanctuary.querySelectorAll('#sanctuaryStageButtons .stage-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = parseInt(btn.getAttribute('data-stage'), 10);
+        companionStageOverride = s;
+        window.companionStageOverride = s;
+        if (window.initAudio) window.initAudio();
+        if (window.playSound) playSound('coin');
+        updateSanctuaryUI();
+        if (window.updateHUD) window.updateHUD();
+        const labels = { 1: 'Young Pup/Kitten', 3: 'Adult Hunter', 5: 'Ancient Celestial Legend' };
+        (window.showToast || console.log)(`✨ Evolution Stage: ${labels[s]}!`);
+      });
+    });
+
+    sanctuary.querySelector('#btnRandomCompanion')?.addEventListener('click', () => {
+      const list = ['Camp Hound', 'Hunting Falcon', 'Barn Owl', 'Sherwood Cat'];
+      const pick = list[Math.floor(Math.random() * list.length)];
+      const stages = [1, 3, 5];
+      const randStg = stages[Math.floor(Math.random() * stages.length)];
+      companionOverride = pick;
+      window.companionOverride = pick;
+      companionStageOverride = randStg;
+      window.companionStageOverride = randStg;
+      companionTraitOverride = 'auto';
+      window.companionTraitOverride = 'auto';
+      try { localStorage.setItem('hoodquest_adopted_companion', pick); } catch(_) {}
+      if (window.initAudio) window.initAudio();
+      if (window.playSound) playSound('purr');
+      updateSanctuaryUI();
+      if (typeof renderCompanionTraitChips === 'function') renderCompanionTraitChips();
+      if (window.updateHUD) window.updateHUD();
+      (window.showToast || console.log)(`🎲 Rescued Wild ${pick} (Stage ${randStg}) in deep Greenwood!`);
+    });
+
+    updateSanctuaryUI();
+    return sanctuary;
+  }
+
   function renderLootGrid() {
     getOutfitterFeedbackEl();
+    renderBeastAdoptionSanctuary();
+    updateSanctuaryUI();
     lootGrid.innerHTML = '';
     const goldCount = walletLootBalances[1] || 0;
     const goldDisplay = document.getElementById('goldBalanceDisplay');
@@ -6436,6 +6684,41 @@
   const maxStyle = document.createElement('style');
   maxStyle.id = 'hoodquest-max-style';
   maxStyle.textContent = `
+    html.title-screen-active, body.title-screen-active {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100vh !important;
+      overflow: hidden !important;
+      position: fixed !important;
+      inset: 0 !important;
+    }
+    #titleScreenOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: radial-gradient(circle at 50% 25%, #153819 0%, #08150a 55%, #030804 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      box-sizing: border-box;
+      text-align: center;
+      box-shadow: inset 0 0 70px rgba(0,0,0,0.95);
+      user-select: none;
+      cursor: pointer;
+      overflow: hidden !important;
+      max-height: 100vh;
+      max-width: 100vw;
+    }
+    @media (min-height: 520px) {
+      #titleScreenOverlay .title-badge { font-size: 10px !important; padding: 4px 12px !important; margin-bottom: 8px !important; }
+      #titleScreenOverlay .title-art svg { width: 130px !important; height: 95px !important; }
+      #titleScreenOverlay .title-logo { font-size: 30px !important; margin: 4px 0 !important; }
+      #titleScreenOverlay .title-sub { font-size: 10px !important; margin-bottom: 12px !important; }
+      #titleScreenOverlay #btnStartArcade { font-size: 12px !important; padding: 8px 20px !important; }
+      #titleScreenOverlay .title-specs { font-size: 8.5px !important; padding: 3px 9px !important; margin-top: 10px !important; }
+    }
     html.maximized-arcade, body.maximized-arcade {
       width: 100% !important;
       height: auto !important;
@@ -6453,6 +6736,8 @@
     }
   `;
   document.head.appendChild(maxStyle);
+  document.documentElement.classList.add('title-screen-active');
+  document.body.classList.add('title-screen-active');
 
   // Set clean initial button text
   const fsBtnInit = document.getElementById('btnFullscreenArcade');
@@ -7462,13 +7747,13 @@
 })();
 </script>
 <!-- 16-Bit Arcade Title Screen & Thumbnail Mode -->
-  <div id="titleScreenOverlay" style="position:fixed; inset:0; z-index:9000; background:radial-gradient(circle at 50% 25%, #153819 0%, #08150a 55%, #030804 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px; box-sizing:border-box; text-align:center; box-shadow:inset 0 0 70px rgba(0,0,0,0.95); user-select:none; cursor:pointer;" onclick="window.dismissTitleScreen()">
-    <div style="display:inline-block; background:#042f1a; border:1px solid #22c55e; color:#86efac; font-size:9px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; padding:3px 8px; border-radius:12px; margin-bottom:6px; box-shadow:0 0 8px rgba(34, 197, 94, 0.25);">
+  <div id="titleScreenOverlay" style="position:fixed; inset:0; z-index:9000; background:radial-gradient(circle at 50% 25%, #153819 0%, #08150a 55%, #030804 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:6px 10px; box-sizing:border-box; text-align:center; box-shadow:inset 0 0 70px rgba(0,0,0,0.95); user-select:none; cursor:pointer; overflow:hidden !important; max-height:100vh; max-width:100vw;" onclick="window.dismissTitleScreen()">
+    <div class="title-badge" style="display:inline-flex; align-items:center; gap:4px; background:#042f1a; border:1px solid #22c55e; color:#86efac; font-size:8.5px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; padding:2px 8px; border-radius:12px; margin-bottom:4px; box-shadow:0 0 8px rgba(34, 197, 94, 0.25); white-space:nowrap;">
       ⚡ On-Chain Cartridge • ROM V1.0
     </div>
     
-    <div style="margin:2px 0 6px 0; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.8));">
-      <svg width="120" height="90" viewBox="0 0 140 105" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div class="title-art" style="margin:2px 0 4px 0; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.8));">
+      <svg width="96" height="68" viewBox="0 0 140 105" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:auto;">
         <circle cx="102" cy="30" r="22" fill="#fef08a" opacity="0.85" />
         <circle cx="108" cy="26" r="20" fill="#153819" />
         <rect x="25" y="16" width="2" height="2" fill="#ffd700" />
@@ -7501,20 +7786,20 @@
       </svg>
     </div>
 
-    <div style="font-size:26px; font-weight:900; letter-spacing:2px; color:#ffd700; text-shadow:0 1px 0 #ca8a04, 0 2px 0 #a16207, 0 3px 0 #854d0e, 0 4px 6px rgba(0,0,0,0.9), 0 0 15px rgba(255,215,0,0.35); margin:2px 0; font-family:'Impact', 'Arial Black', sans-serif; text-transform:uppercase; white-space:nowrap;">
+    <div class="title-logo" style="font-size:22px; font-weight:900; letter-spacing:2px; color:#ffd700; text-shadow:0 1px 0 #ca8a04, 0 2px 0 #a16207, 0 3px 0 #854d0e, 0 4px 6px rgba(0,0,0,0.9), 0 0 15px rgba(255,215,0,0.35); margin:2px 0; font-family:'Impact', 'Arial Black', sans-serif; text-transform:uppercase; white-space:nowrap; line-height:1.1;">
       HOODQUEST
     </div>
-    <div style="font-size:9px; color:#86efac; letter-spacing:1px; margin-bottom:8px; text-transform:uppercase; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.8); font-family:monospace;">
+    <div class="title-sub" style="font-size:8px; color:#86efac; letter-spacing:0.8px; margin-bottom:6px; text-transform:uppercase; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.8); font-family:monospace; white-space:nowrap;">
       Living Companion RPG • Robinhood Testnet
     </div>
 
-    <div style="margin-top:4px;">
-      <div style="font-size:11px; font-weight:bold; color:#ffd700; letter-spacing:1.5px; background:linear-gradient(180deg, #15803d, #14532d); border:1.5px solid #4ade80; padding:7px 18px; border-radius:6px; box-shadow:0 4px 12px rgba(34, 197, 94, 0.35), inset 0 1px 0 rgba(255,255,255,0.25); cursor:pointer; display:inline-block;" id="btnStartArcade">
+    <div style="margin-top:2px;">
+      <div style="font-size:10.5px; font-weight:bold; color:#ffd700; letter-spacing:1.2px; background:linear-gradient(180deg, #15803d, #14532d); border:1.5px solid #4ade80; padding:5px 15px; border-radius:6px; box-shadow:0 4px 12px rgba(34, 197, 94, 0.35), inset 0 1px 0 rgba(255,255,255,0.25); cursor:pointer; display:inline-block; white-space:nowrap;" id="btnStartArcade">
         ⚔️ CLICK TO PLAY ⚔️
       </div>
     </div>
 
-    <div style="margin-top:8px; font-size:8px; color:#6ee7b7; letter-spacing:0.5px; background:rgba(0,0,0,0.45); border:1px solid #1f4728; padding:3px 8px; border-radius:4px; font-family:monospace;">
+    <div class="title-specs" style="margin-top:5px; font-size:7.5px; color:#6ee7b7; letter-spacing:0.5px; background:rgba(0,0,0,0.45); border:1px solid #1f4728; padding:2px 7px; border-radius:4px; font-family:monospace; white-space:nowrap;">
       Chain ID: 46630 • 100% Solidity Bytecode ROM
     </div>
   </div>
@@ -7522,6 +7807,8 @@
   <script>
     window.dismissTitleScreen = function() {
       const ts = document.getElementById('titleScreenOverlay');
+      document.documentElement.classList.remove('title-screen-active');
+      document.body.classList.remove('title-screen-active');
       if (ts) {
         ts.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         ts.style.opacity = '0';
@@ -7532,6 +7819,8 @@
       if (window.playSound) window.playSound('coin');
     };
     window.showTitleScreen = function() {
+      document.documentElement.classList.add('title-screen-active');
+      document.body.classList.add('title-screen-active');
       const ts = document.getElementById('titleScreenOverlay');
       if (ts) {
         ts.style.display = 'flex';
@@ -7540,18 +7829,47 @@
       }
     };
 
-    // Auto-update developer sandbox link for proper GitHub Pages navigation & sandbox clipboard fallback
+    // Auto-update official Web Portal and Sandbox Footer for seamless 1-click copying & navigation
     (function() {
-      const simLink = document.querySelector('a[href="/simulator.html"], a[href="./simulator.html"]');
-      if (simLink) {
-        simLink.href = 'https://srhsoulja.github.io/hoodquest/simulator.html';
-        simLink.onclick = function(e) {
-          const inIframe = (window.self !== window.top);
-          if (inIframe) {
-            e.preventDefault();
+      const footer = document.querySelector('.app-footer');
+      if (footer) {
+        footer.innerHTML = `
+          <div style="background:#09140b; border:1.5px solid #22c55e; border-radius:10px; padding:12px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.6); max-width:520px; margin:auto;">
+            <div style="color:#86efac; font-weight:bold; font-size:12px; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+              <span>🌐 Official Game Portal & Web Hub</span>
+            </div>
+            <div style="color:#94a3b8; font-size:10px; line-height:1.4; margin-bottom:8px;">
+              Play in full browser tab for direct desktop MetaMask, Frame & WalletConnect signing:
+            </div>
+            <div id="footerPortalBox" style="background:#030804; border:1px solid #166534; border-radius:6px; padding:7px 10px; font-family:monospace; font-size:11px; color:#4ade80; word-break:break-all; user-select:all; cursor:pointer; margin-bottom:8px;" title="Click to copy full portal URL">
+              https://srhsoulja.github.io/hoodquest/
+            </div>
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+              <button type="button" id="btnCopyFooterPortal" class="btn" style="flex:1; min-width:170px; background:#15803d; border:1px solid #4ade80; color:#fff; font-size:11px; font-weight:bold; padding:7px 12px; border-radius:6px; cursor:pointer;">
+                📋 Copy Portal URL
+              </button>
+              <a href="https://srhsoulja.github.io/hoodquest/" target="_blank" rel="noopener noreferrer" id="btnOpenFooterPortal" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; background:#1e293b; border:1px solid #475569; color:#93c5fd; font-size:11px; font-weight:bold; padding:7px 12px; border-radius:6px;">
+                ↗ Open Portal
+              </a>
+            </div>
+            <div style="margin-top:10px; border-top:1px solid #142817; padding-top:8px; display:flex; justify-content:space-between; align-items:center; font-size:10px; flex-wrap:wrap; gap:6px;">
+              <a href="https://srhsoulja.github.io/hoodquest/simulator.html" target="_blank" rel="noopener noreferrer" id="btnFooterSimulator" style="color:#a7f3d0; text-decoration:underline;">🧪 Open Developer Sandbox & 25-Year Time Machine ↗</a>
+              <span style="color:#6ee7b7; font-family:monospace;">Robinhood Testnet (46630)</span>
+            </div>
+          </div>
+        `;
+
+        function copyUrl(text, btn) {
+          let copied = false;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text).then(() => { copied = true; }).catch(() => {});
+            }
+          } catch(_) {}
+          if (!copied) {
             try {
               const ta = document.createElement('textarea');
-              ta.value = 'https://srhsoulja.github.io/hoodquest/simulator.html';
+              ta.value = text;
               ta.style.position = 'fixed';
               ta.style.left = '-9999px';
               document.body.appendChild(ta);
@@ -7559,10 +7877,49 @@
               ta.select();
               document.execCommand('copy');
               document.body.removeChild(ta);
+              copied = true;
             } catch(_) {}
-            (window.showToast || console.log)('📋 Copied Sandbox URL! (Paste into a new tab)');
           }
-        };
+          if (btn) {
+            const orig = btn.innerText;
+            btn.innerText = '✓ Copied Portal URL!';
+            btn.style.background = '#166534';
+            setTimeout(() => {
+              btn.innerText = orig;
+              btn.style.background = '#15803d';
+            }, 2500);
+          }
+          if (window.initAudio) window.initAudio();
+          if (window.playSound) window.playSound('coin');
+          (window.showToast || console.log)('📋 Copied: ' + text + ' ! Paste in new browser tab.');
+        }
+
+        const btnCopy = document.getElementById('btnCopyFooterPortal');
+        if (btnCopy) {
+          btnCopy.addEventListener('click', () => copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy));
+        }
+        const box = document.getElementById('footerPortalBox');
+        if (box) {
+          box.addEventListener('click', () => copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy));
+        }
+        const openLink = document.getElementById('btnOpenFooterPortal');
+        if (openLink) {
+          openLink.addEventListener('click', (e) => {
+            const inIframe = (window.self !== window.top);
+            if (inIframe) {
+              copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy);
+            }
+          });
+        }
+        const simLink = document.getElementById('btnFooterSimulator');
+        if (simLink) {
+          simLink.addEventListener('click', (e) => {
+            const inIframe = (window.self !== window.top);
+            if (inIframe) {
+              copyUrl('https://srhsoulja.github.io/hoodquest/simulator.html', null);
+            }
+          });
+        }
       }
     })();
   </script>
