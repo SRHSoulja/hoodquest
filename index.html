@@ -7480,9 +7480,9 @@ tslib/tslib.es6.js:
 })();
 </script>
 <!-- Real WalletConnect v2 Pairing Modal -->
-  <div id="walletConnectModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:10001; backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
-    <div style="background:#131c12; border:2px solid #3b82f6; border-radius:16px; max-width:380px; width:100%; padding:22px; box-shadow:0 20px 50px rgba(0,0,0,0.95); position:relative; text-align:center; color:#e2e8f0; font-family:sans-serif;">
-      <button id="btnCloseWcModal" style="position:absolute; top:12px; right:14px; background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;" onclick="document.getElementById('walletConnectModal').style.display='none'">✕</button>
+  <div id="walletConnectModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:10001; backdrop-filter:blur(8px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 12px; box-sizing:border-box;" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#131c12; border:2px solid #3b82f6; border-radius:16px; max-width:380px; width:100%; padding:22px; box-shadow:0 20px 50px rgba(0,0,0,0.95); position:relative; text-align:center; color:#e2e8f0; font-family:sans-serif; margin:auto; box-sizing:border-box;">
+      <button id="btnCloseWcModal" style="position:absolute; top:12px; right:14px; background:#1e293b; border:1px solid #475569; border-radius:50%; width:28px; height:28px; color:#f1f5f9; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('walletConnectModal').style.display='none'">✕</button>
       <h3 style="margin-top:0; color:#60a5fa; font-size:17px; display:flex; align-items:center; justify-content:center; gap:8px;">
         <span>📱 WalletConnect v2</span>
       </h3>
@@ -7535,14 +7535,19 @@ tslib/tslib.es6.js:
           </div>
         </div>
       </details>
+
+      <!-- Bottom Close Button -->
+      <div style="margin-top:16px;">
+        <button type="button" class="btn" style="width:100%; background:#1e293b; border:1px solid #475569; color:#e2e8f0; font-size:12px; font-weight:bold; padding:9px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('walletConnectModal').style.display='none'">✕ Close Window</button>
+      </div>
     </div>
   </div>
 
 
 <!-- Nottingham Castle Vault Heist Modal -->
-  <div id="castleHeistModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
-    <div style="background:#141217; border:2px solid #e11d48; border-radius:14px; max-width:520px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative; color:#e2e8f0; font-family:inherit;">
-      <button id="btnCloseCastleModal" style="position:absolute; top:12px; right:14px; background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
+  <div id="castleHeistModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9999; backdrop-filter:blur(8px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 12px; box-sizing:border-box;" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#141217; border:2px solid #e11d48; border-radius:14px; max-width:520px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative; color:#e2e8f0; font-family:inherit; margin:auto; box-sizing:border-box;">
+      <button id="btnCloseCastleModal" style="position:absolute; top:12px; right:14px; background:#27181c; border:1px solid #881337; border-radius:50%; width:28px; height:28px; color:#fda4af; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('castleHeistModal').style.display='none'">✕</button>
       <h2 style="color:#f43f5e; font-size:18px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">🏰 The Great Nottingham Castle Vault Heist</h2>
       <p style="color:#fda4af; font-size:12px; margin-bottom:12px;">Annual Flagship World Event • Days 318–325 • Liberate The Golden Arrow (Slots 0–19)</p>
 
@@ -7590,13 +7595,18 @@ tslib/tslib.es6.js:
       <div id="heistConsoleLog" style="background:#09090b; border:1px solid #27272a; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:10px; color:#a1a1aa; height:70px; overflow-y:auto; line-height:1.4;">
         [Delayed L2 Entropy ArbSys 0x64]: Ready for infiltration assignment. Choose an assault sector above.
       </div>
+
+      <!-- Bottom Close Button -->
+      <div style="margin-top:14px;">
+        <button type="button" class="btn" style="width:100%; background:#27181c; border:1px solid #881337; color:#fda4af; font-size:12px; font-weight:bold; padding:8px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('castleHeistModal').style.display='none'">✕ Close Castle Infiltration</button>
+      </div>
     </div>
   </div>
 
 <!-- Item Art Inspector Modal -->
-  <div id="itemArtModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
-    <div style="background:#131c11; border:2px solid #ffd700; border-radius:14px; max-width:440px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative;">
-      <button id="btnCloseItemModal" style="position:absolute; top:12px; right:14px; background:none; border:none; color:#9cb894; font-size:20px; cursor:pointer;">✕</button>
+  <div id="itemArtModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9999; backdrop-filter:blur(8px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 12px; box-sizing:border-box;" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#131c11; border:2px solid #ffd700; border-radius:14px; max-width:440px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative; margin:auto; box-sizing:border-box;">
+      <button id="btnCloseItemModal" style="position:absolute; top:12px; right:14px; background:#1b2818; border:1px solid #4a7c59; border-radius:50%; width:28px; height:28px; color:#bbf7d0; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('itemArtModal').style.display='none'">✕</button>
       <h2 id="itemModalTitle" style="color:#ffd700; font-size:18px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">🧪 Greenwood Elixir of Vigor</h2>
       <p id="itemModalType" style="color:#88b04b; font-size:12px; margin-bottom:12px;">ERC-1155 Loot • Token ID #5 • Consumable Alchemical Draft</p>
       
@@ -7616,8 +7626,24 @@ tslib/tslib.es6.js:
         <button class="pill-btn item-sel-btn" data-item="gold">💰 Sovereign</button>
         <button class="pill-btn item-sel-btn" data-item="stiletto">🗡️ Stilettos</button>
       </div>
+
+      <!-- Bottom Close Button -->
+      <div style="margin-top:14px;">
+        <button type="button" class="btn" style="width:100%; background:#1b2818; border:1px solid #4a7c59; color:#bbf7d0; font-size:12px; font-weight:bold; padding:8px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('itemArtModal').style.display='none'">✕ Close Inspector</button>
+      </div>
     </div>
   </div>
+<script>
+  // Global Escape key listener to dismiss any open modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      ['walletConnectModal', 'castleHeistModal', 'itemArtModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+    }
+  });
+</script>
 <script src="nft_gallery.js"></script>
 <script>
   // Safe accessor for currentToken across script tags
