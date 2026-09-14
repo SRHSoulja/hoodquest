@@ -342,6 +342,26 @@
       border-color: #bbf766;
       color: #fff;
     }
+    .color-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #1f381c;
+      transition: all 0.15s ease;
+      display: inline-block;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+    }
+    .color-swatch:hover {
+      transform: scale(1.2);
+      border-color: #ffd700;
+    }
+    .color-swatch.active {
+      border-color: #ffd700;
+      box-shadow: 0 0 7px #ffd700;
+      transform: scale(1.18);
+    }
 
     /* On-Chain Robinhood Testnet Loot Hub */
     .onchain-panel {
@@ -740,134 +760,6 @@
       height: 100%;
       display: block;
     }
-
-    /* Camp Roster Holder Panel */
-    .roster-panel {
-      background: #101a0f;
-      border: 1px solid #2d4725;
-      border-radius: 12px;
-      padding: 12px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    }
-    .roster-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(132, 204, 76, 0.2);
-      padding-bottom: 8px;
-    }
-    .roster-title-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #bbf766;
-    }
-    .roster-status {
-      font-size: 10px;
-      color: #4cd964;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .roster-selector-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #090f08;
-      border: 1px solid #23381c;
-      border-radius: 8px;
-      padding: 8px;
-      gap: 8px;
-    }
-    .roster-nav-btn {
-      background: #172913;
-      border: 1px solid #3d5e2e;
-      color: #bbf766;
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .roster-nav-btn:hover:not(:disabled) {
-      background: #25441d;
-      border-color: #ffd700;
-      color: #ffd700;
-    }
-    .roster-nav-btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-    .roster-hero-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-    .roster-hero-name {
-      font-size: 14px;
-      font-weight: 800;
-      color: #ffd700;
-      letter-spacing: 0.5px;
-    }
-    .roster-hero-sub {
-      font-size: 10px;
-      color: #8fa789;
-    }
-    .roster-chips-container {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .roster-chips-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .roster-chip {
-      background: #162414;
-      border: 1px solid #2d4725;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 11px;
-      color: #d1dcce;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .roster-chip:hover {
-      border-color: #84cc4c;
-      background: #1d3319;
-    }
-    .roster-chip.active {
-      background: #223f1b;
-      border-color: #ffd700;
-      color: #ffd700;
-      font-weight: 700;
-    }
-    .app-footer {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 11px;
-      color: #657e60;
-    }
-    .app-footer a {
-      color: #84cc4c;
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-    .app-footer a:hover {
-      color: #ffd700;
-      text-decoration: underline;
-    }
   </style>
 </head>
 <body>
@@ -875,10 +767,6 @@
   <header>
     <h1>🏹 HoodQuest (HQ): 25-Year Living Simulation</h1>
     <p class="subtitle">On-Chain Procedural Diorama • Zero-Gas Evolution • Universal UTC Daily Cycle</p>
-    <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap;">
-      <button id="btnFullscreenArcade" class="btn" style="background:#164e63; border:1px solid #06b6d4; color:#67e8f9; font-size:11px; padding:5px 12px; border-radius:6px; cursor:pointer; font-weight:bold;" title="Escape the iframe sandbox and connect your wallet extension in a full window">↗ Fullscreen Arcade (Connect Wallet)</button>
-      <span id="globalChainBadge" style="background:#0f291e; border:1px solid #22c55e; color:#86efac; font-size:11px; padding:5px 12px; border-radius:6px; font-family:monospace;">● Robinhood Testnet Sync</span>
-    </div>
   </header>
 
   <div class="main-layout">
@@ -913,50 +801,181 @@
       </div>
     </div>
 
-    <!-- Annual Castle Vault Heist Banner -->
-    <div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(90deg, #1c131a, #1a1625); border:1px solid #e11d48; border-radius:10px; padding:10px 14px; margin-bottom:12px; box-shadow:0 4px 15px rgba(225, 29, 72, 0.15);">
-      <div>
-        <div style="font-size:12px; font-weight:bold; color:#fda4af; display:flex; align-items:center; gap:6px;">
-          <span>🏰 The Great Nottingham Castle Vault Heist</span>
-          <span style="background:#881337; color:#ffd700; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:normal;">ANNUAL AUTUMN EVENT</span>
-        </div>
-        <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">
-          Liberate <strong>The Golden Arrow</strong> (Slots 0–19) & plunder the King's royal tax treasury!
+    <!-- 25-Year Time Machine Sandbox Control Panel -->
+    <div class="control-panel">
+      <div class="panel-header">
+        <span class="panel-title">⏳ 25-Year Time Warp Simulator</span>
+        <span class="time-readout" id="ageDisplay">Day 0 • Year 0 • Spring</span>
+      </div>
+
+      <div class="slider-row">
+        <input type="range" id="timeSlider" min="0" max="9125" value="0" step="1">
+        <div class="slider-labels">
+          <span>Day 0 (Mint)</span>
+          <span>Yr 1 (365d)</span>
+          <span>Yr 5 (Scout)</span>
+          <span>Yr 10 (Veteran)</span>
+          <span>Yr 25 (Legend: 9,125d)</span>
         </div>
       </div>
-      <button class="pill-btn" id="btnCastleHeist" style="background:#e11d48; color:#fff; border:none; font-weight:bold; font-size:11px; padding:7px 14px; border-radius:6px; cursor:pointer; box-shadow:0 2px 8px rgba(225, 29, 72, 0.4);">
-        🏰 Infiltrate Vault
-      </button>
+
+      <div class="warp-btn-row">
+        <button class="warp-btn" id="warp1d">+1 Day</button>
+        <button class="warp-btn" id="warp7d">+1 Week</button>
+        <button class="warp-btn" id="warp30d">+1 Month</button>
+        <button class="warp-btn" id="warp365d">+1 Year</button>
+        <button class="warp-btn" id="warp5y">+5 Years</button>
+        <button class="warp-btn" id="warp25y">👑 Max 25y</button>
+        <button class="warp-btn" id="warpPlay" style="background:#264a1b; border-color:#84cc4c; color:#bbf766;">▶ Auto Play</button>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <span>Care State: </span>
+          <div class="pill-btn active" id="pillCared" style="display:inline-block;">🔥 Active & Cared For</div>
+          <div class="pill-btn" id="pillDormant" style="display:inline-block;">💤 Overgrown Slumber</div>
+        </div>
+        <div class="toggle-group">
+          <span style="font-size:10px; margin-right:4px;">Season:</span>
+          <button class="pill-btn active" id="sAuto">Auto</button>
+          <button class="pill-btn" id="sSpring">🌸</button>
+          <button class="pill-btn" id="sSummer">☀️</button>
+          <button class="pill-btn" id="sAutumn">🍂</button>
+          <button class="pill-btn" id="sWinter">❄️</button>
+        </div>
+      </div>
+
+      <!-- Greenwood Customization & Dressing Studio -->
+      <div class="companion-sim-panel" style="margin-top:12px; padding:12px 14px; background:#0b170e; border:1px solid #284c22; border-radius:10px; display:flex; flex-direction:column; gap:10px;">
+        <!-- 1. Companion Animal Randomizer & Stage -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span style="font-size:11px; font-weight:bold; color:#88b04b;">🐾 Companion:</span>
+            <button class="pill-btn comp-btn active" data-comp="auto" id="btnCompAuto">Auto</button>
+            <button class="pill-btn comp-btn" data-comp="Camp Hound" id="btnCompHound">🐕 Hound</button>
+            <button class="pill-btn comp-btn" data-comp="Hunting Falcon" id="btnCompFalcon">🦅 Falcon</button>
+            <button class="pill-btn comp-btn" data-comp="Barn Owl" id="btnCompOwl">🦉 Owl</button>
+            <button class="pill-btn comp-btn" data-comp="Sherwood Cat" id="btnCompCat">🐈 Cat</button>
+            <button class="pill-btn comp-btn" data-comp="None" id="btnCompNone">🚫 None</button>
+            <button class="pill-btn" id="btnRandomCompanion" style="background:#1b3d18; border-color:#84cc4c; color:#bbf766; font-weight:bold; font-size:10px;">🎲 Random Animal</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:10px; color:#88b04b;">Pet Evolution:</span>
+            <button class="pill-btn pet-stage-btn active" data-stage="auto" id="btnPetStageAuto">Sync</button>
+            <button class="pill-btn pet-stage-btn" data-stage="1" id="btnPetStage1">Pup (St. 1)</button>
+            <button class="pill-btn pet-stage-btn" data-stage="3" id="btnPetStage3">Adult (St. 3)</button>
+            <button class="pill-btn pet-stage-btn" data-stage="5" id="btnPetStage5">Legend (St. 5)</button>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; font-size:10px; border-top:1px solid #162914; padding-top:4px;">
+          <span id="companionPerkInfo" style="color:#ffd700;">🐾 Bonded Companion: Independent ERC-721 Evolution</span>
+          <span style="color:#88b04b; font-style:italic;">💡 Unbonded pets rest in Hearth Den with 0 food / 0 aging</span>
+        </div>
+
+        <!-- Companion Breed / Plumage / Coat Trait Selector -->
+        <div id="companionTraitRow" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; background:#0d1c10; padding:6px 10px; border-radius:6px; border:1px dashed #284c22;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:10px; font-weight:bold; color:#ffd700;" id="companionTraitLabel">🧬 Breed / Coat Trait:</span>
+            <div id="companionTraitChips" style="display:flex; gap:5px; flex-wrap:wrap;">
+              <!-- Populated dynamically based on selected companion -->
+            </div>
+          </div>
+          <button class="pill-btn" id="btnRandomAnimalTrait" style="background:#173315; border-color:#84cc4c; color:#bbf766; font-size:9px; padding:3px 8px;">🎲 Random Breed</button>
+        </div>
+
+        <!-- 2. Try-On Equipment Dressing Room -->
+        <div style="display:flex; flex-direction:column; gap:6px; border-top:1px solid #1a3317; padding-top:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+            <span style="font-size:11px; font-weight:bold; color:#ffd700;">⚔️ Try-On Armory & Equips (Dressing Room):</span>
+            <div style="display:flex; gap:6px;">
+              <button class="pill-btn" id="btnTryAllEquips" style="background:#264a1b; border-color:#ffd700; color:#ffd700; font-size:10px;">✨ Try All Equips</button>
+              <button class="pill-btn" id="btnClearEquips" style="background:#3d1a1a; border-color:#e11d48; color:#fca5a5; font-size:10px;">🧹 Unequip All</button>
+              <button class="pill-btn" id="btnRandomEquips" style="background:#1b2d18; border-color:#84cc4c; color:#bbf766; font-size:10px;">🎲 Random Equips</button>
+            </div>
+          </div>
+          <div class="preset-chips" id="equipTryOnChips">
+            <div class="chip" data-equip="3" id="chipTryBow">🏹 Gilded Bow</div>
+            <div class="chip" data-equip="4" id="chipTryArrow">✨ Golden Arrow</div>
+            <div class="chip" data-equip="6" id="chipTryCloak">🧥 Velvet Cloak</div>
+            <div class="chip" data-equip="1" id="chipTryGold">🪙 Gold / Crown</div>
+            <div class="chip" data-equip="2" id="chipTryMead">🍺 Mead Cask</div>
+            <div class="chip" data-equip="7" id="chipTryFeast">🧺 Feast Basket</div>
+            <div class="chip" data-equip="5" id="chipTryShield">🧪 Alchemy Elixir</div>
+            <div class="chip" data-equip="8" id="chipTryHorn">📯 Rallying Horn</div>
+          </div>
+        </div>
+
+        <!-- 3. Palette Studio & Aging Genetics -->
+        <div style="display:flex; flex-direction:column; gap:6px; border-top:1px solid #1a3317; padding-top:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+            <span style="font-size:11px; font-weight:bold; color:#60a5fa;">🎨 Palette Studio & Aging Genetics:</span>
+            <button class="pill-btn" id="btnRandomColors" style="background:#1e293b; border-color:#60a5fa; color:#93c5fd; font-size:10px; font-weight:bold;">🎲 Randomize Colors & Traits</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:10px; color:#88b04b; min-width:55px;">🧥 Cloak:</span>
+            <div id="cloakSwatches" style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:10px; color:#88b04b; min-width:55px;">💇 Hair:</span>
+            <div id="hairSwatches" style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:10px; color:#88b04b; min-width:55px;">👤 Skin:</span>
+            <div id="skinSwatches" style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:10px; color:#88b04b; min-width:55px;">⏳ Aging:</span>
+            <button class="pill-btn aging-style-btn active" data-aging="auto" id="agingAuto">🧬 Auto (Genetics)</button>
+            <button class="pill-btn aging-style-btn" data-aging="silver" id="agingSilver">❄️ Full Silver</button>
+            <button class="pill-btn aging-style-btn" data-aging="salt_pepper" id="agingSalt">🧂 Salt & Pepper</button>
+            <button class="pill-btn aging-style-btn" data-aging="retained" id="agingRetained">✨ Retain Pigment</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Camp Roster & Owned Hero Selector -->
-    <div class="roster-panel">
-      <div class="roster-header">
-        <div class="roster-title-group">
-          <span class="roster-icon">🏰</span>
-          <span class="roster-title">Camp Roster</span>
-        </div>
-        <span class="roster-status" id="rosterStatusBadge">● Real-Time On-Chain Sync</span>
+        <!-- Sherwood Camp Backdrop & Props Simulation -->
+    <div class="presets-box" style="margin-bottom: 4px; border-color: rgba(132, 204, 76, 0.4);">
+      <div class="presets-title">
+        <span>🌲 Sherwood Camp Backdrop & Props:</span>
+        <span style="font-size:11px; color:#88b04b;">Toggle items in camp scene</span>
       </div>
-
-      <div class="roster-selector-bar">
-        <button class="roster-nav-btn" id="btnPrevHero" title="Cycle to Previous Hero">◀ Prev</button>
-        <div class="roster-hero-info">
-          <div class="roster-hero-name" id="rosterHeroName">Robin Hood #1</div>
-          <div class="roster-hero-sub" id="rosterHeroSub">The Outlaw Archer • Veteran (Era I) • Verified On-Chain</div>
-        </div>
-        <button class="roster-nav-btn" id="btnNextHero" title="Cycle to Next Hero">Next ▶</button>
+      <div class="preset-chips" id="backdropChips">
+        <div class="chip active" data-prop="target" id="chipPropTarget">🎯 Target</div>
+        <div class="chip active" data-prop="campfire" id="chipPropCampfire">🔥 Hearth</div>
+        <div class="chip active" data-prop="armoryRack" id="chipPropArmory">🛡️ Armory Rack</div>
+        <div class="chip active" data-prop="alchemyBench" id="chipPropAlchemy">🧪 Alchemy Table</div>
+        <div class="chip" data-prop="treasureHoard" id="chipPropTreasure">💰 Gold Chest</div>
+        <div class="chip" data-prop="meadCask" id="chipPropMead">🍺 Mead Cask</div>
+        <div class="chip" data-prop="feastBasket" id="chipPropBasket">🧺 Feast Basket</div>
+        <div class="chip active" data-prop="campShelter" id="chipPropShelter">⛺ Shelter</div>
       </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid #162914; font-size:11px;">
+        <span id="charTraitInfo" style="color:#bbf766;">🎭 Traits: Lincoln Green Bycocket • Auburn Hair • Fair Rose Skin</span>
+        <div style="display:flex; gap:6px;">
+          <button class="pill-btn" id="btnCastleHeist" style="background:#4a1e1e; color:#ffd700; border:1px solid #e11d48; cursor:pointer; font-weight:bold;">🏰 Castle Vault Heist</button>
+          <button class="pill-btn" id="btnInspectItemArt" style="background:#2a401f; color:#ffd700; border:1px solid #ffd700; cursor:pointer;">🔍 Inspect Item Art</button>
+        </div>
+      </div>
+    </div>
 
-      <div class="roster-chips-container">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:10px; color:#8fa789; text-transform:uppercase; letter-spacing:0.5px;">Heroes in Your Camp:</span>
-          <span id="rosterSummaryCount" style="font-size:10px; color:#ffd700;">2 Verified Outlaws</span>
-        </div>
-        <div class="roster-chips-row" id="rosterChipsRow">
-          <div class="roster-chip active" data-id="1" style="cursor:pointer;" onclick="window.selectOutlaw(1)">★ Robin Hood #1 (Active)</div>
-          <div class="roster-chip" data-id="2" style="cursor:pointer;" onclick="window.selectOutlaw(2)">Robin Hood #2</div>
-        </div>
+    <!-- Quick Preset Showcase (10 Outlaw Roster) -->
+    <div class="presets-box">
+      <div class="presets-title">
+        <span>🎭 Archetypes & Test Seeds:</span>
+        <span style="color:#ffd700; cursor:pointer;" id="btnRandomSeed">🎲 Random Mint</span>
+      </div>
+      <div class="preset-chips">
+        <div class="chip active" data-seed="1">#1 Robin (Archer)</div>
+        <div class="chip" data-seed="2">#2 Little John (Brawler)</div>
+        <div class="chip" data-seed="3">#3 Friar Tuck (Monk)</div>
+        <div class="chip" data-seed="4">#4 Maid Marian (Spy)</div>
+        <div class="chip" data-seed="5">#5 Alan-a-Dale (Minstrel)</div>
+        <div class="chip" data-seed="6">#6 Will Scarlet (Duelist)</div>
+        <div class="chip" data-seed="7">#7 Much the Miller (Scout)</div>
+        <div class="chip" data-seed="8">#8 Mother Meg (Herbalist)</div>
+        <div class="chip" data-seed="9">#9 Guy of Gisborne (Bounty)</div>
+        <div class="chip" data-seed="10">#10 Sheriff of Notts (Pursuer)</div>
       </div>
     </div>
 
@@ -974,9 +993,8 @@
       </div>
 
       <div class="wallet-bar">
-        <input type="text" id="walletInput" value="" placeholder="Enter 0x address to connect wallet & read loot..." class="wallet-input">
-        <button class="btn" id="btnConnectWallet">🦊 MetaMask</button>
-        <button class="btn" id="btnWalletConnect" style="background:#1d4ed8; color:#fff; border-color:#3b82f6; font-weight:bold;">📱 WalletConnect</button>
+        <input type="text" id="walletInput" value="0xC115C51a1bf9DdE7B1eD0861E18CaA27f24C3Be9" placeholder="Enter 0x address to read wallet loot..." class="wallet-input">
+        <button class="btn" id="btnConnectWallet">🦊 Connect</button>
         <button class="btn primary" id="btnRefreshLoot">🔄 Read Loot</button>
       </div>
 
@@ -992,7 +1010,7 @@
       <!-- In-Game Sherwood Outfitter / Camp Shop -->
       <div class="outfitter-box">
         <div class="outfitter-header">
-          <span>🏪 Sherwood Camp Outfitter (Forge & Brew Gear) <span style="color:#8fa789; font-size:10px; font-weight:normal; margin-left:6px;">(Requires only Gold Sovereigns • No wood or other materials needed)</span></span>
+          <span>🏪 Sherwood Camp Outfitter (Forge & Brew Gear)</span>
           <span id="goldBalanceDisplay" style="color:#ffd700; font-family:monospace; font-size:12px;">🪙 0 Gold Held</span>
         </div>
         <div class="outfitter-grid">
@@ -1025,7 +1043,6 @@
             <span class="craft-cost">100 🪙 Gold</span>
           </button>
         </div>
-        <div id="outfitterFeedback" style="display:none; padding:8px 12px; margin-top:8px; border-radius:6px; font-size:11px; line-height:1.4; background:#0f1d10; border:1px solid #22c55e; color:#e2e8f0;"></div>
       </div>
 
       <!-- Connected Wallet Outlaw Selector -->
@@ -1036,13 +1053,11 @@
 
       <div class="heist-action-row">
         <button class="btn primary heist-btn" id="btnOnchainHeist">👑 Ambush Royal Carriage (Gas Action) ⚔️</button>
-        <button class="btn" id="btnOnchainMint" style="background:#15803d; border-color:#22c55e; color:#fff; font-weight:bold;" title="Mint a brand new Robin Hood Outlaw NFT on Robinhood Testnet">🎲 Mint Outlaw NFT</button>
+        <button class="btn" id="btnOnchainMint" title="Mint a brand new Robin Hood Outlaw NFT on Robinhood Testnet">🎲 Mint Outlaw</button>
         <button class="btn" id="btnInspectOnchainSvg" title="View raw SVG output directly from smart contract generateSVG()">🖼️ On-Chain SVG</button>
         <button class="btn btn-open-nft-gallery" id="btnOpenNftGallery" style="background:#223c20; color:#ffd700; border:1px solid #4a733e;" title="Explore the complete artisan visual catalog for all Companions, Weapons, Relics, and Materials">🎨 NFT Showcase Gallery</button>
         <button class="btn" id="btnRefreshIndexer" title="Call EIP-4906 refreshMetadata() on-chain to force Blockscout/OpenSea cache invalidation">📡 Refresh Indexer (EIP-4906)</button>
       </div>
-
-      <div id="heistFeedback" style="display:none; padding:10px 14px; border-radius:8px; font-size:11px; background:#0f1d10; border:1px solid #3b82f6; margin-top:8px; line-height:1.5; color:#e2e8f0;"></div>
 
       <!-- Live On-Chain Quest Dispatch & Ambush Dossier -->
       <div class="quest-dossier" id="questDossier">
@@ -1092,38 +1107,8 @@
         <span style="font-size:9px; color:#8fa789; text-align:center;">This is the pure SVG rendered directly by Solidity on Robinhood Chain testnet</span>
       </div>
     </div>
-
-    <footer class="app-footer">
-      <div>🏹 HoodQuest (HQ) • Robinhood Chain Testnet (46630)</div>
-      <div style="margin-top:6px;">
-        <a href="/simulator.html" target="_blank">🧪 Open Developer Sandbox & 25-Year Time Machine ↗</a>
-      </div>
-    </footer>
   </div>
 
-<script>
-// Sandboxed iframe storage polyfill (required for on-chain Blockscout embeds)
-(function() {
-  function makeStorage() {
-    var s = {};
-    return {
-      getItem: function(k) { return k in s ? s[k] : null; },
-      setItem: function(k, v) { s[k] = String(v); },
-      removeItem: function(k) { delete s[k]; },
-      clear: function() { s = {}; },
-      get length() { return Object.keys(s).length; },
-      key: function(i) { return Object.keys(s)[i] || null; }
-    };
-  }
-  try { window.localStorage; } catch(_) {
-    try { Object.defineProperty(window, 'localStorage', { value: makeStorage(), configurable: true, writable: true }); } catch(_) {}
-  }
-  try { window.sessionStorage; } catch(_) {
-    try { Object.defineProperty(window, 'sessionStorage', { value: makeStorage(), configurable: true, writable: true }); } catch(_) {}
-  }
-})();
-</script>
-<script src="walletconnect.bundle.js"></script>
 <script>
 (() => {
   const canvas = document.getElementById('stage');
@@ -1372,7 +1357,31 @@
     { name: 'Royal Velvet', hex: '#5b264e', hi: '#8c3b77', sh: '#33122b' }
   ];
 
-  // --- Simulation State ---
+  const HAIR_COLORS = [
+    { name: 'Auburn', hex: '#7a3215', hi: '#d97736', sh: '#4a1b0b' },
+    { name: 'Chestnut Brown', hex: '#4a2f1b', hi: '#82522c', sh: '#2b1a0e' },
+    { name: 'Raven Black', hex: '#1e1b18', hi: '#3d3835', sh: '#0d0c0a' },
+    { name: 'Golden Flaxen', hex: '#b5893e', hi: '#e0b25e', sh: '#73541f' },
+    { name: 'Forest Copper', hex: '#963c1a', hi: '#c95828', sh: '#5c220c' },
+    { name: 'Silver Gray', hex: '#8a949e', hi: '#c2cbd4', sh: '#525c66' }
+  ];
+
+  const SKIN_TONES = [
+    { name: 'Fair Rose', base: '#fde8d4', sh: '#ecc195', blush: 'rgba(235, 87, 87, 0.35)', lip: '#d96565' },
+    { name: 'Warm Peach', base: '#fbd3b6', sh: '#dfa87e', blush: 'rgba(220, 80, 80, 0.32)', lip: '#c95b5b' },
+    { name: 'Olive Tan', base: '#e4b48b', sh: '#be895b', blush: 'rgba(195, 75, 75, 0.30)', lip: '#b75353' },
+    { name: 'Weathered Bronze', base: '#c78c58', sh: '#996538', blush: 'rgba(175, 65, 65, 0.28)', lip: '#a64d4d' },
+    { name: 'Deep Umber', base: '#8d5538', sh: '#663820', blush: 'rgba(140, 50, 50, 0.25)', lip: '#7a3838' }
+  ];
+
+  const HAT_PALETTES = [
+    { name: 'Lincoln Green', hex: '#2f6932', hi: '#489f4d', sh: '#1c421e' },
+    { name: 'Royal Burgundy', hex: '#831843', hi: '#be185d', sh: '#500724' },
+    { name: 'Midnight Charcoal', hex: '#1e293b', hi: '#334155', sh: '#0f172a' },
+    { name: 'Autumn Russet', hex: '#944b25', hi: '#c76633', sh: '#592911' },
+    { name: 'Tawny Gold', hex: '#b45309', hi: '#d97706', sh: '#78350f' }
+  ];
+
   const backdropProps = {
     target: true,
     campfire: true,
@@ -1383,17 +1392,25 @@
     feastBasket: false,
     campShelter: true
   };
-  let companionOverride = 'auto';
-  let companionStageOverride = 'auto';
-  let companionTraitOverride = 'auto';
-  let cloakOverride = 'auto';
-  let hairOverride = 'auto';
-  let skinOverride = 'auto';
-  let agingOverride = 'auto';
 
+  // --- Simulation State ---
   let simulationDay = 0; // 0 to 9125 (25 Years)
   let careState = 'cared'; // 'cared' or 'dormant'
   let seasonOverride = 'auto'; // 'auto', 'spring', 'summer', 'autumn', 'winter'
+  let companionOverride = 'auto'; // 'auto', 'Camp Hound', 'Hunting Falcon', 'Barn Owl', 'Sherwood Cat', 'None'
+  let companionStageOverride = 'auto'; // 'auto', 1, 3, 5
+  let companionTraitOverride = 'auto'; // 'auto' or specific breed/coat
+  window.companionOverride = companionOverride;
+  window.companionStageOverride = companionStageOverride;
+  window.companionTraitOverride = companionTraitOverride;
+  let cloakOverride = 'auto';
+  let hairOverride = 'auto';
+  let skinOverride = 'auto';
+  let agingOverride = 'auto'; // 'auto', 'silver', 'salt_pepper', 'retained'
+  window.cloakOverride = cloakOverride;
+  window.hairOverride = hairOverride;
+  window.skinOverride = skinOverride;
+  window.agingOverride = agingOverride;
   let timeMode = 0; // 0 = day, 1 = sunset, 2 = night
   let currentSeed = 1;
   let autoPlayTimer = null;
@@ -1440,7 +1457,7 @@
     const seasonIdx = Math.floor((days % 365) / 91.25);
     const seasonList = ['Spring', 'Summer', 'Autumn', 'Winter'];
     const autoSeason = seasonList[Math.min(seasonIdx, 3)];
-    const season = seasonOverride !== 'auto' ? (seasonOverride.charAt(0).toUpperCase() + seasonOverride.slice(1)) : autoSeason;
+    const activeSeason = seasonOverride === 'auto' ? autoSeason : seasonOverride;
 
     return {
       stageNum,
@@ -1448,8 +1465,9 @@
       title,
       years,
       days,
-      season,
-      isDormant
+      season: activeSeason,
+      isDormant,
+      hasWhiteStag: (stageNum === 5 && years >= 5)
     };
   }
 
@@ -1459,14 +1477,24 @@
     const arch = ARCHETYPES[archIdx >= 0 ? archIdx : 0];
     const name = arch.names[Math.floor(rng() * arch.names.length)];
     const cloak = CLOAK_PALETTES[Math.floor(rng() * CLOAK_PALETTES.length)];
+    const skin = SKIN_TONES[Math.floor(rng() * SKIN_TONES.length)];
+    const hair = HAIR_COLORS[Math.floor(rng() * HAIR_COLORS.length)];
+    const hatColor = HAT_PALETTES[Math.floor(rng() * HAT_PALETTES.length)];
     const compIdx = Math.floor(rng() * COMPANIONS.length);
     const companion = COMPANIONS[compIdx];
+
+    // Folklore Paper-Doll Variants: Beggar disguise & Change Cup (for seeds >= 100)
+    const isBeggar = (arch.id === 'friar' || arch.id === 'archer') && (seed >= 100 && (seed % 3) === 0);
 
     return {
       seed,
       archetype: arch,
       name,
       cloak,
+      skin,
+      hair,
+      hatColor,
+      isBeggar,
       companion,
       rng
     };
@@ -1476,18 +1504,12 @@
     if (!currentToken) return;
     const info = getStageInfo(simulationDay, careState === 'dormant');
     
-    const charNameEl = document.getElementById('charName');
-    if (charNameEl) charNameEl.innerText = currentToken.name;
-    const charMetaEl = document.getElementById('charMeta');
-    if (charMetaEl) charMetaEl.innerText = `${currentToken.archetype.title} • Stage ${info.stageNum}: ${info.title} • ${info.season}`;
+    document.getElementById('charName').innerText = currentToken.name;
+    document.getElementById('charMeta').innerText = `${currentToken.archetype.title} • Stage ${info.stageNum}: ${info.title} • ${info.season}`;
     
     const yearStr = info.years > 0 ? `Yr ${info.years}, ` : '';
-    const ageEl = document.getElementById('ageDisplay');
-    if (ageEl) ageEl.innerText = `${yearStr}Day ${simulationDay} • ${info.season} (Stage ${info.stageNum})`;
-    const sliderEl = document.getElementById('timeSlider');
-    if (sliderEl) sliderEl.value = simulationDay;
-
-    if (typeof updateRosterUI === 'function') updateRosterUI();
+    document.getElementById('ageDisplay').innerText = `${yearStr}Day ${simulationDay} • ${info.season} (Stage ${info.stageNum})`;
+    document.getElementById('timeSlider').value = simulationDay;
 
     const btnArchery = document.getElementById('btnArchery');
     if (btnArchery && currentToken.archetype) {
@@ -4952,7 +4974,7 @@
   window.showToast = showToast;
 
 
-  document.getElementById('btnInteract')?.addEventListener('click', () => {
+  document.getElementById('btnInteract').addEventListener('click', () => {
     initAudio();
     if (careState === 'dormant') {
       careState = 'cared';
@@ -4968,13 +4990,13 @@
     (window.showToast || console.log)(currentToken.archetype.actionText);
   });
 
-  document.getElementById('btnFeed')?.addEventListener('click', () => {
+  document.getElementById('btnFeed').addEventListener('click', () => {
     initAudio();
     playSound('munch');
     (window.showToast || console.log)('🍎 Fed roasted forest berries to companion!');
   });
 
-  document.getElementById('btnCampfire')?.addEventListener('click', () => {
+  document.getElementById('btnCampfire').addEventListener('click', () => {
     initAudio();
     campfire.intensity = 1.6;
     setTimeout(() => { campfire.intensity = 1.0; }, 1200);
@@ -4982,7 +5004,7 @@
     (window.showToast || console.log)('🔥 Campfire stoked with dry pine logs!');
   });
 
-  document.getElementById('btnArchery')?.addEventListener('click', () => {
+  document.getElementById('btnArchery').addEventListener('click', () => {
     shootAt(targets[0].x, targets[0].y);
   });
 
@@ -5016,7 +5038,7 @@
         }
         initAudio();
         playSound('purr');
-        (window.showToast || console.log)(`🐾 Petted ${activePet}! (Camp Affection ❤️)`);
+        (window.showToast || console.log)(`🐾 Petted ${activePet}! (+3 Bond Strengthened)`);
       }
     } else {
       shootAt(clickX, clickY);
@@ -5025,7 +5047,7 @@
 
   // Time Slider
   const slider = document.getElementById('timeSlider');
-  slider?.addEventListener('input', (e) => {
+  slider.addEventListener('input', (e) => {
     simulationDay = parseInt(e.target.value, 10);
     updateHUD();
   });
@@ -5036,12 +5058,12 @@
     updateHUD();
     (window.showToast || console.log)(`⏩ Fast-forwarded +${n} Days!`);
   };
-  document.getElementById('warp1d')?.addEventListener('click', () => addDays(1));
-  document.getElementById('warp7d')?.addEventListener('click', () => addDays(7));
-  document.getElementById('warp30d')?.addEventListener('click', () => addDays(30));
-  document.getElementById('warp365d')?.addEventListener('click', () => addDays(365));
-  document.getElementById('warp5y')?.addEventListener('click', () => addDays(365 * 5));
-  document.getElementById('warp25y')?.addEventListener('click', () => {
+  document.getElementById('warp1d').addEventListener('click', () => addDays(1));
+  document.getElementById('warp7d').addEventListener('click', () => addDays(7));
+  document.getElementById('warp30d').addEventListener('click', () => addDays(30));
+  document.getElementById('warp365d').addEventListener('click', () => addDays(365));
+  document.getElementById('warp5y').addEventListener('click', () => addDays(365 * 5));
+  document.getElementById('warp25y').addEventListener('click', () => {
     simulationDay = 9125;
     updateHUD();
     (window.showToast || console.log)('👑 Reached Max Year 25 (Ancient Legend)!');
@@ -5049,7 +5071,7 @@
 
   // Auto-Play
   const btnPlay = document.getElementById('warpPlay');
-  btnPlay?.addEventListener('click', () => {
+  btnPlay.addEventListener('click', () => {
     if (autoPlayTimer) {
       clearInterval(autoPlayTimer);
       autoPlayTimer = null;
@@ -5070,13 +5092,13 @@
   });
 
   // Care Mode Toggles
-  document.getElementById('pillCared')?.addEventListener('click', () => {
+  document.getElementById('pillCared').addEventListener('click', () => {
     careState = 'cared';
     document.getElementById('pillCared').classList.add('active');
     document.getElementById('pillDormant').classList.remove('active');
     updateHUD();
   });
-  document.getElementById('pillDormant')?.addEventListener('click', () => {
+  document.getElementById('pillDormant').addEventListener('click', () => {
     careState = 'dormant';
     document.getElementById('pillDormant').classList.add('active');
     document.getElementById('pillCared').classList.remove('active');
@@ -5093,7 +5115,7 @@
     sWinter: 'Winter'
   };
   Object.keys(seasonBtns).forEach(id => {
-    document.getElementById(id)?.addEventListener('click', (e) => {
+    document.getElementById(id).addEventListener('click', (e) => {
       seasonOverride = seasonBtns[id];
       Object.keys(seasonBtns).forEach(k => document.getElementById(k).classList.remove('active'));
       e.target.classList.add('active');
@@ -5392,24 +5414,24 @@
     });
   });
 
-  document.getElementById('btnRandomSeed')?.addEventListener('click', () => {
+  document.getElementById('btnRandomSeed').addEventListener('click', () => {
     const randomSeed = Math.floor(Math.random() * 9999) + 1;
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
     setSeed(randomSeed);
   });
 
   // Time & Sound Toggles
-  document.getElementById('btnSound')?.addEventListener('click', (e) => {
+  document.getElementById('btnSound').addEventListener('click', (e) => {
     soundEnabled = !soundEnabled;
     e.target.innerText = soundEnabled ? '🔊' : '🔇';
   });
 
-  document.getElementById('btnTimeMode')?.addEventListener('click', (e) => {
+  document.getElementById('btnTimeMode').addEventListener('click', (e) => {
     timeMode = (timeMode + 1) % 3;
     e.target.innerText = timeMode === 0 ? '☀️' : (timeMode === 1 ? '🌅' : '🌙');
   });
 
-  document.getElementById('utcBadge')?.addEventListener('click', () => {
+  document.getElementById('utcBadge').addEventListener('click', () => {
     (window.showToast || console.log)('⏰ Universal Clock: Resets for all players at 00:00 UTC!');
   });
 
@@ -5419,26 +5441,7 @@
   const walletInput = document.getElementById('walletInput');
   const heistFeedback = document.getElementById('heistFeedback');
 
-  function getOutfitterFeedbackEl() {
-    let el = document.getElementById('outfitterFeedback');
-    if (!el) {
-      const parent = document.querySelector('.outfitter-box') || document.querySelector('.outfitter-grid')?.parentElement;
-      if (parent) {
-        el = document.createElement('div');
-        el.id = 'outfitterFeedback';
-        el.style.cssText = 'display:none; padding:8px 12px; margin-top:8px; border-radius:6px; font-size:11px; line-height:1.4; background:#0f1d10; border:1px solid #22c55e; color:#e2e8f0;';
-        parent.appendChild(el);
-      }
-    }
-    const outfitterHdr = document.querySelector('.outfitter-header span');
-    if (outfitterHdr && !outfitterHdr.innerText.includes('Requires only Gold')) {
-      outfitterHdr.innerHTML = '🏪 Sherwood Camp Outfitter <span style="font-size:10px; color:#8fa789; font-weight:normal;">(Requires only Gold Sovereigns • No wood or materials needed)</span>';
-    }
-    return el;
-  }
-
   function renderLootGrid() {
-    getOutfitterFeedbackEl();
     lootGrid.innerHTML = '';
     const goldCount = walletLootBalances[1] || 0;
     const goldDisplay = document.getElementById('goldBalanceDisplay');
@@ -5454,13 +5457,13 @@
     const btnHorn = document.getElementById('btnCraftHorn');
     const btnBow = document.getElementById('btnCraftBow');
     const btnArrow = document.getElementById('btnCraftArrow');
-    if (btnFeast) btnFeast.classList.toggle('insufficient-gold', goldCount < 3);
-    if (btnMead) btnMead.classList.toggle('insufficient-gold', goldCount < 5);
-    if (btnElixir) btnElixir.classList.toggle('insufficient-gold', goldCount < 15);
-    if (btnCloak) btnCloak.classList.toggle('insufficient-gold', goldCount < 25);
-    if (btnHorn) btnHorn.classList.toggle('insufficient-gold', goldCount < 35);
-    if (btnBow) btnBow.classList.toggle('insufficient-gold', goldCount < 50);
-    if (btnArrow) btnArrow.classList.toggle('insufficient-gold', goldCount < 100);
+    if (btnFeast) btnFeast.disabled = goldCount < 3;
+    if (btnMead) btnMead.disabled = goldCount < 5;
+    if (btnElixir) btnElixir.disabled = goldCount < 15;
+    if (btnCloak) btnCloak.disabled = goldCount < 25;
+    if (btnHorn) btnHorn.disabled = goldCount < 35;
+    if (btnBow) btnBow.disabled = goldCount < 50;
+    if (btnArrow) btnArrow.disabled = goldCount < 100;
 
     LOOT_DEFS.forEach(item => {
       const count = walletLootBalances[item.id] || 0;
@@ -5485,7 +5488,6 @@
         <div class="loot-card-rarity ${rarityClass}">${item.rarity}</div>
         <div class="loot-card-count">Held: <strong>${count}</strong></div>
         <div class="loot-card-status">${isLocked ? '🔒 Unowned' : (isEquipped ? '✓ Equipped' : '○ Unequipped')}</div>
-        ${(!isLocked && item.id === 5) ? `<div style="margin-top:6px;"><button type="button" class="btn" style="font-size:10px; padding:3px 8px; background:#6b21a8; border:1px solid #c084fc; color:#fff; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="event.stopPropagation(); window.useElixirForOutlaw(window.currentSeed || 1);">🧪 Drink (+5 ⚡ Stamina)</button></div>` : ''}
       `;
       card.addEventListener('click', () => {
         if (isLocked) {
@@ -5509,42 +5511,6 @@
     });
   }
 
-  // --- Swappable Infrastructure Config (Non-load-bearing & Configurable) ---
-  const DEFAULT_RELAY_URL = 'wss://relay.walletconnect.org';
-  const DEFAULT_PROJECT_ID = '3a8170812b534d0ff9d794f19a901d64';
-  const DEFAULT_RPC_URL = 'https://rpc.testnet.chain.robinhood.com';
-
-  function getRelayUrl() {
-    try {
-      const urlParam = new URLSearchParams(window.location.search).get('relay');
-      if (urlParam) return urlParam.trim();
-      const stored = localStorage.getItem('hoodquest_wc_relay');
-      if (stored) return stored.trim();
-    } catch(_) {}
-    return (window.WC_RELAY_URL && String(window.WC_RELAY_URL).trim()) || DEFAULT_RELAY_URL;
-  }
-
-  function getProjectId() {
-    try {
-      const urlParam = new URLSearchParams(window.location.search).get('projectId');
-      if (urlParam !== null) return urlParam.trim();
-      const stored = localStorage.getItem('hoodquest_wc_project_id');
-      if (stored !== null) return stored.trim();
-    } catch(_) {}
-    if (window.WC_PROJECT_ID !== undefined) return String(window.WC_PROJECT_ID).trim();
-    return DEFAULT_PROJECT_ID;
-  }
-
-  function getActiveRpcUrl() {
-    try {
-      const urlParam = new URLSearchParams(window.location.search).get('rpc');
-      if (urlParam) return urlParam.trim();
-      const stored = localStorage.getItem('hoodquest_rpc_url');
-      if (stored) return stored.trim();
-    } catch(_) {}
-    return (window.RH_RPC_URL && String(window.RH_RPC_URL).trim()) || DEFAULT_RPC_URL;
-  }
-
   async function fetchWalletLoot(address) {
     if (!address || !address.startsWith('0x')) return;
     lootSyncStatus.innerText = '🔄 Querying Robinhood Testnet...';
@@ -5561,7 +5527,7 @@
       const ids = [1, 2, 3, 4, 5, 6, 7, 8].map(n => n.toString(16).padStart(64, '0')).join('');
       const calldata = '0x' + selector + off1 + off2 + len + addrs + len + ids;
 
-      const res = await fetch(getActiveRpcUrl(), {
+      const res = await fetch(RH_RPC_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -5601,685 +5567,65 @@
     }
   }
 
-  // --- Real WalletConnect v2 Core Engine ---
-  let wcClient = null;
-  let wcSession = null;
-
-  async function startWalletConnect() {
+  // Connect Wallet Handler
+  document.getElementById('btnConnectWallet').addEventListener('click', async () => {
     initAudio();
-    playSound('coin');
-    const modal = document.getElementById('walletConnectModal');
-    if (!modal) return;
-
-    modal.style.display = 'flex';
-    document.getElementById('wcStatusText').innerText = '⏳ Connecting to WalletConnect relay...';
-    document.getElementById('wcQrBox').innerHTML = '<div style="color:#64748b; padding:40px 10px; font-size:12px;">Generating QR Code...</div>';
-
-    // Populate swappable config drawer inputs
-    const relayInput = document.getElementById('wcCfgRelay');
-    const pidInput = document.getElementById('wcCfgProjectId');
-    const rpcInput = document.getElementById('wcCfgRpc');
-    if (relayInput) relayInput.value = getRelayUrl();
-    if (pidInput) pidInput.value = getProjectId();
-    if (rpcInput) rpcInput.value = getActiveRpcUrl();
-
-    try {
-      if (!window.SignClient) {
-        throw new Error('WalletConnect module not loaded yet');
-      }
-
-      let originUrl = 'https://explorer.testnet.chain.robinhood.com';
+    if (window.ethereum) {
       try {
-        if (window.location && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file')) {
-          originUrl = window.location.origin;
-        }
-      } catch(_) {}
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts.length > 0) {
+          connectedUserAddress = accounts[0];
+          walletInput.value = connectedUserAddress;
+          playSound('coin');
+          (window.showToast || console.log)(`🦊 Connected: ${connectedUserAddress.slice(0, 6)}...${connectedUserAddress.slice(-4)}`);
 
-      if (!wcClient) {
-        const relay = getRelayUrl();
-        const pid = getProjectId();
-        const clientOptions = {
-          metadata: {
-            name: 'HoodQuest',
-            description: 'Robinhood Chain Living Simulation',
-            url: originUrl,
-            icons: ['https://explorer.testnet.chain.robinhood.com/favicon.ico']
-          }
-        };
-        // Swappable endpoint: use configured relay URL
-        if (relay) {
-          clientOptions.relayUrl = relay;
-        }
-        // Non-load-bearing: only supply project ID if provided (self-hosted relays do not require one)
-        if (pid) {
-          clientOptions.projectId = pid;
-        }
-        wcClient = await window.SignClient.init(clientOptions);
-      }
-
-      const { uri, approval } = await wcClient.connect({
-        optionalNamespaces: {
-          eip155: {
-            methods: ['eth_sendTransaction', 'personal_sign'],
-            chains: ['eip155:46630', 'eip155:1'],
-            events: ['chainChanged', 'accountsChanged']
-          }
-        }
-      });
-
-      if (uri) {
-        const qrDataUrl = await window.QRCode.toDataURL(uri, { width: 220, margin: 1 });
-        document.getElementById('wcQrBox').innerHTML = `
-          <img src="${qrDataUrl}" style="border-radius:8px; display:block; margin:0 auto; width:220px; height:220px;" alt="WalletConnect QR Code" />
-          <div style="font-size:11px; color:#94a3b8; margin-top:8px; text-align:center;">
-            📲 Point camera or scan in <strong>MetaMask Mobile</strong>, <strong>Rainbow</strong>, or <strong>Robinhood Wallet</strong>
-          </div>
-        `;
-        document.getElementById('wcStatusText').innerText = '📲 Scan with your mobile wallet app';
-        
-        const copyBtn = document.getElementById('btnCopyWcUri');
-        if (copyBtn) {
-          copyBtn.onclick = () => {
-            let copied = false;
-            try {
-              const ta = document.createElement('textarea');
-              ta.value = uri;
-              ta.style.position = 'fixed';
-              ta.style.left = '-9999px';
-              document.body.appendChild(ta);
-              ta.focus();
-              ta.select();
-              copied = document.execCommand('copy');
-              document.body.removeChild(ta);
-            } catch(_) {}
-            if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(uri).catch(() => {});
-            }
-            copyBtn.innerText = '✅ Copied!';
-            copyBtn.style.background = '#15803d';
-            copyBtn.style.borderColor = '#22c55e';
-            setTimeout(() => {
-              copyBtn.innerText = '📋 Copy Pairing URI';
-              copyBtn.style.background = '#1e293b';
-              copyBtn.style.borderColor = '#475569';
-            }, 2500);
-            (window.showToast || console.log)('📋 Copied pairing URI! (Paste in MetaMask Mobile QR scanner)');
-          };
-        }
-      }
-
-      // Await user approval on phone
-      wcSession = await approval();
-      let detectedAddress = null;
-      if (wcSession && wcSession.namespaces) {
-        for (const nsKey in wcSession.namespaces) {
-          const ns = wcSession.namespaces[nsKey];
-          if (ns.accounts && ns.accounts.length > 0) {
-            for (const acc of ns.accounts) {
-              const parts = acc.split(':');
-              if (parts.length >= 3 && parts[2].startsWith('0x')) {
-                detectedAddress = parts[2];
-                break;
-              }
-            }
-          }
-          if (detectedAddress) break;
-        }
-      }
-
-      if (detectedAddress) {
-        connectedUserAddress = detectedAddress;
-        walletInput.value = connectedUserAddress;
-        modal.style.display = 'none';
-        playSound('fanfare');
-        (window.showToast || console.log)(`📱 WalletConnect Connected: ${connectedUserAddress.slice(0, 6)}...${connectedUserAddress.slice(-4)}`);
-        
-        const wcBtn = document.getElementById('btnWalletConnect');
-        if (wcBtn) {
-          wcBtn.innerText = `📱 ${connectedUserAddress.slice(0, 6)}...${connectedUserAddress.slice(-4)}`;
-          wcBtn.style.background = '#15803d';
-          wcBtn.style.borderColor = '#22c55e';
-        }
-
-        await fetchWalletLoot(connectedUserAddress);
-        await fetchUserOwnedOutlaws(connectedUserAddress);
-
-        const logBox = document.getElementById('questLogBox');
-        if (userOwnedOutlaws.length === 0 && logBox) {
-          logBox.innerHTML = `
-            <div class="quest-log-entry" style="border-left-color:#ffd700; background:#182012;">
-              <span class="log-time">🌲 Welcome Outlaw:</span>
-              <span>Wallet connected! You have no Sherwood Outlaws yet. Click <strong>"🎲 Mint Outlaw NFT"</strong> below to recruit your first archer and start ambushing royal carriages!</span>
-            </div>
-          `;
-        }
-      }
-    } catch(err) {
-      console.error('WalletConnect error:', err);
-      document.getElementById('wcStatusText').innerText = '⚠️ Connection cancelled or failed: ' + err.message;
-    }
-  }
-  window.startWalletConnect = startWalletConnect;
-  document.getElementById('btnWalletConnect')?.addEventListener('click', startWalletConnect);
-
-  // Wire up configuration buttons
-  document.getElementById('btnSaveWcConfig')?.addEventListener('click', async () => {
-    const newRelay = (document.getElementById('wcCfgRelay')?.value || '').trim();
-    const newPid = (document.getElementById('wcCfgProjectId')?.value || '').trim();
-    const newRpc = (document.getElementById('wcCfgRpc')?.value || '').trim();
-
-    try {
-      if (newRelay) localStorage.setItem('hoodquest_wc_relay', newRelay);
-      else localStorage.removeItem('hoodquest_wc_relay');
-
-      if (newPid) localStorage.setItem('hoodquest_wc_project_id', newPid);
-      else localStorage.setItem('hoodquest_wc_project_id', ''); // explicitly empty
-
-      if (newRpc) localStorage.setItem('hoodquest_rpc_url', newRpc);
-      else localStorage.removeItem('hoodquest_rpc_url');
-    } catch(_) {}
-
-    if (wcClient) {
-      try {
-        if (wcSession) await wcClient.disconnect({ topic: wcSession.topic, reason: { code: 6000, message: 'Reconfiguring relay' } });
-      } catch(_) {}
-      wcClient = null;
-      wcSession = null;
-    }
-    (window.showToast || console.log)('⚙️ Endpoints updated! Reconnecting...');
-    startWalletConnect();
-  });
-
-  document.getElementById('btnResetWcConfig')?.addEventListener('click', () => {
-    try {
-      localStorage.removeItem('hoodquest_wc_relay');
-      localStorage.removeItem('hoodquest_wc_project_id');
-      localStorage.removeItem('hoodquest_rpc_url');
-    } catch(_) {}
-    const relayInput = document.getElementById('wcCfgRelay');
-    const pidInput = document.getElementById('wcCfgProjectId');
-    const rpcInput = document.getElementById('wcCfgRpc');
-    if (relayInput) relayInput.value = DEFAULT_RELAY_URL;
-    if (pidInput) pidInput.value = DEFAULT_PROJECT_ID;
-    if (rpcInput) rpcInput.value = DEFAULT_RPC_URL;
-    if (wcClient) {
-      try {
-        if (wcSession) wcClient.disconnect({ topic: wcSession.topic, reason: { code: 6000, message: 'Resetting' } });
-      } catch(_) {}
-      wcClient = null;
-      wcSession = null;
-    }
-    (window.showToast || console.log)('↺ Reset to default endpoints');
-    startWalletConnect();
-  });
-
-  // ---- Wallet Discovery & Dynamic Multi-Wallet Selector (EIP-6963 + window.ethereum) ----
-  // Matches rh-airdrop pattern: senses all announced browser extensions (MetaMask, Compass, Phantom, etc.),
-  // displays dedicated buttons for each wallet plus Phone Wallet · WalletConnect, and lets the user choose explicitly.
-  const discoveredWallets = new Map();
-  let activeInjectedProvider = null;
-  let activeWalletName = '';
-
-  function getWalletEmoji(name = '') {
-    const n = (name || '').toLowerCase();
-    if (n.includes('metamask')) return '🦊';
-    if (n.includes('compass')) return '🧭';
-    if (n.includes('phantom')) return '👻';
-    if (n.includes('coinbase')) return '🔵';
-    if (n.includes('rabby')) return '🐰';
-    if (n.includes('brave')) return '🦁';
-    if (n.includes('rainbow')) return '🌈';
-    if (n.includes('frame')) return '🖥️';
-    return '👛';
-  }
-
-  function registerDiscoveredWallet(key, info, provider) {
-    if (!info || !provider) return;
-    const name = info.name || 'Browser Wallet';
-    discoveredWallets.set(key, { info: { ...info, name }, provider });
-    renderWalletChoice();
-  }
-
-  // 1. EIP-6963 Standard Discovery Event Listener
-  window.addEventListener('eip6963:announceProvider', (event) => {
-    try {
-      const d = event && event.detail;
-      if (d && d.info && d.provider) {
-        const key = d.info.uuid || d.info.rdns || d.info.name;
-        registerDiscoveredWallet(key, d.info, d.provider);
-      }
-    } catch (_) {}
-  });
-  try {
-    window.dispatchEvent(new Event('eip6963:requestProvider'));
-  } catch (_) {}
-
-  // 2. Scan window.ethereum and window.ethereum.providers array
-  function scanWindowEthereum() {
-    try {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        if (Array.isArray(window.ethereum.providers)) {
-          window.ethereum.providers.forEach((p, idx) => {
-            if (p.isCompass) {
-              registerDiscoveredWallet('compass', { name: 'Compass Wallet', rdns: 'io.compass' }, p);
-            } else if (p.isMetaMask && !p.isCompass && !p.isPhantom) {
-              registerDiscoveredWallet('metamask', { name: 'MetaMask', rdns: 'io.metamask' }, p);
-            } else if (p.isPhantom) {
-              registerDiscoveredWallet('phantom', { name: 'Phantom', rdns: 'app.phantom' }, p);
-            } else if (p.isCoinbaseWallet) {
-              registerDiscoveredWallet('coinbase', { name: 'Coinbase Wallet', rdns: 'com.coinbase.wallet' }, p);
-            } else if (p.isRabby) {
-              registerDiscoveredWallet('rabby', { name: 'Rabby', rdns: 'io.rabby' }, p);
-            } else {
-              registerDiscoveredWallet(`injected_${idx}`, { name: p.name || 'Extension Wallet', rdns: `injected.${idx}` }, p);
-            }
-          });
-        } else {
-          const p = window.ethereum;
-          if (p.isCompass) {
-            registerDiscoveredWallet('compass', { name: 'Compass Wallet', rdns: 'io.compass' }, p);
-          } else if (p.isMetaMask) {
-            registerDiscoveredWallet('metamask', { name: 'MetaMask', rdns: 'io.metamask' }, p);
-          } else {
-            registerDiscoveredWallet('ethereum', { name: 'Injected Wallet', rdns: 'window.ethereum' }, p);
-          }
-        }
-      }
-      try {
-        if (window.parent && window.parent !== window && window.parent.ethereum) {
-          registerDiscoveredWallet('parent_eth', { name: 'Parent Frame Wallet', rdns: 'parent.ethereum' }, window.parent.ethereum);
-        }
-      } catch(_) {}
-    } catch (_) {}
-  }
-  scanWindowEthereum();
-  setTimeout(scanWindowEthereum, 300);
-  setTimeout(scanWindowEthereum, 1000);
-
-  function getInjectedProvider() {
-    if (activeInjectedProvider) return activeInjectedProvider;
-    for (const [_, w] of discoveredWallets) {
-      if ((w.info.name || '').toLowerCase().includes('metamask')) return w.provider;
-    }
-    if (discoveredWallets.size > 0) {
-      return [...discoveredWallets.values()][0].provider;
-    }
-    if (typeof window !== 'undefined' && window.ethereum) {
-      if (Array.isArray(window.ethereum.providers)) {
-        const mm = window.ethereum.providers.find(p => p.isMetaMask && !p.isCompass && !p.isPhantom);
-        if (mm) return mm;
-        return window.ethereum.providers[0];
-      }
-      return window.ethereum;
-    }
-    return null;
-  }
-
-  async function connectWithInjected(provider, name) {
-    initAudio();
-    if (!provider) {
-      (window.showToast || console.log)('⚠️ Wallet provider not available');
-      return;
-    }
-    try {
-      const accounts = await provider.request({ method: 'eth_requestAccounts' });
-      if (accounts && accounts.length > 0) {
-        const userAddr = accounts[0];
-        activeInjectedProvider = provider;
-        activeWalletName = name || 'Injected Wallet';
-        playSound('coin');
-        (window.showToast || console.log)(`✅ Connected ${activeWalletName}: ${userAddr.slice(0, 6)}...${userAddr.slice(-4)}`);
-        await window.setConnectedWallet(userAddr);
-
-        // Switch or prompt to add Robinhood Chain Testnet
-        try {
-          await provider.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: RH_CHAIN_ID_HEX }]
-          });
-        } catch (switchError) {
-          if (switchError.code === 4902) {
-            try {
-              await provider.request({
+          // Attempt switch to Robinhood Testnet
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: RH_CHAIN_ID_HEX }]
+            });
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
                   chainId: RH_CHAIN_ID_HEX,
                   chainName: 'Robinhood Chain Testnet',
-                  rpcUrls: [getActiveRpcUrl()],
+                  rpcUrls: [RH_RPC_URL],
                   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
                   blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
                 }]
               });
-            } catch (_) {}
+            }
           }
+          await fetchWalletLoot(connectedUserAddress);
+          await fetchUserOwnedOutlaws(connectedUserAddress);
         }
-
-        // Keep session responsive to account or chain changes in this wallet
-        if (provider.on) {
-          provider.on('accountsChanged', async (accts) => {
-            if (accts && accts.length > 0) {
-              await window.setConnectedWallet(accts[0]);
-              renderWalletChoice();
-            } else {
-              disconnectWallet();
-            }
-          });
-          provider.on('chainChanged', () => {
-            if (connectedUserAddress) {
-              fetchUserOwnedOutlaws(connectedUserAddress);
-              fetchWalletLoot(connectedUserAddress);
-            }
-          });
-        }
-        renderWalletChoice();
+      } catch(err) {
+        (window.showToast || console.log)('⚠️ Wallet connection cancelled or failed');
       }
-    } catch (err) {
-      playSound('hit');
-      (window.showToast || console.log)('⚠️ Wallet connection cancelled: ' + (err.message || err));
-    }
-  }
-
-  function disconnectWallet() {
-    activeInjectedProvider = null;
-    activeWalletName = '';
-    connectedUserAddress = '';
-    frameConnected = false;
-    frameAddress = '';
-    if (walletInput) walletInput.value = '';
-    if (wcClient && wcSession) {
-      try { wcClient.disconnect({ topic: wcSession.topic, reason: { code: 6000, message: 'User disconnected' } }); } catch(_) {}
-      wcClient = null;
-      wcSession = null;
-    }
-    updateRosterUI();
-    updateOwnedOutlawsUI();
-    renderWalletChoice();
-    (window.showToast || console.log)('🔌 Disconnected. Choose a wallet to connect.');
-  }
-  window.disconnectWallet = disconnectWallet;
-
-  // ---- Frame Wallet · Loopback JSON-RPC Provider (127.0.0.1:1248) ----
-  // Frame (frame.sh) is a desktop wallet app that exposes a system-wide JSON-RPC
-  // at http://127.0.0.1:1248. This works from sandboxed data: iframes because:
-  // - 127.0.0.1 is "potentially trustworthy" (W3C spec) — exempt from mixed-content
-  // - Only needs fetch() — no extension injection, no popups, no navigation
-  // - Frame sends Access-Control-Allow-Origin: * — CORS passes with Origin: null
-  const FRAME_RPC_URL = 'http://127.0.0.1:1248';
-  let frameConnected = false;
-  let frameAddress = '';
-
-  // Frame provider object — mimics EIP-1193 provider.request() interface
-  // so sendOnchainTx can use it interchangeably with injected providers
-  const frameProvider = {
-    isFrame: true,
-    _rpcId: 1,
-    async request({ method, params }) {
-      const resp = await fetch(FRAME_RPC_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: this._rpcId++, method, params: params || [] })
-      });
-      if (!resp.ok) throw new Error(`Frame RPC error: HTTP ${resp.status}`);
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message || 'Frame RPC error');
-      return data.result;
-    }
-  };
-
-  async function probeFrameAvailable() {
-    try {
-      const resp = await fetch(FRAME_RPC_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 0, method: 'web3_clientVersion', params: [] })
-      });
-      return resp.ok;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  async function connectFrameWallet() {
-    initAudio();
-    (window.showToast || console.log)('🖥️ Connecting to Frame (127.0.0.1:1248)...');
-    try {
-      const accounts = await frameProvider.request({ method: 'eth_requestAccounts' });
-      if (!accounts || accounts.length === 0) {
-        throw new Error('Frame returned no accounts — approve the request in Frame');
-      }
-      const addr = accounts[0];
-      frameConnected = true;
-      frameAddress = addr;
-      activeInjectedProvider = frameProvider;
-      activeWalletName = 'Frame';
-      playSound('coin');
-      (window.showToast || console.log)(`✅ Frame Connected: ${addr.slice(0, 6)}...${addr.slice(-4)}`);
-      await window.setConnectedWallet(addr);
-
-      // Ask Frame to switch to Robinhood Chain Testnet
-      try {
-        await frameProvider.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: RH_CHAIN_ID_HEX }]
-        });
-      } catch (switchErr) {
-        // Frame may not support wallet_addEthereumChain but try
-        try {
-          await frameProvider.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: RH_CHAIN_ID_HEX,
-              chainName: 'Robinhood Chain Testnet',
-              rpcUrls: [getActiveRpcUrl()],
-              nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-              blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
-            }]
-          });
-        } catch (_) {}
-      }
-      renderWalletChoice();
-    } catch (err) {
-      frameConnected = false;
-      frameAddress = '';
-      playSound('hit');
-      const msg = (err.message || '').toLowerCase();
-      if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('econnrefused')) {
-        (window.showToast || console.log)('⚠️ Frame not detected on localhost:1248. Is Frame running? Install from frame.sh');
-      } else {
-        (window.showToast || console.log)('⚠️ Frame connection failed: ' + (err.message || err));
-      }
-    }
-  }
-  window.connectFrameWallet = connectFrameWallet;
-
-  // Dynamic Multi-Wallet Selector UI renderer
-  function renderWalletChoice() {
-    const bar = document.querySelector('.wallet-bar');
-    if (!bar) return;
-
-    let cluster = document.getElementById('walletButtonsCluster');
-    if (!cluster) {
-      cluster = document.createElement('span');
-      cluster.id = 'walletButtonsCluster';
-      cluster.style.display = 'inline-flex';
-      cluster.style.gap = '6px';
-      cluster.style.flexWrap = 'wrap';
-      cluster.style.alignItems = 'center';
-
-      const oldMm = document.getElementById('btnConnectWallet');
-      const oldWc = document.getElementById('btnWalletConnect');
-      const refreshBtn = document.getElementById('btnRefreshLoot');
-
-      if (oldMm) oldMm.remove();
-      if (oldWc) oldWc.remove();
-
-      if (refreshBtn) {
-        bar.insertBefore(cluster, refreshBtn);
-      } else {
-        bar.appendChild(cluster);
-      }
-    }
-
-    cluster.innerHTML = '';
-
-    if (connectedUserAddress) {
-      const shortAddr = connectedUserAddress.slice(0, 6) + '...' + connectedUserAddress.slice(-4);
-      const emoji = activeWalletName ? getWalletEmoji(activeWalletName) : (wcSession ? '📱' : '👛');
-      const label = activeWalletName || (wcSession ? 'Phone Wallet' : 'Connected');
-
-      const pill = document.createElement('span');
-      pill.className = 'btn';
-      pill.style.background = '#15803d';
-      pill.style.borderColor = '#22c55e';
-      pill.style.color = '#fff';
-      pill.style.cursor = 'default';
-      pill.style.fontWeight = 'bold';
-      pill.textContent = `${emoji} ${shortAddr} (${label})`;
-      cluster.appendChild(pill);
-
-      const disBtn = document.createElement('button');
-      disBtn.className = 'btn';
-      disBtn.style.background = '#334155';
-      disBtn.style.borderColor = '#64748b';
-      disBtn.style.color = '#cbd5e1';
-      disBtn.title = 'Disconnect or switch wallet';
-      disBtn.textContent = 'Change wallet';
-      disBtn.addEventListener('click', disconnectWallet);
-      cluster.appendChild(disBtn);
-      return;
-    }
-
-    // Not connected: render detected injected wallets + Phone Wallet · WalletConnect
-    if (discoveredWallets.size > 1) {
-      for (const [key, w] of discoveredWallets) {
-        const b = document.createElement('button');
-        b.className = 'btn';
-        const name = w.info.name || 'Wallet';
-        const emoji = getWalletEmoji(name);
-        b.textContent = `${emoji} ${name}`;
-        if (name.toLowerCase().includes('metamask')) {
-          b.style.background = '#ea580c';
-          b.style.borderColor = '#fb923c';
-          b.style.color = '#fff';
-        } else if (name.toLowerCase().includes('compass')) {
-          b.style.background = '#0284c7';
-          b.style.borderColor = '#38bdf8';
-          b.style.color = '#fff';
-        } else {
-          b.style.background = '#223e27';
-          b.style.borderColor = '#4a7c59';
-          b.style.color = '#bbf766';
-        }
-        b.style.fontWeight = 'bold';
-        b.addEventListener('click', () => connectWithInjected(w.provider, name));
-        cluster.appendChild(b);
-      }
-    } else if (discoveredWallets.size === 1) {
-      const [key, w] = [...discoveredWallets.entries()][0];
-      const name = w.info.name || 'Wallet';
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.id = 'btnConnectWallet';
-      b.textContent = `${getWalletEmoji(name)} Connect ${name}`;
-      if (name.toLowerCase().includes('metamask')) {
-        b.style.background = '#ea580c';
-        b.style.borderColor = '#fb923c';
-        b.style.color = '#fff';
-      } else {
-        b.style.background = '#0284c7';
-        b.style.borderColor = '#38bdf8';
-        b.style.color = '#fff';
-      }
-      b.style.fontWeight = 'bold';
-      b.addEventListener('click', () => connectWithInjected(w.provider, name));
-      cluster.appendChild(b);
     } else {
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.id = 'btnConnectWallet';
-      b.textContent = '🦊 Connect Laptop Wallet';
-      b.addEventListener('click', () => {
-        const p = getInjectedProvider();
-        if (p) {
-          connectWithInjected(p, 'Injected Wallet');
-        } else {
-          const inIframe = (window.self !== window.top);
-          if (inIframe) {
-            (window.showToast || console.log)('📱 Sandboxed explorer detected. Opening Phone Wallet / standalone pairing...');
-          } else {
-            (window.showToast || console.log)('📱 Extension wallet not detected. Opening WalletConnect...');
-          }
-          startWalletConnect();
-        }
-      });
-      cluster.appendChild(b);
-    }
-
-    // Frame Desktop Wallet button (loopback 127.0.0.1:1248)
-    const frameBtn = document.createElement('button');
-    frameBtn.className = 'btn';
-    frameBtn.id = 'btnFrameWallet';
-    frameBtn.style.background = '#7c3aed';
-    frameBtn.style.borderColor = '#a78bfa';
-    frameBtn.style.color = '#fff';
-    frameBtn.style.fontWeight = 'bold';
-    frameBtn.style.display = 'none'; // Hidden unless detected running
-    frameBtn.textContent = '🖥️ Frame · Desktop';
-    frameBtn.title = 'Connect via Frame desktop wallet (frame.sh)';
-    frameBtn.addEventListener('click', connectFrameWallet);
-    cluster.appendChild(frameBtn);
-
-    // Probe Frame availability in background and show ONLY if running
-    probeFrameAvailable().then(available => {
-      if (available) {
-        frameBtn.style.display = 'inline-block';
-        frameBtn.textContent = '🖥️ Frame · Desktop ✓';
-        frameBtn.style.background = '#6d28d9';
-      } else {
-        frameBtn.style.display = 'none';
-      }
-    });
-
-    // Always include Phone Wallet · WalletConnect button
-    const wcBtn = document.createElement('button');
-    wcBtn.className = 'btn';
-    wcBtn.id = 'btnWalletConnect';
-    wcBtn.style.background = '#1d4ed8';
-    wcBtn.style.borderColor = '#3b82f6';
-    wcBtn.style.color = '#fff';
-    wcBtn.style.fontWeight = 'bold';
-    wcBtn.textContent = '📱 Phone Wallet · WalletConnect';
-    wcBtn.addEventListener('click', startWalletConnect);
-    cluster.appendChild(wcBtn);
-  }
-  window.renderWalletChoice = renderWalletChoice;
-  renderWalletChoice();
-
-
-  // Automatically recognize wallet when typed or pasted into the wallet bar
-  walletInput?.addEventListener('input', async () => {
-    const val = walletInput.value.trim();
-    if (val.startsWith('0x') && val.length === 42) {
-      await window.setConnectedWallet(val);
-      (window.showToast || console.log)(`👛 Wallet address recognized: ${val.slice(0, 6)}...${val.slice(-4)}`);
+      // Injected wallet not available; demonstrate with rehearsal testnet wallet
+      walletInput.value = '0xcc6eB67bdDb5Ec3e8D3EcB18ea7C8C5668790322';
+      playSound('coin');
+      (window.showToast || console.log)('ℹ️ No browser wallet detected. Loaded Testnet Rehearsal Account!');
+      fetchWalletLoot(walletInput.value);
+      fetchUserOwnedOutlaws(walletInput.value);
     }
   });
 
-  let allMintedOutlaws = [1, 2, 3];
-  let outlawOwners = {};
-
-  // Query which Outlaw NFT tokens exist on-chain and which ones the user owns
+  // Query which Outlaw NFT tokens an address owns
   async function fetchUserOwnedOutlaws(address) {
-    const cleanAddr = (address && address.startsWith('0x')) ? address.toLowerCase() : '';
+    if (!address || !address.startsWith('0x')) return;
+    const cleanAddr = address.toLowerCase();
     const selector = '6352211e'; // ownerOf(uint256)
-    const newMinted = [];
-    const newOwned = [];
-    const newOwners = {};
+    userOwnedOutlaws = [];
 
-    for (let id = 1; id <= 25; id++) {
+    for (let id = 1; id <= 10; id++) {
       try {
         const calldata = '0x' + selector + id.toString(16).padStart(64, '0');
-        const res = await fetch(getActiveRpcUrl(), {
+        const res = await fetch(RH_RPC_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -6290,492 +5636,56 @@
           })
         });
         const data = await res.json();
-        if (data && data.result && data.result.length >= 66 && data.result !== '0x') {
+        if (data && data.result && data.result.length >= 66) {
           const owner = '0x' + data.result.slice(26, 66).toLowerCase();
-          if (owner !== '0x0000000000000000000000000000000000000000') {
-            newMinted.push(id);
-            newOwners[id] = owner;
-            if (cleanAddr && owner === cleanAddr) {
-              newOwned.push(id);
-            }
+          if (owner === cleanAddr) {
+            userOwnedOutlaws.push(id);
           }
         }
       } catch(e) {}
     }
 
-    if (newMinted.length > 0) {
-      allMintedOutlaws = newMinted;
-      outlawOwners = newOwners;
-    }
-    userOwnedOutlaws = newOwned;
-
-    // If connected and user owns heroes, auto-equip the first owned hero if current one isn't theirs
-    if (cleanAddr && userOwnedOutlaws.length > 0 && !userOwnedOutlaws.includes(currentSeed)) {
-      setSeed(userOwnedOutlaws[0]);
-    }
-
     updateOwnedOutlawsUI();
-    updateRosterUI();
   }
 
   function updateOwnedOutlawsUI() {
     const el = document.getElementById('ownedOutlawsList');
     if (!el) return;
-    if (!connectedUserAddress) {
-      el.innerHTML = '<span style="color:#8fa789;">Connect wallet to view your band</span>';
-    } else if (userOwnedOutlaws.length === 0) {
-      el.innerHTML = '<span style="color:#8fa789;">None held yet (Click "🎲 Mint Outlaw NFT" below!)</span>';
+    if (userOwnedOutlaws.length === 0) {
+      el.innerHTML = '<span style="color:#8fa789;">None held yet (Click "Mint Outlaw NFT" below!)</span>';
     } else {
       el.innerHTML = userOwnedOutlaws.map(id => {
         const isSel = (currentSeed === id);
-        return `<button type="button" class="btn" style="display:inline-block; margin-left:6px; padding:3px 8px; border-radius:4px; font-size:10px; cursor:pointer; background:${isSel ? '#2e5c26' : '#1b2d18'}; border:1px solid ${isSel ? '#ffd700' : '#3d5c31'}; color:${isSel ? '#ffd700' : '#e6edd9'}; font-weight:${isSel ? 'bold' : 'normal'};" onclick="window.selectOutlaw(${id})">#${id} ${isSel ? '👑 Active' : ''}</button>`;
+        return `<span style="display:inline-block; margin-left:6px; padding:2px 8px; border-radius:4px; font-size:10px; cursor:pointer; background:${isSel ? '#2e5c26' : '#1b2d18'}; border:1px solid ${isSel ? '#ffd700' : '#3d5c31'}; color:${isSel ? '#ffd700' : '#e6edd9'};" onclick="window.selectOutlaw(${id})">#${id} ${isSel ? '👑 Active' : ''}</span>`;
       }).join(' ');
+
+      // If current diorama seed isn't owned, switch to the first owned Outlaw!
+      // Keep selected seed active in simulator
     }
   }
-
-  function updateRosterUI() {
-    const heroNameEl = document.getElementById('rosterHeroName');
-    const heroSubEl = document.getElementById('rosterHeroSub');
-    const chipsRow = document.getElementById('rosterChipsRow');
-    const summaryCount = document.getElementById('rosterSummaryCount');
-    const heistBtn = document.getElementById('btnOnchainHeist');
-    
-    const isMine = userOwnedOutlaws.includes(currentSeed);
-    const ownerAddr = outlawOwners[currentSeed];
-    const ownerShort = ownerAddr ? `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}` : '';
-
-    if (heroNameEl && currentToken) {
-      let ownershipBadge = '';
-      if (isMine) {
-        ownershipBadge = '<span style="color:#22c55e; font-size:11px; margin-left:6px; font-weight:bold; background:#14532d; padding:2px 6px; border-radius:4px; border:1px solid #22c55e;">👑 YOUR HERO</span>';
-      } else if (connectedUserAddress) {
-        ownershipBadge = `<span style="color:#f59e0b; font-size:11px; margin-left:6px; font-weight:bold; background:#451a03; padding:2px 6px; border-radius:4px; border:1px solid #f59e0b;">🔒 SPECTATING (Owner: ${ownerShort || 'Other'})</span>`;
-      } else {
-        ownershipBadge = `<span style="color:#94a3b8; font-size:10px; margin-left:6px;">${ownerShort ? '(Owner: ' + ownerShort + ')' : ''}</span>`;
-      }
-      heroNameEl.innerHTML = `${currentToken.name} #${currentSeed} ${ownershipBadge}`;
-    }
-    if (heroSubEl && currentToken) {
-      const heists = currentToken.totalHeists !== undefined ? currentToken.totalHeists : 0;
-      const dnaStr = currentToken.dna ? ` • DNA: 0x${currentToken.dna.slice(0, 6)}...` : '';
-      heroSubEl.innerText = `${currentToken.archetype.title} • ${heists} On-Chain Heists${dnaStr}`;
-    }
-    if (chipsRow) {
-      if (summaryCount) {
-        summaryCount.innerText = `${allMintedOutlaws.length} Minted • ${userOwnedOutlaws.length} in Your Band`;
-      }
-      chipsRow.innerHTML = allMintedOutlaws.map(id => {
-        const isSel = (currentSeed === id);
-        const ownedByMe = userOwnedOutlaws.includes(id);
-        const label = ownedByMe ? `★ Hero #${id} (Yours 👑)` : `Outlaw #${id} 🔒`;
-        const bg = isSel ? (ownedByMe ? '#15803d' : '#334155') : (ownedByMe ? '#1e293b' : '#0f172a');
-        const border = isSel ? (ownedByMe ? '#22c55e' : '#94a3b8') : (ownedByMe ? '#3b82f6' : '#334155');
-        const color = isSel ? '#ffffff' : (ownedByMe ? '#93c5fd' : '#94a3b8');
-        return `<div class="roster-chip ${isSel ? 'active' : ''}" style="cursor:pointer; background:${bg}; border:1px solid ${border}; color:${color}; font-size:10px; padding:4px 8px; margin:2px; display:inline-block; border-radius:6px; font-weight:${isSel || ownedByMe ? 'bold' : 'normal'};" onclick="window.selectOutlaw(${id})">${label}</div>`;
-      }).join('');
-    }
-
-    if (heistBtn) {
-      if (!connectedUserAddress) {
-        heistBtn.innerHTML = '📱 Connect Wallet to Ambush Carriage';
-        heistBtn.style.background = '';
-        heistBtn.style.borderColor = '';
-        heistBtn.style.color = '';
-        heistBtn.style.cursor = 'pointer';
-      } else if (userOwnedOutlaws.length === 0) {
-        heistBtn.innerHTML = '🎲 Mint an Outlaw to Ambush Carriage';
-        heistBtn.style.background = '#d97706';
-        heistBtn.style.borderColor = '#f59e0b';
-        heistBtn.style.color = '#ffffff';
-        heistBtn.style.cursor = 'pointer';
-      } else if (!isMine) {
-        heistBtn.innerHTML = `🔒 Spectator Mode (Outlaw #${currentSeed} Not Owned)`;
-        heistBtn.style.background = '#334155';
-        heistBtn.style.borderColor = '#64748b';
-        heistBtn.style.color = '#94a3b8';
-        heistBtn.style.cursor = 'not-allowed';
-      } else {
-        heistBtn.innerHTML = `👑 Ambush Royal Carriage with Outlaw #${currentSeed} ⚔️`;
-        heistBtn.style.background = '#15803d';
-        heistBtn.style.borderColor = '#22c55e';
-        heistBtn.style.color = '#ffffff';
-        heistBtn.style.cursor = 'pointer';
-      }
-    }
-  }
-  window.updateRosterUI = updateRosterUI;
-
-  window.setConnectedWallet = async function(addr) {
-    connectedUserAddress = addr;
-    if (walletInput) walletInput.value = addr;
-    if (typeof renderWalletChoice === 'function') renderWalletChoice();
-    await fetchUserOwnedOutlaws(addr);
-    await fetchWalletLoot(addr);
-    updateRosterUI();
-    updateOwnedOutlawsUI();
-  };
-
-  document.getElementById('btnPrevHero')?.addEventListener('click', () => {
-    initAudio();
-    playSound('coin');
-    const list = allMintedOutlaws;
-    const idx = list.indexOf(currentSeed);
-    const prevIdx = (idx <= 0) ? list.length - 1 : idx - 1;
-    selectOutlaw(list[prevIdx]);
-  });
-  document.getElementById('btnNextHero')?.addEventListener('click', () => {
-    initAudio();
-    playSound('coin');
-    const list = allMintedOutlaws;
-    const idx = list.indexOf(currentSeed);
-    const nextIdx = (idx >= list.length - 1) ? 0 : idx + 1;
-    selectOutlaw(list[nextIdx]);
-  });
-
-  // Inject Maximized View Styling into document head (full scrolling enabled)
-  const maxStyle = document.createElement('style');
-  maxStyle.id = 'hoodquest-max-style';
-  maxStyle.textContent = `
-    html.maximized-arcade, body.maximized-arcade {
-      width: 100% !important;
-      height: auto !important;
-      min-height: 100vh !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      background: #070d08 !important;
-    }
-    body.maximized-arcade {
-      padding: 8px 12px 60px !important;
-    }
-    body.maximized-arcade .main-layout {
-      max-width: 620px !important;
-      width: 100% !important;
-    }
-  `;
-  document.head.appendChild(maxStyle);
-
-  // Set clean initial button text
-  const fsBtnInit = document.getElementById('btnFullscreenArcade');
-  if (fsBtnInit) {
-    fsBtnInit.innerText = '⛶ Maximize Arcade';
-    fsBtnInit.title = 'Toggle expanded view with full scrolling';
-
-    // Inject Title Screen button
-    const titleBtn = document.createElement('button');
-    titleBtn.className = 'btn';
-    titleBtn.id = 'btnShowTitleScreen';
-    titleBtn.style.background = '#064e3b';
-    titleBtn.style.borderColor = '#10b981';
-    titleBtn.style.color = '#a7f3d0';
-    titleBtn.style.fontWeight = 'bold';
-    titleBtn.innerText = '🎮 Title Screen';
-    titleBtn.title = 'View 16-bit arcade title screen artwork';
-    titleBtn.addEventListener('click', () => {
-      if (window.showTitleScreen) window.showTitleScreen();
-    });
-    if (fsBtnInit.parentNode) {
-      fsBtnInit.parentNode.insertBefore(titleBtn, fsBtnInit.nextSibling);
-    }
-  }
-
-  function openFullscreenArcade() {
-    initAudio();
-    playSound('coin');
-    document.documentElement.classList.toggle('maximized-arcade');
-    const isMax = document.body.classList.toggle('maximized-arcade');
-    const btn = document.getElementById('btnFullscreenArcade');
-    if (btn) {
-      btn.innerText = isMax ? '✕ Exit Maximized View' : '⛶ Maximize Arcade';
-      btn.style.background = isMax ? '#881337' : '#164e63';
-      btn.style.borderColor = isMax ? '#f43f5e' : '#06b6d4';
-      btn.style.color = isMax ? '#fecdd3' : '#67e8f9';
-    }
-    try {
-      if (isMax && !document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else if (!isMax && document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-    } catch(_) {}
-    (window.showToast || console.log)(isMax ? '⛶ Arcade Maximized (Full Scroll)' : '⛶ Standard View Restored');
-  }
-  document.getElementById('btnFullscreenArcade')?.addEventListener('click', openFullscreenArcade);
-  document.getElementById('btnDispatchFullscreen')?.addEventListener('click', openFullscreenArcade);
-
-  window.copyPortalUrl = function(btn) {
-    const url = 'https://srhsoulja.github.io/hoodquest/';
-    let copied = false;
-    const inp = document.getElementById('publicWebPortalUrl');
-    if (inp) {
-      inp.focus();
-      inp.select();
-      inp.setSelectionRange(0, 99999);
-      try {
-        copied = document.execCommand('copy');
-      } catch(_) {}
-    }
-    if (!copied) {
-      try {
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        ta.style.position = 'fixed';
-        ta.style.left = '-9999px';
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        copied = document.execCommand('copy');
-        document.body.removeChild(ta);
-      } catch(_) {}
-    }
-    if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).catch(() => {});
-    }
-    if (btn) {
-      const orig = btn.innerText;
-      btn.innerText = '✓ Copied!';
-      btn.style.background = '#15803d';
-      btn.style.borderColor = '#22c55e';
-      setTimeout(() => {
-        btn.innerText = orig;
-        btn.style.background = '#0284c7';
-        btn.style.borderColor = '#38bdf8';
-      }, 3000);
-    }
-    (window.showToast || console.log)('📋 Copied portal URL! Press Ctrl+T and Ctrl+V to open in a new browser tab.');
-  };
-
   window.selectOutlaw = (id) => {
     setSeed(id);
     updateOwnedOutlawsUI();
     (window.showToast || console.log)(`👑 Selected Outlaw #${id} for questing!`);
   };
 
-
   // Refresh Loot Button
-  document.getElementById('btnRefreshLoot')?.addEventListener('click', async () => {
+  document.getElementById('btnRefreshLoot').addEventListener('click', () => {
     initAudio();
     playSound('purr');
     const addr = walletInput.value.trim();
-    if (addr.startsWith('0x') && addr.length === 42) {
-      await window.setConnectedWallet(addr);
-      (window.showToast || console.log)(`🎒 Synced wallet & loot for ${addr.slice(0, 6)}...${addr.slice(-4)}`);
-    } else {
-      fetchWalletLoot(addr);
-      fetchUserOwnedOutlaws(addr);
-    }
+    fetchWalletLoot(addr);
+    fetchUserOwnedOutlaws(addr);
     fetchOutlawQuestStats(currentSeed);
   });
-
-  // ---- Unified On-Chain Cooldown & Stamina Management ----
-  const activeCooldownEnds = {};
-
-  function getUtcDayKey() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function getOutlawStamina(tokenId) {
-    const day = getUtcDayKey();
-    const used = parseInt(localStorage.getItem(`hq_stamina_used_${day}_${tokenId}`) || '0', 10);
-    const elixirActive = localStorage.getItem(`hq_elixir_active_${day}_${tokenId}`) === 'true';
-    const max = elixirActive ? 10 : 5;
-    const remaining = Math.max(0, max - used);
-    return { remaining, max, used, elixirActive };
-  }
-
-  function recordHeistUsed(tokenId) {
-    const day = getUtcDayKey();
-    const used = parseInt(localStorage.getItem(`hq_stamina_used_${day}_${tokenId}`) || '0', 10);
-    localStorage.setItem(`hq_stamina_used_${day}_${tokenId}`, (used + 1).toString());
-    updateStaminaUI();
-  }
-
-  function useElixirForOutlaw(tokenId) {
-    initAudio();
-    const day = getUtcDayKey();
-    const currentElixirs = walletLootBalances[5] || 0;
-    const { elixirActive } = getOutlawStamina(tokenId);
-
-    if (elixirActive) {
-      (window.showToast || console.log)('🧪 Greenwood Elixir already active today (+5 Bonus Stamina applied)!');
-      return;
-    }
-    if (currentElixirs <= 0) {
-      playSound('hit');
-      (window.showToast || console.log)('⚠️ No Greenwood Alchemical Elixirs held! Brew one at Sherwood Camp Outfitter (15 Gold).');
-      return;
-    }
-
-    // Burn 1 Elixir from inventory
-    walletLootBalances[5] = Math.max(0, currentElixirs - 1);
-    renderLootGrid();
-    localStorage.setItem(`hq_elixir_active_${day}_${tokenId}`, 'true');
-    playSound('fanfare');
-    (window.showToast || console.log)(`🧪 Greenwood Elixir drank! Outlaw #${tokenId} gained +5 Bonus Stamina!`);
-
-    const logBox = document.getElementById('questLogBox');
-    if (logBox) {
-      const entry = document.createElement('div');
-      entry.className = 'quest-log-entry success';
-      entry.innerHTML = `<span class="log-time">🧪 Elixir Imbibed:</span><span>Outlaw #${tokenId} drank <strong>Greenwood Alchemical Elixir</strong>! Daily Stamina expanded to <strong>10 / 10 ⚡</strong>!</span>`;
-      logBox.prepend(entry);
-    }
-
-    updateStaminaUI();
-    updateCooldownAndButtonUI();
-  }
-  window.useElixirForOutlaw = useElixirForOutlaw;
-
-  function ensureStaminaCard() {
-    let card = document.getElementById('statStaminaCard');
-    if (!card) {
-      const grid = document.querySelector('.quest-stats-grid');
-      if (grid) {
-        card = document.createElement('div');
-        card.className = 'quest-stat-card';
-        card.id = 'statStaminaCard';
-        card.innerHTML = `
-          <span class="quest-stat-label">Daily Stamina</span>
-          <span class="quest-stat-value" id="statStaminaVal" style="color:#38bdf8;">5 / 5 ⚡</span>
-        `;
-        const first = grid.children[0];
-        if (first && first.nextSibling) {
-          grid.insertBefore(card, first.nextSibling);
-        } else {
-          grid.appendChild(card);
-        }
-      }
-    }
-    return card;
-  }
-
-  function updateStaminaUI() {
-    ensureStaminaCard();
-    const targetTokenId = currentSeed || 1;
-    const { remaining, max, elixirActive } = getOutlawStamina(targetTokenId);
-    const valEl = document.getElementById('statStaminaVal');
-    if (valEl) {
-      valEl.innerText = `${remaining} / ${max} ⚡`;
-      if (remaining === 0) {
-        valEl.style.color = '#ef4444';
-        valEl.innerText += ' (Fatigued)';
-      } else if (elixirActive) {
-        valEl.style.color = '#c084fc';
-        valEl.innerText += ' 🧪';
-      } else {
-        valEl.style.color = '#38bdf8';
-      }
-    }
-  }
-
-  function setOutlawCooldown(tokenId, seconds = 60) {
-    activeCooldownEnds[tokenId] = Date.now() + (seconds * 1000);
-    updateCooldownAndButtonUI();
-  }
-
-  function getOutlawCooldownRemaining(tokenId) {
-    const end = activeCooldownEnds[tokenId] || 0;
-    return Math.max(0, Math.ceil((end - Date.now()) / 1000));
-  }
-
-  function updateCooldownAndButtonUI() {
-    const targetTokenId = currentSeed || 1;
-    const rem = getOutlawCooldownRemaining(targetTokenId);
-    const badge = document.getElementById('questCooldownBadge');
-    const cdStat = document.getElementById('statCooldown');
-    const heistBtn = document.getElementById('btnOnchainHeist');
-
-    if (rem > 0) {
-      if (badge) {
-        badge.className = 'cooldown-pill active';
-        badge.innerText = `⏱️ Ambush Cooldown: ${rem}s`;
-      }
-      if (cdStat) {
-        cdStat.innerText = `${rem}s`;
-        cdStat.style.color = '#fbbf24';
-      }
-      if (heistBtn) {
-        heistBtn.disabled = true;
-        heistBtn.innerText = `⏱️ Carriage Guarded (${rem}s Cooldown)`;
-        heistBtn.style.background = '#374151';
-        heistBtn.style.borderColor = '#4b5563';
-        heistBtn.style.color = '#9ca3af';
-        heistBtn.style.cursor = 'not-allowed';
-      }
-    } else {
-      if (badge) {
-        badge.className = 'cooldown-pill ready';
-        badge.innerText = `🟢 Carriage Spotted: Ready to Ambush`;
-      }
-      if (cdStat) {
-        cdStat.innerText = `Ready`;
-        cdStat.style.color = '#4ade80';
-      }
-      if (heistBtn) {
-        const isMine = userOwnedOutlaws.includes(targetTokenId);
-        const { remaining } = getOutlawStamina(targetTokenId);
-        heistBtn.disabled = false;
-        if (!isMine) {
-          heistBtn.innerHTML = `🔒 Spectator Mode (Outlaw #${targetTokenId} Not Owned)`;
-          heistBtn.style.background = '#334155';
-          heistBtn.style.borderColor = '#64748b';
-          heistBtn.style.color = '#94a3b8';
-          heistBtn.style.cursor = 'not-allowed';
-        } else if (remaining === 0) {
-          heistBtn.innerHTML = `😴 Outlaw #${targetTokenId} Fatigued (Drink 🧪 Elixir)`;
-          heistBtn.style.background = '#451a03';
-          heistBtn.style.borderColor = '#b45309';
-          heistBtn.style.color = '#fde68a';
-          heistBtn.style.cursor = 'pointer';
-        } else {
-          heistBtn.innerHTML = `👑 Ambush Royal Carriage with Outlaw #${targetTokenId} ⚔️`;
-          heistBtn.style.background = '#15803d';
-          heistBtn.style.borderColor = '#22c55e';
-          heistBtn.style.color = '#ffffff';
-          heistBtn.style.cursor = 'pointer';
-        }
-      }
-    }
-  }
-
-  window.setOutlawCooldown = setOutlawCooldown;
-  window.getOutlawStamina = getOutlawStamina;
-  window.updateCooldownAndButtonUI = updateCooldownAndButtonUI;
-  window.updateStaminaUI = updateStaminaUI;
-
-  // Active 1-second ticking timer for HUD, cooldowns, and stamina
-  if (!window._hqCooldownTimer) {
-    window._hqCooldownTimer = setInterval(() => {
-      updateCooldownAndButtonUI();
-      updateStaminaUI();
-    }, 1000);
-  }
 
   // --- Real-Time On-Chain Quest & Ambush Tracker ---
   async function fetchOutlawQuestStats(tokenId) {
     if (!tokenId) return;
     try {
-      // 0. Query Robinhood Testnet Block Number
-      try {
-        const blkRes = await fetch(getActiveRpcUrl(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', id: 88, method: 'eth_blockNumber', params: [] })
-        });
-        const blkData = await blkRes.json();
-        if (blkData && blkData.result) {
-          const blockNum = parseInt(blkData.result, 16);
-          const gBadge = document.getElementById('globalChainBadge');
-          if (gBadge) gBadge.innerText = `● Robinhood Testnet #${blockNum} (Live Sync)`;
-          if (lootSyncStatus) {
-            lootSyncStatus.innerText = `● Live from Testnet RPC (Block #${blockNum})`;
-            lootSyncStatus.style.color = '#4cd964';
-          }
-        }
-      } catch(e) {}
-
       // 1. Query on-chain outlaws(tokenId)
       const calldata = '0xbc26484c' + tokenId.toString(16).padStart(64, '0');
-      const res = await fetch(getActiveRpcUrl(), {
+      const res = await fetch(RH_RPC_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -6788,64 +5698,32 @@
       const data = await res.json();
       if (data && data.result && data.result.length >= 258) {
         const hex = data.result.slice(2);
-        const dna = hex.slice(0, 64);
         const lastHeistTimestamp = parseInt(hex.slice(128, 192), 16);
         const totalHeists = parseInt(hex.slice(192, 256), 16);
         
         const statEl = document.getElementById('statTotalHeists');
         if (statEl) statEl.innerText = totalHeists;
-        if (currentToken) {
-          currentToken.totalHeists = totalHeists;
-          currentToken.dna = dna;
-        }
+        if (currentToken) currentToken.totalHeists = totalHeists;
 
-        // Dynamic Vault Breach calculation
-        vaultBreachPoints = Math.min(10000, 6400 + (totalHeists * 100));
-        const breachPct = Math.floor((vaultBreachPoints / 10000) * 100);
-        const vPctEl = document.getElementById('vaultBreachPercent');
-        if (vPctEl) vPctEl.innerText = `${breachPct}% Breached`;
-        const vBarEl = document.getElementById('vaultBreachBar');
-        if (vBarEl) vBarEl.style.width = `${breachPct}%`;
-
-        // Cooldown calculation (60s cooldown from on-chain lastHeistTimestamp)
+        // Cooldown calculation (60s cooldown)
         const nowSec = Math.floor(Date.now() / 1000);
         const elapsed = nowSec - lastHeistTimestamp;
         const cooldownRemaining = Math.max(0, 60 - elapsed);
-        if (cooldownRemaining > 0 && lastHeistTimestamp > 0) {
-          setOutlawCooldown(tokenId, cooldownRemaining);
-        }
-        updateCooldownAndButtonUI();
-        updateStaminaUI();
-      }
-
-      // 1c. Query ownerOf(tokenId) and auto-sync wallet loot
-      try {
-        const ownerRes = await fetch(getActiveRpcUrl(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: 77,
-            method: 'eth_call',
-            params: [{ to: OUTLAWS_CONTRACT, data: '0x6352211e' + tokenId.toString(16).padStart(64, '0') }, 'latest']
-          })
-        });
-        const ownerData = await ownerRes.json();
-        if (ownerData && ownerData.result && ownerData.result.length >= 66) {
-          const ownerAddr = '0x' + ownerData.result.slice(26, 66);
-          if (walletInput && (!connectedUserAddress || connectedUserAddress === '')) {
-            walletInput.value = ownerAddr;
-            await fetchWalletLoot(ownerAddr);
+        const badge = document.getElementById('questCooldownBadge');
+        if (badge) {
+          if (cooldownRemaining > 0 && lastHeistTimestamp > 0) {
+            badge.className = 'cooldown-pill active';
+            badge.innerText = `⏱️ Ambush Cooldown: ${cooldownRemaining}s`;
+          } else {
+            badge.className = 'cooldown-pill ready';
+            badge.innerText = `🟢 Carriage Spotted: Ready to Ambush`;
           }
         }
-      } catch(e) {}
-
-      updateRosterUI();
-      if (window.updateHUD) window.updateHUD();
+      }
 
       // 1b. Query Nottingham Defense Era (Dogecoin disinflationary era)
       try {
-        const eraRes = await fetch(getActiveRpcUrl(), {
+        const eraRes = await fetch(RH_RPC_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -6872,7 +5750,7 @@
 
       // 2. Query recent HeistCompleted event logs for this tokenId
       const tokenIdHex = tokenId.toString(16).padStart(64, '0');
-      const logsRes = await fetch(getActiveRpcUrl(), {
+      const logsRes = await fetch(RH_RPC_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -6928,284 +5806,161 @@
     }
   }
 
-  // Universal On-Chain Transaction Dispatcher (WalletConnect v2 + Injected)
-  async function sendOnchainTx({ to, data, gas = '0x55730', value = '0x0' }) {
-    if (!connectedUserAddress) {
-      throw new Error('Please connect your wallet first (via Injected or WalletConnect)');
-    }
-    const provider = activeInjectedProvider || getInjectedProvider();
-    if (wcClient && wcSession) {
-      let targetChain = 'eip155:46630';
-      try {
-        const eip155Ns = wcSession.namespaces && wcSession.namespaces.eip155;
-        if (eip155Ns && eip155Ns.chains && !eip155Ns.chains.includes('eip155:46630')) {
-          if (eip155Ns.chains.length > 0) targetChain = eip155Ns.chains[0];
-        }
-      } catch(_) {}
-      return await wcClient.request({
-        topic: wcSession.topic,
-        chainId: targetChain,
-        request: {
-          method: 'eth_sendTransaction',
-          params: [{
-            from: connectedUserAddress,
-            to: to,
-            data: data,
-            gas: gas,
-            value: value
-          }]
-        }
-      });
-    } else if (provider) {
-      return await provider.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: connectedUserAddress,
-          to: to,
-          data: data,
-          gas: gas,
-          value: value
-        }]
-      });
-    } else {
-      throw new Error('No wallet connected. Please click 📱 WalletConnect first.');
-    }
-  }
-  window.sendOnchainTx = sendOnchainTx;
-
-  // Universal Public RPC Transaction Receipt Poller
-  async function waitForTxReceipt(txHash, maxAttempts = 15) {
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise(r => setTimeout(r, 1500));
-      try {
-        const res = await fetch(getActiveRpcUrl(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: i + 1,
-            method: 'eth_getTransactionReceipt',
-            params: [txHash]
-          })
-        });
-        const data = await res.json();
-        if (data && data.result && data.result.blockNumber) {
-          return data.result;
-        }
-      } catch(e) {}
-    }
-    return null;
-  }
-
   // On-Chain Heist Button
-  document.getElementById('btnOnchainHeist')?.addEventListener('click', async () => {
+  document.getElementById('btnOnchainHeist').addEventListener('click', async () => {
     initAudio();
     let targetTokenId = currentSeed || 1;
     const logBox = document.getElementById('questLogBox');
 
-    if (!connectedUserAddress) {
-      playSound('coin');
-      (window.showToast || console.log)('📱 Please connect via WalletConnect to command your Outlaws!');
-      startWalletConnect();
-      return;
-    }
-
-    // 1. Fetch owned outlaws if not loaded yet
-    if (userOwnedOutlaws.length === 0) {
-      if (logBox) logBox.innerHTML = `<div class="quest-log-entry"><span class="log-time">⏳ Scouting:</span><span>Scanning wallet for owned Outlaw NFTs on Robinhood testnet...</span></div>`;
-      await fetchUserOwnedOutlaws(connectedUserAddress);
-    }
-
-    // 2. Strict Ownership Check: You can only quest with an Outlaw YOU own!
-    if (userOwnedOutlaws.length === 0) {
-      playSound('hit');
-      (window.showToast || console.log)(`⚠️ You don't own an Outlaw yet! Click '🎲 Mint Outlaw NFT' first.`);
-      if (logBox) logBox.innerHTML = `
-        <div class="quest-log-entry" style="border-left-color:#e74c3c; background:#1c1414;">
-          <span class="log-time">⚠️ Ambush Blocked:</span>
-          <span>You don't own a Sherwood Outlaw yet! (Token #${targetTokenId} is owned by another adventurer). Click <strong>"🎲 Mint Outlaw NFT"</strong> below to recruit your own on-chain hero!</span>
-        </div>
-      `;
-      return;
-    }
-
-    // 3. Strict Spectator Guard: NEVER perform actions for another player's hero!
-    if (!userOwnedOutlaws.includes(targetTokenId)) {
-      playSound('hit');
-      const ownerAddr = outlawOwners[targetTokenId];
-      const ownerShort = ownerAddr ? `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}` : 'another adventurer';
-      (window.showToast || console.log)(`⛔ Spectator Mode: Outlaw #${targetTokenId} is owned by ${ownerShort}! You cannot command someone else's hero.`);
-      if (logBox) {
-        logBox.innerHTML = `
-          <div class="quest-log-entry" style="border-left-color:#ef4444; background:#221515;">
-            <span class="log-time">⛔ Spectator Mode:</span>
-            <span>Outlaw #${targetTokenId} belongs to another adventurer (${ownerShort}). You cannot perform actions or send quests for heroes you do not own. Select your own Outlaw (${userOwnedOutlaws.map(id => '<strong>#' + id + '</strong>').join(', ')}) to launch an ambush!</span>
-          </div>
-        `;
+    if (window.ethereum && connectedUserAddress) {
+      // 1. Fetch owned outlaws if not loaded yet
+      if (userOwnedOutlaws.length === 0) {
+        if (logBox) logBox.innerHTML = `<div class="quest-log-entry"><span class="log-time">⏳ Scouting:</span><span>Scanning wallet for owned Outlaw NFTs on Robinhood testnet...</span></div>`;
+        await fetchUserOwnedOutlaws(connectedUserAddress);
       }
-      return;
-    }
 
-    // 4. Hard Cooldown Guard: Prevent transaction dispatch when smart contract is cooling down!
-    const cooldownRem = getOutlawCooldownRemaining(targetTokenId);
-    if (cooldownRem > 0) {
-      playSound('hit');
-      (window.showToast || console.log)(`⏱️ Royal carriage ambush on cooldown! Guards passing in ${cooldownRem}s.`);
-      if (logBox) {
-        const entry = document.createElement('div');
-        entry.className = 'quest-log-entry';
-        entry.style.borderLeftColor = '#f59e0b';
-        entry.innerHTML = `<span class="log-time">⏱️ Ambush Cooldown:</span><span>Sheriff guards are still alert from the previous raid! You must wait <strong>${cooldownRem} seconds</strong> before ambushing again.</span>`;
-        logBox.prepend(entry);
-      }
-      return;
-    }
-
-    // 5. Daily Stamina Guard (5/5 Base, +5 Bonus via Elixir)
-    const { remaining: staminaRem, max: staminaMax, elixirActive } = getOutlawStamina(targetTokenId);
-    if (staminaRem <= 0) {
-      playSound('hit');
-      const elixirs = walletLootBalances[5] || 0;
-      if (elixirs > 0 && !elixirActive) {
-        (window.showToast || console.log)('⚡ Outlaw fatigued! Drinking 🧪 Greenwood Elixir for +5 Stamina...');
-        useElixirForOutlaw(targetTokenId);
-      } else {
-        (window.showToast || console.log)(`😴 Outlaw #${targetTokenId} is out of stamina for today (${staminaMax}/${staminaMax} heists used)!`);
-        if (logBox) {
-          const entry = document.createElement('div');
-          entry.className = 'quest-log-entry';
-          entry.style.borderLeftColor = '#f59e0b';
-          entry.innerHTML = `<span class="log-time">😴 Daily Stamina Depleted:</span><span>Outlaw #${targetTokenId} has exhausted today's <strong>${staminaMax} daily heists</strong>! Brew a <strong>🧪 Greenwood Elixir</strong> at the Outfitter below to restore +5 Stamina, or wait until tomorrow (00:00 UTC).</span>`;
-          logBox.prepend(entry);
-        }
+      // 2. If user doesn't own any Outlaws on this contract
+      if (userOwnedOutlaws.length === 0) {
+        playSound('hit');
+        (window.showToast || console.log)(`⚠️ You don't own any Outlaws yet! Click 'Mint Outlaw NFT' first.`);
+        if (logBox) logBox.innerHTML = `<div class="quest-log-entry" style="border-left-color:#e74c3c;"><span class="log-time">⚠️ Ambush Cancelled:</span><span>Your wallet does not own any Outlaws on this contract yet. Click <strong>"🎲 Mint Outlaw NFT"</strong> to recruit your first archer!</span></div>`;
         return;
       }
-    }
 
-    const hasProvider = !!(window.ethereum || (wcClient && wcSession));
-    if (!hasProvider) {
-      playSound('coin');
-      (window.showToast || console.log)('📱 Please connect via WalletConnect to sign on-chain!');
-      startWalletConnect();
-      return;
-    }
-
-    const pendingEntry = document.createElement('div');
-    pendingEntry.className = 'quest-log-entry';
-    pendingEntry.innerHTML = `<span class="log-time">🏹 Ambush In Progress:</span><span>Outlaw #${targetTokenId} is ambushing the Sheriff's Royal Gold Carriage... Signing transaction in wallet...</span>`;
-    if (logBox) logBox.prepend(pendingEntry);
-
-    try {
-      const tokenIdHex = targetTokenId.toString(16).padStart(64, '0');
-      const calldata = '0xae59a304' + tokenIdHex;
-      if (wcSession && wcClient) {
-        pendingEntry.innerHTML = `<span class="log-time">📱 Sent to Phone:</span><span>Please approve the heist in your mobile wallet...</span>`;
+      // 3. Auto-target user's owned Outlaw!
+      if (!userOwnedOutlaws.includes(targetTokenId)) {
+        targetTokenId = userOwnedOutlaws[0];
+        setSeed(targetTokenId);
+        updateOwnedOutlawsUI();
       }
 
-      // Lock cooldown immediately upon user initiating transaction
-      setOutlawCooldown(targetTokenId, 61);
-
-      const txHash = await sendOnchainTx({
-        to: OUTLAWS_CONTRACT,
-        data: calldata,
-        gas: '0x55730'
-      });
-
-      pendingEntry.innerHTML = `<span class="log-time">⏳ Carriage Surrounded (Tx Broadcast):</span><span>Ambush broadcast to Robinhood testnet! Waiting for block confirmation... <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700;">View Tx ↗</a></span>`;
-      (window.showToast || console.log)('👑 ROYAL HEIST BROADCAST! ⚔️ Awaiting spoils...');
-
-      const receipt = await waitForTxReceipt(txHash);
-
-      let lootAnnounce = 'Treasure Looted!';
-      if (receipt && receipt.logs) {
-        const heistLog = receipt.logs.find(l => 
-          l.topics && l.topics[0] && l.topics[0].toLowerCase() === '0x31de42c345b7b87df09977df6d013504abb3a064ffdd151cdaed22c31c571efa'
-        );
-        if (heistLog && heistLog.data) {
-          const hex = heistLog.data.slice(2);
-          const itemId = parseInt(hex.slice(0, 64), 16);
-          const amount = parseInt(hex.slice(64, 128), 16);
-          const def = LOOT_DEFS.find(d => d.id === itemId) || { name: 'Treasure', icon: '🎁', rarity: 'Heist Loot' };
-          lootAnnounce = `+${amount} ${def.name} ${def.icon} (${def.rarity})`;
-          (window.showToast || console.log)(`👑 HEIST VICTORY: Looted ${def.name}!`);
-        }
-      }
-
-      playSound('fanfare');
-      pendingEntry.className = 'quest-log-entry success';
-      pendingEntry.innerHTML = `<span class="log-time">👑 Ambush Victory!</span><span>Outlaw #${targetTokenId} overwhelmed the royal escort and captured <strong>${lootAnnounce}</strong>! <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">Tx Confirmed ↗</a></span>`;
-
-      // Record successful heist for daily stamina & lock 60s cooldown
-      recordHeistUsed(targetTokenId);
-      setOutlawCooldown(targetTokenId, 61);
-
-      await fetchWalletLoot(connectedUserAddress);
-      await fetchOutlawQuestStats(targetTokenId);
-    } catch(err) {
+      const pendingEntry = document.createElement('div');
       pendingEntry.className = 'quest-log-entry';
-      pendingEntry.style.borderLeftColor = '#e74c3c';
-      pendingEntry.innerHTML = `<span class="log-time">⚠️ Ambush Interrupted:</span><span>${err.message || err}</span>`;
-      // Re-sync cooldown in case it failed due to existing on-chain cooldown
-      await fetchOutlawQuestStats(targetTokenId);
+      pendingEntry.innerHTML = `<span class="log-time">🏹 Ambush In Progress:</span><span>Outlaw #${targetTokenId} is ambushing the Sheriff's Royal Gold Carriage... Signing transaction in wallet...</span>`;
+      if (logBox) logBox.prepend(pendingEntry);
+
+      try {
+        const tokenIdHex = targetTokenId.toString(16).padStart(64, '0');
+        const calldata = '0xae59a304' + tokenIdHex;
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: OUTLAWS_CONTRACT,
+            data: calldata,
+            gas: '0x55730' // 350,000 gas limit for multi-mint heist & metadata update
+          }]
+        });
+
+        pendingEntry.innerHTML = `<span class="log-time">⏳ Carriage Surrounded (Tx Broadcast):</span><span>Ambush broadcast to Robinhood testnet! Waiting for block confirmation... <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700;">View Tx ↗</a></span>`;
+        (window.showToast || console.log)('👑 ROYAL HEIST BROADCAST! ⚔️ Awaiting spoils...');
+
+        // Poll for receipt and decode the looted item
+        let receipt = null;
+        for (let i = 0; i < 12; i++) {
+          await new Promise(r => setTimeout(r, 1500));
+          try {
+            receipt = await window.ethereum.request({
+              method: 'eth_getTransactionReceipt',
+              params: [txHash]
+            });
+            if (receipt && receipt.blockNumber) break;
+          } catch(e) {}
+        }
+
+        let lootAnnounce = 'Treasure Looted!';
+        if (receipt && receipt.logs) {
+          const heistLog = receipt.logs.find(l => 
+            l.topics && l.topics[0] && l.topics[0].toLowerCase() === '0x31de42c345b7b87df09977df6d013504abb3a064ffdd151cdaed22c31c571efa'
+          );
+          if (heistLog && heistLog.data) {
+            const hex = heistLog.data.slice(2);
+            const itemId = parseInt(hex.slice(0, 64), 16);
+            const amount = parseInt(hex.slice(64, 128), 16);
+            const def = LOOT_DEFS.find(d => d.id === itemId) || { name: 'Treasure', icon: '🎁', rarity: 'Heist Loot' };
+            lootAnnounce = `+${amount} ${def.name} ${def.icon} (${def.rarity})`;
+            (window.showToast || console.log)(`👑 HEIST VICTORY: Looted ${def.name}!`);
+          }
+        }
+
+        playSound('fanfare');
+        pendingEntry.className = 'quest-log-entry success';
+        pendingEntry.innerHTML = `<span class="log-time">👑 Ambush Victory!</span><span>Outlaw #${targetTokenId} overwhelmed the royal escort and captured <strong>${lootAnnounce}</strong>! <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">Tx Confirmed ↗</a></span>`;
+
+        await fetchWalletLoot(connectedUserAddress);
+        await fetchOutlawQuestStats(targetTokenId);
+      } catch(err) {
+        pendingEntry.className = 'quest-log-entry';
+        pendingEntry.style.borderLeftColor = '#e74c3c';
+        pendingEntry.innerHTML = `<span class="log-time">⚠️ Ambush Interrupted:</span><span>${err.message || err}</span>`;
+      }
+    } else {
+      // Sandbox rehearsal / demonstration simulation
+      const pendingEntry = document.createElement('div');
+      pendingEntry.className = 'quest-log-entry';
+      pendingEntry.innerHTML = `<span class="log-time">⚔️ Ambush Initiated:</span><span>Outlaw #${targetTokenId} is raiding the Sheriff's Royal Coach...</span>`;
+      if (logBox) logBox.prepend(pendingEntry);
+      playSound('shoot');
+
+      setTimeout(() => {
+        const roll = Math.random() * 100;
+        let wonId = 1, amount = 1;
+        if (roll < 5) { wonId = 4; amount = 1; }
+        else if (roll < 18) { wonId = 3; amount = 1; }
+        else if (roll < 35) { wonId = 2; amount = 1; }
+        else if (roll < 50) { wonId = 7; amount = 1; }
+        else { wonId = 1; amount = Math.floor(Math.random() * 4) + 1; }
+
+        walletLootBalances[wonId] = (walletLootBalances[wonId] || 0) + amount;
+        if (wonId !== 1) {
+          walletLootBalances[1] = (walletLootBalances[1] || 0) + 1; // Doge baseline subsidy
+        }
+        equippedLoot[wonId] = true;
+        renderLootGrid();
+        playSound('fanfare');
+
+        const wonDef = LOOT_DEFS.find(d => d.id === wonId);
+        pendingEntry.className = 'quest-log-entry success';
+        pendingEntry.innerHTML = `<span class="log-time">👑 Heist Victory:</span><span>Looted <strong>+${amount} ${wonDef.name} ${wonDef.icon}</strong> (${wonDef.rarity})! Automatically added to camp diorama.</span>`;
+        document.getElementById('statLatestSpoils').innerText = `${wonDef.icon} +${amount} ${wonDef.name}`;
+        (window.showToast || console.log)(`👑 Looted +${amount} ${wonDef.name}!`);
+      }, 700);
     }
   });
 
   // On-Chain Mint Button
-  document.getElementById('btnOnchainMint')?.addEventListener('click', async () => {
+  document.getElementById('btnOnchainMint').addEventListener('click', async () => {
     initAudio();
-    const isConnected = !!(connectedUserAddress && (window.ethereum || (wcClient && wcSession)));
+    if (window.ethereum && connectedUserAddress) {
+      heistFeedback.style.display = 'block';
+      heistFeedback.innerHTML = '⏳ Minting new Sherwood Outlaw NFT on Robinhood Testnet...';
+      try {
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: OUTLAWS_CONTRACT,
+            data: '0xb3201950', // mintOutlaw()
+            gas: '0x3d090'
+          }]
+        });
+        playSound('fanfare');
+        heistFeedback.innerHTML = `🎉 <strong>Mint Transaction Broadcast!</strong><br><a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">View Mint on Explorer ↗</a><br>⏳ Confirming block & syncing your new Outlaw...`;
+        (window.showToast || console.log)('🌲 Minting New Outlaw NFT on-chain!');
 
-    if (!isConnected) {
-      playSound('coin');
-      (window.showToast || console.log)('📱 Please connect your wallet to mint your Outlaw!');
-      startWalletConnect();
-      return;
-    }
-
-    const logBox = document.getElementById('questLogBox');
-    const feedback = document.getElementById('heistFeedback');
-    if (feedback) feedback.style.display = 'block';
-
-    const mintLog = document.createElement('div');
-    mintLog.className = 'quest-log-entry';
-    mintLog.innerHTML = `<span class="log-time">🎲 Recruiting Outlaw:</span><span>Dispatching mintOutlaw() on Robinhood Testnet...</span>`;
-    if (logBox) logBox.prepend(mintLog);
-
-    if (wcSession && wcClient) {
-      if (feedback) feedback.innerHTML = '📱 <strong>Sent to Phone:</strong> Please approve the <code>mintOutlaw()</code> transaction in your mobile wallet...';
-      mintLog.innerHTML = `<span class="log-time">📱 Sent to Phone:</span><span>Please approve <code>mintOutlaw()</code> in your wallet app...</span>`;
-    } else {
-      if (feedback) feedback.innerHTML = '⏳ Minting new Sherwood Outlaw NFT on Robinhood Testnet...';
-    }
-
-    try {
-      const txHash = await sendOnchainTx({
-        to: OUTLAWS_CONTRACT,
-        data: '0xb3201950', // mintOutlaw()
-        gas: '0x3d090'
-      });
-      playSound('fanfare');
-      if (feedback) feedback.innerHTML = `🎉 <strong>Mint Transaction Broadcast!</strong><br><a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">View Mint on Explorer ↗</a><br>⏳ Confirming block & syncing your new Outlaw...`;
-      mintLog.innerHTML = `<span class="log-time">⏳ Recruiter Broadcast:</span><span>Transaction broadcast! Confirming on-chain... <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700;">View Tx ↗</a></span>`;
-      (window.showToast || console.log)('🌲 Minting New Outlaw NFT on-chain!');
-
-      await waitForTxReceipt(txHash);
-      await fetchUserOwnedOutlaws(connectedUserAddress);
-      await fetchWalletLoot(connectedUserAddress);
-
-      if (userOwnedOutlaws.length > 0) {
-        const newId = userOwnedOutlaws[userOwnedOutlaws.length - 1];
-        setSeed(newId);
-        updateOwnedOutlawsUI();
-        if (feedback) feedback.innerHTML = `🌲 <strong>Outlaw Recruited!</strong> You now command Outlaw #${newId}! Ready to ambush royal carriages!`;
-        mintLog.className = 'quest-log-entry success';
-        mintLog.innerHTML = `<span class="log-time">👑 Hero Recruited!</span><span>You are now the master of <strong>Outlaw #${newId}</strong>! Select them anytime and start raiding!</span>`;
+        // Poll for receipt and refresh owned outlaws
+        setTimeout(async () => {
+          await fetchUserOwnedOutlaws(connectedUserAddress);
+          await fetchWalletLoot(connectedUserAddress);
+        }, 3500);
+      } catch(err) {
+        heistFeedback.innerHTML = `⚠️ Mint failed: ${err.message || err}`;
       }
-    } catch(err) {
-      if (feedback) feedback.innerHTML = `⚠️ Mint failed: ${err.message || err}`;
-      mintLog.className = 'quest-log-entry';
-      mintLog.style.borderLeftColor = '#e74c3c';
-      mintLog.innerHTML = `<span class="log-time">⚠️ Mint Cancelled:</span><span>${err.message || err}</span>`;
+    } else {
+      const nextSeed = Math.floor(Math.random() * 8999) + 1000;
+      setSeed(nextSeed);
+      playSound('fanfare');
+      (window.showToast || console.log)(`🌲 Minted Outlaw #${nextSeed} (Procedural Canvas Sandbox)!`);
     }
   });
 
@@ -7213,85 +5968,45 @@
   async function craftLootItem(itemId, cost, itemName) {
     initAudio();
     const currentGold = walletLootBalances[1] || 0;
-    const outfitterFb = getOutfitterFeedbackEl();
-    const logBox = document.getElementById('questLogBox');
-
     if (currentGold < cost) {
       playSound('hit');
-      if (outfitterFb) {
-        outfitterFb.style.display = 'block';
-        outfitterFb.style.borderColor = '#ef4444';
-        outfitterFb.innerHTML = `⚠️ <strong>Insufficient Gold Sovereigns:</strong> You need <strong>${cost} Gold</strong> to craft <em>${itemName}</em>. (Current Balance: ${currentGold} Gold).<br><span style="color:#94a3b8;">Ambush royal carriages in the forest above to loot gold from rich barons!</span>`;
-      }
       (window.showToast || console.log)(`⚠️ Need ${cost} Gold Sovereigns to craft ${itemName}! (Held: ${currentGold})`);
       return;
     }
 
-    const hasSigner = !!(getInjectedProvider() || (wcClient && wcSession));
-    if (!connectedUserAddress || !hasSigner) {
-      playSound('coin');
-      if (outfitterFb) {
-        outfitterFb.style.display = 'block';
-        outfitterFb.style.borderColor = '#eab308';
-        outfitterFb.innerHTML = `⚠️ <strong>Wallet Not Connected:</strong> Please connect your wallet via 📱 <strong>WalletConnect</strong> or 💻 <strong>Laptop Connect</strong> to sign the crafting transaction on Robinhood Testnet.`;
+    heistFeedback.style.display = 'block';
+
+    if (window.ethereum && connectedUserAddress) {
+      heistFeedback.innerHTML = `⏳ Signing on-chain craft transaction for <strong>${itemName}</strong> (${cost} Gold Sovereigns)...`;
+      try {
+        const itemIdHex = itemId.toString(16).padStart(64, '0');
+        const calldata = '0x7309cbbd' + itemIdHex; // craftItem(uint256)
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: LOOT_CONTRACT,
+            data: calldata,
+            gas: '0x3d090' // 250,000 gas limit
+          }]
+        });
+        playSound('fanfare');
+        heistFeedback.innerHTML = `✨ <strong>Crafted ${itemName}!</strong><br>Tx Hash: <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">${txHash.slice(0, 16)}... ↗ View on Explorer</a>`;
+        (window.showToast || console.log)(`✨ Crafted ${itemName} on-chain!`);
+        setTimeout(() => fetchWalletLoot(connectedUserAddress), 3500);
+      } catch(err) {
+        heistFeedback.innerHTML = `⚠️ Crafting failed: ${err.message || err}`;
       }
-      (window.showToast || console.log)('📱 Please connect your wallet to craft on-chain!');
-      startWalletConnect();
-      return;
-    }
-
-    if (outfitterFb) {
-      outfitterFb.style.display = 'block';
-      outfitterFb.style.borderColor = '#3b82f6';
-      if (wcSession && wcClient) {
-        outfitterFb.innerHTML = `📱 <strong>Sent to Phone:</strong> Please approve crafting <strong>${itemName}</strong> (${cost} Gold Sovereigns) in your mobile wallet...`;
-      } else {
-        outfitterFb.innerHTML = `⏳ Signing on-chain craft transaction for <strong>${itemName}</strong> (${cost} Gold Sovereigns)...`;
-      }
-    }
-
-    if (logBox) {
-      const craftLog = document.createElement('div');
-      craftLog.className = 'quest-log-entry';
-      craftLog.innerHTML = `<span class="log-time">🔨 Outfitter:</span><span>Dispatching craftItem(${itemId}) for <strong>${itemName}</strong> (${cost} Gold)...</span>`;
-      logBox.prepend(craftLog);
-    }
-
-    try {
-      const itemIdHex = itemId.toString(16).padStart(64, '0');
-      const calldata = '0x7309cbbd' + itemIdHex; // craftItem(uint256)
-      const txHash = await sendOnchainTx({
-        to: LOOT_CONTRACT,
-        data: calldata,
-        gas: '0x3d090'
-      });
+    } else {
+      // Sandbox rehearsal / demonstration simulation
+      walletLootBalances[1] -= cost;
+      walletLootBalances[itemId] = (walletLootBalances[itemId] || 0) + 1;
+      equippedLoot[itemId] = true;
+      equippedLoot[1] = walletLootBalances[1] > 0;
       playSound('fanfare');
-      if (outfitterFb) {
-        outfitterFb.style.borderColor = '#22c55e';
-        outfitterFb.innerHTML = `✨ <strong>Crafted ${itemName}!</strong> (Spent ${cost} Gold Sovereigns)<br>Tx Hash: <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">${txHash.slice(0, 16)}... ↗ View on Explorer</a><br>⏳ Updating on-chain inventory...`;
-      }
-      if (logBox) {
-        const successLog = document.createElement('div');
-        successLog.className = 'quest-log-entry success';
-        successLog.innerHTML = `<span class="log-time">✨ Forged:</span><span>Successfully crafted <strong>${itemName}</strong>! <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700;">View Tx ↗</a></span>`;
-        logBox.prepend(successLog);
-      }
-      (window.showToast || console.log)(`✨ Crafted ${itemName} on-chain!`);
-      await waitForTxReceipt(txHash);
-      await fetchWalletLoot(connectedUserAddress);
+      heistFeedback.innerHTML = `✨ <strong>Crafted ${itemName}!</strong> Spent ${cost} Gold Sovereigns.<br><span style="color:#8fa789;">On live testnet, verified craft tx: <a href="https://explorer.testnet.chain.robinhood.com/tx/0xc2fcc65aa446e989b6d322840040b6acccf059ac1fe1480ef41b0d539b364243" target="_blank" style="color:#ffd700;">0xc2fcc... ↗</a></span>`;
+      (window.showToast || console.log)(`✨ Crafted ${itemName}!`);
       renderLootGrid();
-    } catch(err) {
-      if (outfitterFb) {
-        outfitterFb.style.borderColor = '#ef4444';
-        outfitterFb.innerHTML = `⚠️ Crafting failed: ${err.message || err}`;
-      }
-      if (logBox) {
-        const errLog = document.createElement('div');
-        errLog.className = 'quest-log-entry';
-        errLog.style.borderLeftColor = '#ef4444';
-        errLog.innerHTML = `<span class="log-time">⚠️ Craft Error:</span><span>${err.message || err}</span>`;
-        logBox.prepend(errLog);
-      }
     }
   }
 
@@ -7309,17 +6024,20 @@
     playSound('coin');
     const targetTokenId = currentSeed || (userOwnedOutlaws[0] || 2);
     heistFeedback.style.display = 'block';
-    const isConnected = !!(connectedUserAddress && (window.ethereum || (wcClient && wcSession)));
 
-    if (isConnected) {
+    if (window.ethereum && connectedUserAddress) {
       heistFeedback.innerHTML = `📡 Broadcasting on-chain EIP-4906 <code>MetadataUpdate(${targetTokenId})</code> to notify Blockscout & indexers...`;
       try {
         const tokenIdHex = targetTokenId.toString(16).padStart(64, '0');
         const calldata = '0xd95ba42f' + tokenIdHex; // refreshMetadata(uint256)
-        const txHash = await sendOnchainTx({
-          to: OUTLAWS_CONTRACT,
-          data: calldata,
-          gas: '0x186a0'
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: connectedUserAddress,
+            to: OUTLAWS_CONTRACT,
+            data: calldata,
+            gas: '0x186a0'
+          }]
         });
         playSound('fanfare');
         heistFeedback.innerHTML = `📡 <strong>EIP-4906 Signal Broadcast!</strong><br>Tx Hash: <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">${txHash.slice(0, 16)}... ↗ View on Explorer</a><br><span style="color:#8fa789;">Emitted <code>MetadataUpdate(${targetTokenId})</code>. Blockscout will invalidate its PostgreSQL cache!</span>`;
@@ -7340,78 +6058,32 @@
   const btnCloseSvgViewer = document.getElementById('btnCloseSvgViewer');
 
   if (btnCloseSvgViewer) {
-    btnCloseSvgViewer?.addEventListener('click', () => {
+    btnCloseSvgViewer.addEventListener('click', () => {
       onchainSvgViewer.style.display = 'none';
     });
   }
 
-    function runRehearsalAmbush(targetTokenId) {
-    const logBox = document.getElementById('questLogBox');
-    const pendingEntry = document.createElement('div');
-    pendingEntry.className = 'quest-log-entry';
-    pendingEntry.innerHTML = `<span class="log-time">⚔️ Ambush Initiated:</span><span>Outlaw #${targetTokenId} is raiding the Sheriff's Royal Coach (Zero-Gas Rehearsal)...</span>`;
-    if (logBox) logBox.prepend(pendingEntry);
-    playSound('shoot');
-
-    setTimeout(() => {
-      const roll = Math.random() * 100;
-      let wonId = 1, amount = 1;
-      if (roll < 5) { wonId = 4; amount = 1; }
-      else if (roll < 18) { wonId = 3; amount = 1; }
-      else if (roll < 35) { wonId = 2; amount = 1; }
-      else if (roll < 50) { wonId = 7; amount = 1; }
-      else { wonId = 1; amount = Math.floor(Math.random() * 4) + 1; }
-
-      walletLootBalances[wonId] = (walletLootBalances[wonId] || 0) + amount;
-      if (wonId !== 1) {
-        walletLootBalances[1] = (walletLootBalances[1] || 0) + 1;
-      }
-      equippedLoot[wonId] = true;
-      renderLootGrid();
-      playSound('fanfare');
-
-      const wonDef = LOOT_DEFS.find(d => d.id === wonId);
-      pendingEntry.className = 'quest-log-entry success';
-      pendingEntry.innerHTML = `<span class="log-time">👑 Heist Victory (Rehearsal):</span><span>Looted <strong>+${amount} ${wonDef.name} ${wonDef.icon}</strong> (${wonDef.rarity})! Added to diorama preview.</span>`;
-      document.getElementById('statLatestSpoils').innerText = `${wonDef.icon} +${amount} ${wonDef.name}`;
-      (window.showToast || console.log)(`👑 Looted +${amount} ${wonDef.name}!`);
-    }, 700);
-  }
-
-  window.runDispatchRehearsal = function() {
-    const modal = document.getElementById('heistDispatchModal');
-    if (modal) modal.style.display = 'none';
-    runRehearsalAmbush(currentSeed || 1);
-  };
-  window.openFullscreenArcade = openFullscreenArcade;
-
-  document.getElementById('btnDispatchRehearsal')?.addEventListener('click', window.runDispatchRehearsal);
-
-  async function fetchAndShowOnchainSvg(targetTokenId) {
+  document.getElementById('btnInspectOnchainSvg').addEventListener('click', async () => {
     initAudio();
     playSound('coin');
-    const onchainSvgViewer = document.getElementById('onchainSvgViewer');
-    const onchainSvgFrame = document.getElementById('onchainSvgFrame');
-    if (!onchainSvgViewer || !onchainSvgFrame) return;
-
+    const targetTokenId = currentSeed || (userOwnedOutlaws[0] || 1);
     onchainSvgViewer.style.display = 'flex';
     onchainSvgFrame.innerHTML = `<div style="color:#ffd700; padding:20px; font-size:12px; text-align:center;">⏳ Querying smart contract generateSVG(${targetTokenId}) on Robinhood testnet RPC...</div>`;
-
+    
     try {
-      const tokenIdHex = targetTokenId.toString(16).padStart(64, '0');
-      const calldata = '0x6dcee4ca' + tokenIdHex;
-      const res = await fetch(getActiveRpcUrl(), {
+      const calldata = '0x6dcee4ca' + targetTokenId.toString(16).padStart(64, '0');
+      const res = await fetch(RH_RPC_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jsonrpc: '2.0',
-          id: 1,
+          id: Date.now(),
           method: 'eth_call',
           params: [{ to: OUTLAWS_CONTRACT, data: calldata }, 'latest']
         })
       });
       const data = await res.json();
-      if (data && data.result && data.result.length > 130) {
+      if (data && data.result) {
         let hex = data.result;
         if (hex.startsWith('0x')) hex = hex.slice(2);
         const len = parseInt(hex.slice(64, 128), 16);
@@ -7426,27 +6098,12 @@
         if (vTitle) vTitle.innerText = `📜 Smart Contract Output: Outlaw #${targetTokenId} (\`generateSVG\`)`;
         (window.showToast || console.log)(`📜 Fetched Outlaw #${targetTokenId} On-Chain Contract SVG!`);
       } else {
-        // Token not minted on chain yet
-        onchainSvgFrame.innerHTML = `
-          <div style="padding:16px; text-align:center; font-size:11px; color:#cbd5e1;">
-            <div style="color:#f59e0b; font-weight:bold; margin-bottom:8px;">⚠️ Outlaw #${targetTokenId} is an unminted rehearsal seed</div>
-            <div style="margin-bottom:12px; font-size:10px; color:#94a3b8;">Only minted tokens exist on Robinhood Testnet. Click below to inspect verified minted on-chain SVGs:</div>
-            <div style="display:flex; justify-content:center; gap:8px;">
-              <button type="button" class="btn" onclick="window.fetchAndShowOnchainSvg(1)" style="font-size:10px; padding:6px 12px; background:#1b4332; color:#ffd700; border:1px solid #2d6a4f; cursor:pointer;">🏹 View Outlaw #1 (Robin Hood)</button>
-              <button type="button" class="btn" onclick="window.fetchAndShowOnchainSvg(2)" style="font-size:10px; padding:6px 12px; background:#1b4332; color:#ffd700; border:1px solid #2d6a4f; cursor:pointer;">🌲 View Outlaw #2 (Little John)</button>
-            </div>
-          </div>
-        `;
+        onchainSvgFrame.innerHTML = '<div style="color:#ff6b6b; padding:10px; font-size:11px;">Error loading on-chain SVG</div>';
       }
     } catch(err) {
       console.error('On-chain SVG fetch error:', err);
       onchainSvgFrame.innerHTML = `<div style="color:#ff6b6b; padding:10px; font-size:11px;">Error: ${err.message}</div>`;
     }
-  }
-  window.fetchAndShowOnchainSvg = fetchAndShowOnchainSvg;
-
-  document.getElementById('btnInspectOnchainSvg')?.addEventListener('click', () => {
-    fetchAndShowOnchainSvg(currentSeed || 1);
   });
 
   // Initial Boot
@@ -7454,188 +6111,16 @@
   renderPaletteSwatches();
   renderCompanionTraitChips();
   updateEquipTryChips();
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialSeed = parseInt(urlParams.get('id') || urlParams.get('seed') || '1');
-  setSeed(initialSeed);
-  fetchUserOwnedOutlaws(null);
+  fetchWalletLoot(walletInput.value);
+  fetchUserOwnedOutlaws(walletInput.value);
+  setSeed(1);
   loop();
 })();
 </script>
-<!-- 16-Bit Arcade Title Screen & Thumbnail Mode -->
-  <div id="titleScreenOverlay" style="position:fixed; inset:0; z-index:9000; background:radial-gradient(circle at 50% 25%, #153819 0%, #08150a 55%, #030804 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px; box-sizing:border-box; text-align:center; box-shadow:inset 0 0 70px rgba(0,0,0,0.95); user-select:none; cursor:pointer;" onclick="window.dismissTitleScreen()">
-    <div style="display:inline-block; background:#042f1a; border:1px solid #22c55e; color:#86efac; font-size:9px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; padding:3px 8px; border-radius:12px; margin-bottom:6px; box-shadow:0 0 8px rgba(34, 197, 94, 0.25);">
-      ⚡ On-Chain Cartridge • ROM V1.0
-    </div>
-    
-    <div style="margin:2px 0 6px 0; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.8));">
-      <svg width="120" height="90" viewBox="0 0 140 105" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="102" cy="30" r="22" fill="#fef08a" opacity="0.85" />
-        <circle cx="108" cy="26" r="20" fill="#153819" />
-        <rect x="25" y="16" width="2" height="2" fill="#ffd700" />
-        <rect x="55" y="10" width="3" height="3" fill="#fff" />
-        <rect x="125" y="18" width="2" height="2" fill="#ffd700" />
-        <rect x="80" y="8" width="2" height="2" fill="#fff" />
-        <rect x="35" y="35" width="2" height="2" fill="#86efac" />
-        <polygon points="15,85 25,60 35,85" fill="#0b2413"/>
-        <polygon points="30,87 42,55 54,87" fill="#0f331b"/>
-        <polygon points="50,90 62,50 74,90" fill="#144223"/>
-        <polygon points="70,87 82,53 94,87" fill="#0f331b"/>
-        <polygon points="90,90 105,45 120,90" fill="#144223"/>
-        <polygon points="112,85 122,60 132,85" fill="#0b2413"/>
-        <ellipse cx="70" cy="94" rx="65" ry="12" fill="#051409"/>
-        <rect x="62" y="80" width="4" height="12" fill="#15803d"/>
-        <rect x="70" y="80" width="4" height="12" fill="#15803d"/>
-        <rect x="60" y="90" width="6" height="3" fill="#3f2e18"/>
-        <rect x="70" y="90" width="6" height="3" fill="#3f2e18"/>
-        <rect x="60" y="64" width="16" height="17" fill="#166534"/>
-        <rect x="58" y="68" width="20" height="10" fill="#14532d"/>
-        <rect x="63" y="71" width="10" height="3" fill="#b45309"/>
-        <rect x="67" y="71" width="2" height="3" fill="#ffd700"/>
-        <circle cx="68" cy="58" r="6" fill="#fbcfe8"/>
-        <polygon points="62,56 76,56 74,49 64,50" fill="#166534"/>
-        <path d="M72,51 Q78,44 82,48" stroke="#e11d48" stroke-width="2" fill="none"/>
-        <path d="M54,48 Q46,66 54,84" stroke="#ffd700" stroke-width="3" fill="none"/>
-        <line x1="54" y1="48" x2="54" y2="84" stroke="#fef08a" stroke-width="2"/>
-        <line x1="50" y1="66" x2="72" y2="66" stroke="#fff" stroke-width="2"/>
-        <polygon points="46,66 50,63 50,69" fill="#ffd700"/>
-      </svg>
-    </div>
-
-    <div style="font-size:26px; font-weight:900; letter-spacing:2px; color:#ffd700; text-shadow:0 1px 0 #ca8a04, 0 2px 0 #a16207, 0 3px 0 #854d0e, 0 4px 6px rgba(0,0,0,0.9), 0 0 15px rgba(255,215,0,0.35); margin:2px 0; font-family:'Impact', 'Arial Black', sans-serif; text-transform:uppercase; white-space:nowrap;">
-      HOODQUEST
-    </div>
-    <div style="font-size:9px; color:#86efac; letter-spacing:1px; margin-bottom:8px; text-transform:uppercase; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.8); font-family:monospace;">
-      Living Companion RPG • Robinhood Testnet
-    </div>
-
-    <div style="margin-top:4px;">
-      <div style="font-size:11px; font-weight:bold; color:#ffd700; letter-spacing:1.5px; background:linear-gradient(180deg, #15803d, #14532d); border:1.5px solid #4ade80; padding:7px 18px; border-radius:6px; box-shadow:0 4px 12px rgba(34, 197, 94, 0.35), inset 0 1px 0 rgba(255,255,255,0.25); cursor:pointer; display:inline-block;" id="btnStartArcade">
-        ⚔️ CLICK TO PLAY ⚔️
-      </div>
-    </div>
-
-    <div style="margin-top:8px; font-size:8px; color:#6ee7b7; letter-spacing:0.5px; background:rgba(0,0,0,0.45); border:1px solid #1f4728; padding:3px 8px; border-radius:4px; font-family:monospace;">
-      Chain ID: 46630 • 100% Solidity Bytecode ROM
-    </div>
-  </div>
-
-  <script>
-    window.dismissTitleScreen = function() {
-      const ts = document.getElementById('titleScreenOverlay');
-      if (ts) {
-        ts.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        ts.style.opacity = '0';
-        ts.style.transform = 'scale(1.04)';
-        setTimeout(() => { ts.style.display = 'none'; }, 300);
-      }
-      if (window.initAudio) window.initAudio();
-      if (window.playSound) window.playSound('coin');
-    };
-    window.showTitleScreen = function() {
-      const ts = document.getElementById('titleScreenOverlay');
-      if (ts) {
-        ts.style.display = 'flex';
-        ts.style.opacity = '1';
-        ts.style.transform = 'scale(1)';
-      }
-    };
-
-    // Auto-update developer sandbox link for proper GitHub Pages navigation & sandbox clipboard fallback
-    (function() {
-      const simLink = document.querySelector('a[href="/simulator.html"], a[href="./simulator.html"]');
-      if (simLink) {
-        simLink.href = 'https://srhsoulja.github.io/hoodquest/simulator.html';
-        simLink.onclick = function(e) {
-          const inIframe = (window.self !== window.top);
-          if (inIframe) {
-            e.preventDefault();
-            try {
-              const ta = document.createElement('textarea');
-              ta.value = 'https://srhsoulja.github.io/hoodquest/simulator.html';
-              ta.style.position = 'fixed';
-              ta.style.left = '-9999px';
-              document.body.appendChild(ta);
-              ta.focus();
-              ta.select();
-              document.execCommand('copy');
-              document.body.removeChild(ta);
-            } catch(_) {}
-            (window.showToast || console.log)('📋 Copied Sandbox URL! (Paste into a new tab)');
-          }
-        };
-      }
-    })();
-  </script>
-
-<!-- Real WalletConnect v2 Pairing Modal -->
-  <div id="walletConnectModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:10001; backdrop-filter:blur(8px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 12px; box-sizing:border-box;" onclick="if(event.target===this)this.style.display='none'">
-    <div style="background:#131c12; border:2px solid #3b82f6; border-radius:16px; max-width:380px; width:100%; padding:22px; box-shadow:0 20px 50px rgba(0,0,0,0.95); position:relative; text-align:center; color:#e2e8f0; font-family:sans-serif; margin:auto; box-sizing:border-box;">
-      <button id="btnCloseWcModal" style="position:absolute; top:12px; right:14px; background:#1e293b; border:1px solid #475569; border-radius:50%; width:28px; height:28px; color:#f1f5f9; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('walletConnectModal').style.display='none'">✕</button>
-      <h3 style="margin-top:0; color:#60a5fa; font-size:17px; display:flex; align-items:center; justify-content:center; gap:8px;">
-        <span>📱 WalletConnect v2</span>
-      </h3>
-      <p id="wcStatusText" style="font-size:12px; color:#cbd5e1; margin-bottom:14px;">Scan QR with Robinhood Wallet, MetaMask Mobile, or Rainbow</p>
-      
-      <div id="wcQrBox" style="background:#fff; padding:10px; border-radius:12px; display:inline-block; margin-bottom:14px; min-width:220px; min-height:220px;">
-        <div style="color:#64748b; padding:40px 10px; font-size:12px;">Initializing WalletConnect...</div>
-      </div>
-      
-      <div style="display:flex; justify-content:center; gap:8px; margin-top:6px;">
-        <button id="btnCopyWcUri" class="btn" style="background:#1e293b; border:1px solid #475569; color:#93c5fd; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer;">📋 Copy Pairing URI</button>
-      </div>
-      <div style="font-size:10px; color:#94a3b8; margin-top:10px; line-height:1.4; text-align:center; padding:0 8px;">
-        💡 <strong>How to connect:</strong> Desktop MetaMask does not accept pairing URIs. Scan the QR code with your phone wallet app (<strong>MetaMask Mobile</strong>, <strong>Rainbow</strong>, or <strong>Robinhood Wallet</strong>) to sign and play from your laptop!
-      </div>
-
-      <!-- Direct Laptop MetaMask Web Portal Banner -->
-      <div style="margin-top:12px; background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:12px; text-align:left; font-size:11px;">
-        <div style="color:#38bdf8; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-          <span>🦊 Playing on Laptop with Desktop MetaMask?</span>
-        </div>
-        <div style="color:#cbd5e1; font-size:10px; line-height:1.4; margin-bottom:8px;">
-          Blockscout explorer iframes isolate browser extensions. Open the official web portal in a regular browser tab for direct 1-click desktop MetaMask signing (no phone needed)!
-        </div>
-        <div id="portalDisplayBox" style="background:#020617; border:1px solid #38bdf8; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:11px; color:#38bdf8; word-break:break-all; user-select:all; cursor:pointer; text-align:center; margin-bottom:8px;" onclick="window.copyPortalUrl(document.getElementById('btnCopyPortalUrl'))" title="Click to copy full URL">
-          https://srhsoulja.github.io/hoodquest/
-        </div>
-        <button type="button" id="btnCopyPortalUrl" class="btn" style="width:100%; background:#0284c7; border:1px solid #38bdf8; color:#fff; font-size:11px; font-weight:bold; padding:8px; border-radius:6px; cursor:pointer;" onclick="window.copyPortalUrl(this)">📋 Copy Portal URL (Paste in New Tab)</button>
-      </div>
-
-      <!-- Configurable Infrastructure Drawer -->
-      <details id="wcConfigDrawer" style="margin-top:14px; text-align:left; background:#0b140c; border:1px solid #1e3a1f; border-radius:8px; padding:8px 12px; font-size:11px;">
-        <summary style="cursor:pointer; color:#86efac; font-weight:bold; user-select:none;">⚙️ Connection & Relay Settings</summary>
-        <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
-          <div>
-            <label style="display:block; color:#94a3b8; margin-bottom:2px; font-size:10px;">Relay WebSocket URL (Swappable / Self-hostable):</label>
-            <input id="wcCfgRelay" type="text" placeholder="wss://relay.walletconnect.org" style="width:100%; box-sizing:border-box; background:#050906; border:1px solid #334155; color:#f1f5f9; padding:5px 8px; border-radius:4px; font-size:11px; font-family:monospace;" />
-          </div>
-          <div>
-            <label style="display:block; color:#94a3b8; margin-bottom:2px; font-size:10px;">Project ID (Non-load-bearing / Optional):</label>
-            <input id="wcCfgProjectId" type="text" placeholder="Optional for custom relays" style="width:100%; box-sizing:border-box; background:#050906; border:1px solid #334155; color:#f1f5f9; padding:5px 8px; border-radius:4px; font-size:11px; font-family:monospace;" />
-          </div>
-          <div>
-            <label style="display:block; color:#94a3b8; margin-bottom:2px; font-size:10px;">Robinhood RPC Endpoint (Swappable):</label>
-            <input id="wcCfgRpc" type="text" placeholder="https://rpc.testnet.chain.robinhood.com" style="width:100%; box-sizing:border-box; background:#050906; border:1px solid #334155; color:#f1f5f9; padding:5px 8px; border-radius:4px; font-size:11px; font-family:monospace;" />
-          </div>
-          <div style="display:flex; gap:6px; margin-top:4px;">
-            <button id="btnSaveWcConfig" type="button" class="btn" style="flex:1; background:#15803d; border:1px solid #22c55e; color:#fff; font-size:10px; padding:5px; border-radius:4px; cursor:pointer;">💾 Save & Reconnect</button>
-            <button id="btnResetWcConfig" type="button" class="btn" style="background:#334155; border:1px solid #475569; color:#cbd5e1; font-size:10px; padding:5px 8px; border-radius:4px; cursor:pointer;">↺ Defaults</button>
-          </div>
-        </div>
-      </details>
-
-      <!-- Bottom Close Button -->
-      <div style="margin-top:16px;">
-        <button type="button" class="btn" style="width:100%; background:#1e293b; border:1px solid #475569; color:#e2e8f0; font-size:12px; font-weight:bold; padding:9px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('walletConnectModal').style.display='none'">✕ Close Window</button>
-      </div>
-    </div>
-  </div>
-
-
 <!-- Nottingham Castle Vault Heist Modal -->
-  <div id="castleHeistModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9999; backdrop-filter:blur(8px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 12px; box-sizing:border-box;" onclick="if(event.target===this)this.style.display='none'">
-    <div style="background:#141217; border:2px solid #e11d48; border-radius:14px; max-width:520px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative; color:#e2e8f0; font-family:inherit; margin:auto; box-sizing:border-box;">
-      <button id="btnCloseCastleModal" style="position:absolute; top:12px; right:14px; background:#27181c; border:1px solid #881337; border-radius:50%; width:28px; height:28px; color:#fda4af; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('castleHeistModal').style.display='none'">✕</button>
+  <div id="castleHeistModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#141217; border:2px solid #e11d48; border-radius:14px; max-width:520px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative; color:#e2e8f0; font-family:inherit;">
+      <button id="btnCloseCastleModal" style="position:absolute; top:12px; right:14px; background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
       <h2 style="color:#f43f5e; font-size:18px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">🏰 The Great Nottingham Castle Vault Heist</h2>
       <p style="color:#fda4af; font-size:12px; margin-bottom:12px;">Annual Flagship World Event • Days 318–325 • Liberate The Golden Arrow (Slots 0–19)</p>
 
@@ -7683,18 +6168,13 @@
       <div id="heistConsoleLog" style="background:#09090b; border:1px solid #27272a; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:10px; color:#a1a1aa; height:70px; overflow-y:auto; line-height:1.4;">
         [Delayed L2 Entropy ArbSys 0x64]: Ready for infiltration assignment. Choose an assault sector above.
       </div>
-
-      <!-- Bottom Close Button -->
-      <div style="margin-top:14px;">
-        <button type="button" class="btn" style="width:100%; background:#27181c; border:1px solid #881337; color:#fda4af; font-size:12px; font-weight:bold; padding:8px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('castleHeistModal').style.display='none'">✕ Close Castle Infiltration</button>
-      </div>
     </div>
   </div>
 
 <!-- Item Art Inspector Modal -->
-  <div id="itemArtModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9999; backdrop-filter:blur(8px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 12px; box-sizing:border-box;" onclick="if(event.target===this)this.style.display='none'">
-    <div style="background:#131c11; border:2px solid #ffd700; border-radius:14px; max-width:440px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative; margin:auto; box-sizing:border-box;">
-      <button id="btnCloseItemModal" style="position:absolute; top:12px; right:14px; background:#1b2818; border:1px solid #4a7c59; border-radius:50%; width:28px; height:28px; color:#bbf7d0; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('itemArtModal').style.display='none'">✕</button>
+  <div id="itemArtModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#131c11; border:2px solid #ffd700; border-radius:14px; max-width:440px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); position:relative;">
+      <button id="btnCloseItemModal" style="position:absolute; top:12px; right:14px; background:none; border:none; color:#9cb894; font-size:20px; cursor:pointer;">✕</button>
       <h2 id="itemModalTitle" style="color:#ffd700; font-size:18px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">🧪 Greenwood Elixir of Vigor</h2>
       <p id="itemModalType" style="color:#88b04b; font-size:12px; margin-bottom:12px;">ERC-1155 Loot • Token ID #5 • Consumable Alchemical Draft</p>
       
@@ -7714,24 +6194,11 @@
         <button class="pill-btn item-sel-btn" data-item="gold">💰 Sovereign</button>
         <button class="pill-btn item-sel-btn" data-item="stiletto">🗡️ Stilettos</button>
       </div>
-
-      <!-- Bottom Close Button -->
-      <div style="margin-top:14px;">
-        <button type="button" class="btn" style="width:100%; background:#1b2818; border:1px solid #4a7c59; color:#bbf7d0; font-size:12px; font-weight:bold; padding:8px; border-radius:8px; cursor:pointer;" onclick="document.getElementById('itemArtModal').style.display='none'">✕ Close Inspector</button>
-      </div>
     </div>
   </div>
-<script>
-  // Global Escape key listener to dismiss any open modal
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      ['walletConnectModal', 'castleHeistModal', 'itemArtModal'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
-    }
-  });
-</script>
+</body>
+</html>
+
 <script src="nft_gallery.js"></script>
 <script>
   // Safe accessor for currentToken across script tags
@@ -7974,13 +6441,13 @@
   const btnCloseModal = document.getElementById('btnCloseItemModal');
 
   if (btnInspect && itemModal) {
-    btnInspect?.addEventListener('click', () => {
+    btnInspect.addEventListener('click', () => {
       itemModal.style.display = 'flex';
       renderItemArt('elixir');
     });
   }
   if (btnCloseModal && itemModal) {
-    btnCloseModal?.addEventListener('click', () => {
+    btnCloseModal.addEventListener('click', () => {
       itemModal.style.display = 'none';
     });
   }
@@ -8153,5 +6620,5 @@
   });
 
 </script>
-</body>
-</html>
+  
+  

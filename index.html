@@ -6542,6 +6542,23 @@ tslib/tslib.es6.js:
   if (fsBtnInit) {
     fsBtnInit.innerText = '⛶ Maximize Arcade';
     fsBtnInit.title = 'Toggle expanded view with full scrolling';
+
+    // Inject Title Screen button
+    const titleBtn = document.createElement('button');
+    titleBtn.className = 'btn';
+    titleBtn.id = 'btnShowTitleScreen';
+    titleBtn.style.background = '#064e3b';
+    titleBtn.style.borderColor = '#10b981';
+    titleBtn.style.color = '#a7f3d0';
+    titleBtn.style.fontWeight = 'bold';
+    titleBtn.innerText = '🎮 Title Screen';
+    titleBtn.title = 'View 16-bit arcade title screen artwork';
+    titleBtn.addEventListener('click', () => {
+      if (window.showTitleScreen) window.showTitleScreen();
+    });
+    if (fsBtnInit.parentNode) {
+      fsBtnInit.parentNode.insertBefore(titleBtn, fsBtnInit.nextSibling);
+    }
   }
 
   function openFullscreenArcade() {
@@ -7527,6 +7544,112 @@ tslib/tslib.es6.js:
   loop();
 })();
 </script>
+<!-- 16-Bit Arcade Title Screen & Thumbnail Mode -->
+  <div id="titleScreenOverlay" style="position:fixed; inset:0; z-index:9000; background:radial-gradient(circle at 50% 25%, #153819 0%, #08150a 55%, #030804 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px; box-sizing:border-box; text-align:center; box-shadow:inset 0 0 70px rgba(0,0,0,0.95); user-select:none; cursor:pointer;" onclick="window.dismissTitleScreen()">
+    <div style="display:inline-block; background:#042f1a; border:1px solid #22c55e; color:#86efac; font-size:9px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; padding:3px 8px; border-radius:12px; margin-bottom:6px; box-shadow:0 0 8px rgba(34, 197, 94, 0.25);">
+      ⚡ On-Chain Cartridge • ROM V1.0
+    </div>
+    
+    <div style="margin:2px 0 6px 0; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.8));">
+      <svg width="120" height="90" viewBox="0 0 140 105" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="102" cy="30" r="22" fill="#fef08a" opacity="0.85" />
+        <circle cx="108" cy="26" r="20" fill="#153819" />
+        <rect x="25" y="16" width="2" height="2" fill="#ffd700" />
+        <rect x="55" y="10" width="3" height="3" fill="#fff" />
+        <rect x="125" y="18" width="2" height="2" fill="#ffd700" />
+        <rect x="80" y="8" width="2" height="2" fill="#fff" />
+        <rect x="35" y="35" width="2" height="2" fill="#86efac" />
+        <polygon points="15,85 25,60 35,85" fill="#0b2413"/>
+        <polygon points="30,87 42,55 54,87" fill="#0f331b"/>
+        <polygon points="50,90 62,50 74,90" fill="#144223"/>
+        <polygon points="70,87 82,53 94,87" fill="#0f331b"/>
+        <polygon points="90,90 105,45 120,90" fill="#144223"/>
+        <polygon points="112,85 122,60 132,85" fill="#0b2413"/>
+        <ellipse cx="70" cy="94" rx="65" ry="12" fill="#051409"/>
+        <rect x="62" y="80" width="4" height="12" fill="#15803d"/>
+        <rect x="70" y="80" width="4" height="12" fill="#15803d"/>
+        <rect x="60" y="90" width="6" height="3" fill="#3f2e18"/>
+        <rect x="70" y="90" width="6" height="3" fill="#3f2e18"/>
+        <rect x="60" y="64" width="16" height="17" fill="#166534"/>
+        <rect x="58" y="68" width="20" height="10" fill="#14532d"/>
+        <rect x="63" y="71" width="10" height="3" fill="#b45309"/>
+        <rect x="67" y="71" width="2" height="3" fill="#ffd700"/>
+        <circle cx="68" cy="58" r="6" fill="#fbcfe8"/>
+        <polygon points="62,56 76,56 74,49 64,50" fill="#166534"/>
+        <path d="M72,51 Q78,44 82,48" stroke="#e11d48" stroke-width="2" fill="none"/>
+        <path d="M54,48 Q46,66 54,84" stroke="#ffd700" stroke-width="3" fill="none"/>
+        <line x1="54" y1="48" x2="54" y2="84" stroke="#fef08a" stroke-width="2"/>
+        <line x1="50" y1="66" x2="72" y2="66" stroke="#fff" stroke-width="2"/>
+        <polygon points="46,66 50,63 50,69" fill="#ffd700"/>
+      </svg>
+    </div>
+
+    <div style="font-size:26px; font-weight:900; letter-spacing:2px; color:#ffd700; text-shadow:0 1px 0 #ca8a04, 0 2px 0 #a16207, 0 3px 0 #854d0e, 0 4px 6px rgba(0,0,0,0.9), 0 0 15px rgba(255,215,0,0.35); margin:2px 0; font-family:'Impact', 'Arial Black', sans-serif; text-transform:uppercase; white-space:nowrap;">
+      HOODQUEST
+    </div>
+    <div style="font-size:9px; color:#86efac; letter-spacing:1px; margin-bottom:8px; text-transform:uppercase; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.8); font-family:monospace;">
+      Living Companion RPG • Robinhood Testnet
+    </div>
+
+    <div style="margin-top:4px;">
+      <div style="font-size:11px; font-weight:bold; color:#ffd700; letter-spacing:1.5px; background:linear-gradient(180deg, #15803d, #14532d); border:1.5px solid #4ade80; padding:7px 18px; border-radius:6px; box-shadow:0 4px 12px rgba(34, 197, 94, 0.35), inset 0 1px 0 rgba(255,255,255,0.25); cursor:pointer; display:inline-block;" id="btnStartArcade">
+        ⚔️ CLICK TO PLAY ⚔️
+      </div>
+    </div>
+
+    <div style="margin-top:8px; font-size:8px; color:#6ee7b7; letter-spacing:0.5px; background:rgba(0,0,0,0.45); border:1px solid #1f4728; padding:3px 8px; border-radius:4px; font-family:monospace;">
+      Chain ID: 46630 • 100% Solidity Bytecode ROM
+    </div>
+  </div>
+
+  <script>
+    window.dismissTitleScreen = function() {
+      const ts = document.getElementById('titleScreenOverlay');
+      if (ts) {
+        ts.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        ts.style.opacity = '0';
+        ts.style.transform = 'scale(1.04)';
+        setTimeout(() => { ts.style.display = 'none'; }, 300);
+      }
+      if (window.initAudio) window.initAudio();
+      if (window.playSound) window.playSound('coin');
+    };
+    window.showTitleScreen = function() {
+      const ts = document.getElementById('titleScreenOverlay');
+      if (ts) {
+        ts.style.display = 'flex';
+        ts.style.opacity = '1';
+        ts.style.transform = 'scale(1)';
+      }
+    };
+
+    // Auto-update developer sandbox link for proper GitHub Pages navigation & sandbox clipboard fallback
+    (function() {
+      const simLink = document.querySelector('a[href="/simulator.html"], a[href="./simulator.html"]');
+      if (simLink) {
+        simLink.href = 'https://srhsoulja.github.io/hoodquest/simulator.html';
+        simLink.onclick = function(e) {
+          const inIframe = (window.self !== window.top);
+          if (inIframe) {
+            e.preventDefault();
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = 'https://srhsoulja.github.io/hoodquest/simulator.html';
+              ta.style.position = 'fixed';
+              ta.style.left = '-9999px';
+              document.body.appendChild(ta);
+              ta.focus();
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+            } catch(_) {}
+            (window.showToast || console.log)('📋 Copied Sandbox URL! (Paste into a new tab)');
+          }
+        };
+      }
+    })();
+  </script>
+
 <!-- Real WalletConnect v2 Pairing Modal -->
   <div id="walletConnectModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:10001; backdrop-filter:blur(8px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 12px; box-sizing:border-box;" onclick="if(event.target===this)this.style.display='none'">
     <div style="background:#131c12; border:2px solid #3b82f6; border-radius:16px; max-width:380px; width:100%; padding:22px; box-shadow:0 20px 50px rgba(0,0,0,0.95); position:relative; text-align:center; color:#e2e8f0; font-family:sans-serif; margin:auto; box-sizing:border-box;">
