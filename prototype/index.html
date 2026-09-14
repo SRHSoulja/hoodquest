@@ -5492,17 +5492,46 @@
       ? companionOverride
       : ((typeof currentToken !== 'undefined' && currentToken && currentToken.companion) ? currentToken.companion : 'Camp Hound');
 
+    const bannerBox = document.getElementById('activeBondBanner');
     const bannerEmoji = document.getElementById('activePetEmoji');
     const bannerName = document.getElementById('activePetName');
     const bannerStageTag = document.getElementById('activePetStageTag');
+    const bannerTraitTag = document.getElementById('activePetTraitTag');
     const bannerPerk = document.getElementById('companionPerkInfo');
 
     const activeData = BEASTS_CATALOG.find(b => b.id === curComp) || BEASTS_CATALOG[0];
     if (bannerEmoji) bannerEmoji.innerText = activeData.emoji;
     if (bannerName) bannerName.innerText = activeData.name;
     const stg = (typeof companionStageOverride !== 'undefined' && companionStageOverride !== 'auto') ? companionStageOverride : 3;
-    const stgLabels = { 1: 'Young Pup/Kitten', 3: 'Adult Hunter', 5: 'Celestial Legend' };
-    if (bannerStageTag) bannerStageTag.innerText = stgLabels[stg] || 'Adult';
+    const stgLabels = { 1: 'Young Pup/Fledgling', 3: 'Adult Hunter', 5: 'Celestial Legend ✨' };
+    if (bannerStageTag) {
+      bannerStageTag.innerText = stgLabels[stg] || 'Adult Hunter';
+      bannerStageTag.style.borderColor = (stg === 5) ? '#ffd700' : (stg === 1 ? '#38bdf8' : '#22c55e');
+      bannerStageTag.style.color = (stg === 5) ? '#fef08a' : (stg === 1 ? '#bae6fd' : '#86efac');
+    }
+
+    // Trait label
+    const curTrait = (typeof companionTraitOverride !== 'undefined' && companionTraitOverride !== 'auto') ? companionTraitOverride : 'auto';
+    let traitLabel = 'Natural Genetics';
+    const traitsList = (typeof COMPANION_TRAITS !== 'undefined' && COMPANION_TRAITS[curComp]) ? COMPANION_TRAITS[curComp] : [];
+    if (curTrait !== 'auto' && traitsList.length > 0) {
+      const found = traitsList.find(t => t.id === curTrait);
+      if (found) traitLabel = found.label;
+    }
+    if (bannerTraitTag) {
+      bannerTraitTag.innerText = traitLabel;
+    }
+
+    if (bannerBox) {
+      if (stg === 5) {
+        bannerBox.style.borderColor = '#ffd700';
+        bannerBox.style.boxShadow = '0 0 16px rgba(253, 224, 71, 0.35), inset 0 0 12px rgba(253, 224, 71, 0.15)';
+      } else {
+        bannerBox.style.borderColor = '#22c55e';
+        bannerBox.style.boxShadow = 'inset 0 0 12px rgba(34,197,94,0.15)';
+      }
+    }
+
     if (bannerPerk) bannerPerk.innerText = `${activeData.emoji} ${activeData.name}: ${activeData.perk}`;
 
     grid.innerHTML = BEASTS_CATALOG.map(b => {
@@ -5543,7 +5572,6 @@
           else playSound('lute');
         }
         updateSanctuaryUI();
-        if (typeof renderCompanionTraitChips === 'function') renderCompanionTraitChips();
         if (window.updateHUD) window.updateHUD();
         const found = BEASTS_CATALOG.find(x => x.id === compId);
         (window.showToast || console.log)(`🐾 Bonded with ${found ? found.name : compId}! Active combat perk applied.`);
@@ -5558,6 +5586,40 @@
       btn.style.borderColor = isActive ? '#22c55e' : '#234324';
       btn.style.fontWeight = isActive ? 'bold' : 'normal';
     });
+
+    // Synchronize and render breed/trait chips for curComp
+    const traitContainer = document.getElementById('companionTraitChips');
+    const traitRow = document.getElementById('companionTraitRow');
+    if (traitContainer) {
+      if (curComp === 'None' || !traitsList || traitsList.length === 0) {
+        if (traitRow) traitRow.style.opacity = '0.35';
+        traitContainer.innerHTML = `<span style="font-size:10px; color:#64748b; font-style:italic;">No companion bonded (Hearth Den rest)</span>`;
+      } else {
+        if (traitRow) traitRow.style.opacity = '1.0';
+        let html = `<button type="button" class="pill-btn trait-chip ${curTrait === 'auto' ? 'active' : ''}" data-trait="auto" style="font-size:9.5px; padding:3px 9px; cursor:pointer; background:${curTrait === 'auto' ? '#15803d' : '#132014'}; border:1px solid ${curTrait === 'auto' ? '#22c55e' : '#234324'}; color:${curTrait === 'auto' ? '#fff' : '#86efac'}; border-radius:4px; font-weight:${curTrait === 'auto' ? 'bold' : 'normal'};">Auto (Genetics)</button>`;
+        traitsList.forEach(t => {
+          const isActive = (curTrait === t.id);
+          html += `<button type="button" class="pill-btn trait-chip ${isActive ? 'active' : ''}" data-trait="${t.id}" style="font-size:9.5px; padding:3px 9px; cursor:pointer; background:${isActive ? '#15803d' : '#132014'}; border:1px solid ${isActive ? '#22c55e' : '#234324'}; color:${isActive ? '#fff' : '#86efac'}; border-radius:4px; font-weight:${isActive ? 'bold' : 'normal'};">${t.label}</button>`;
+        });
+        traitContainer.innerHTML = html;
+
+        traitContainer.querySelectorAll('.trait-chip').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const traitId = btn.getAttribute('data-trait');
+            companionTraitOverride = traitId;
+            window.companionTraitOverride = traitId;
+            initAudio();
+            if (curComp === 'Sherwood Cat') playSound('purr');
+            else if (curComp === 'Camp Hound') playSound('hit');
+            else playSound('lute');
+            updateSanctuaryUI();
+            if (window.updateHUD) window.updateHUD();
+            (window.showToast || console.log)(`🧬 Companion Breed: ${btn.innerText}`);
+          });
+        });
+      }
+    }
   }
 
   function renderBeastAdoptionSanctuary() {
@@ -5597,15 +5659,19 @@
         <div style="display:flex; align-items:center; gap:12px;">
           <span id="activePetEmoji" style="font-size:26px; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">🐕</span>
           <div>
-            <div style="font-size:12px; font-weight:bold; color:#fef08a; display:flex; align-items:center; gap:6px;">
+            <div style="font-size:12px; font-weight:bold; color:#fef08a; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span>Bonded:</span>
               <span id="activePetName" style="color:#4ade80;">Camp Hound</span>
+              <span id="activePetTraitTag" style="font-size:9.5px; background:#1e1b4b; border:1px solid #818cf8; color:#e0e7ff; padding:1px 6px; border-radius:4px; font-weight:bold;">Natural Genetics</span>
               <span id="activePetStageTag" style="font-size:9px; background:#042f1a; border:1px solid #22c55e; color:#86efac; padding:1px 6px; border-radius:4px;">Adult</span>
             </div>
             <div id="companionPerkInfo" style="font-size:10px; color:#86efac; margin-top:3px;">🐕 Camp Hound: +15% Sherwood Yew Drops • +10 DEF (Forest Tracker)</div>
           </div>
         </div>
-        <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn" onclick="window.scrollTo({top:0, behavior:'smooth'})" style="background:#14532d; border:1px solid #4ade80; color:#fff; font-size:10.5px; padding:5px 10px; border-radius:6px; font-weight:bold; cursor:pointer;" title="View companion standing with your Outlaw at campfire">
+            <span>👁️</span><span>View Beside Hero ↑</span>
+          </button>
           <button id="btnFeedBerries" class="btn" style="background:linear-gradient(180deg, #9d174d, #831843); border:1px solid #f43f5e; color:#ffe4e6; font-size:10.5px; padding:5px 12px; border-radius:6px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(244,63,94,0.3);" title="Feed sweet forest berries to your pet (+Affection)">
             <span>🫐</span><span>Feed Treats</span>
           </button>
@@ -5647,6 +5713,22 @@
       (window.showToast || console.log)(`🫐 Fed sweet forest berries to ${cur}! (Camp Affection ❤️)`);
     });
 
+    sanctuary.querySelector('#btnRandomAnimalTrait')?.addEventListener('click', () => {
+      const curComp = (typeof companionOverride !== 'undefined' && companionOverride !== 'auto')
+        ? companionOverride
+        : ((typeof currentToken !== 'undefined' && currentToken && currentToken.companion) ? currentToken.companion : 'Camp Hound');
+      const traitsList = (typeof COMPANION_TRAITS !== 'undefined' && COMPANION_TRAITS[curComp]) ? COMPANION_TRAITS[curComp] : [];
+      if (!traitsList || traitsList.length === 0) return;
+      const randTrait = traitsList[Math.floor(Math.random() * traitsList.length)];
+      companionTraitOverride = randTrait.id;
+      window.companionTraitOverride = randTrait.id;
+      if (window.initAudio) window.initAudio();
+      if (window.playSound) playSound('coin');
+      updateSanctuaryUI();
+      if (window.updateHUD) window.updateHUD();
+      (window.showToast || console.log)(`🎲 Mutated Coat: ${randTrait.label}!`);
+    });
+
     sanctuary.querySelectorAll('#sanctuaryStageButtons .stage-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const s = parseInt(btn.getAttribute('data-stage'), 10);
@@ -5656,7 +5738,7 @@
         if (window.playSound) playSound('coin');
         updateSanctuaryUI();
         if (window.updateHUD) window.updateHUD();
-        const labels = { 1: 'Young Pup/Kitten', 3: 'Adult Hunter', 5: 'Ancient Celestial Legend' };
+        const labels = { 1: 'Young Pup/Fledgling', 3: 'Adult Hunter', 5: 'Ancient Celestial Legend' };
         (window.showToast || console.log)(`✨ Evolution Stage: ${labels[s]}!`);
       });
     });
@@ -7149,6 +7231,7 @@
   window.selectOutlaw = (id) => {
     setSeed(id);
     updateOwnedOutlawsUI();
+    if (typeof updateSanctuaryUI === 'function') updateSanctuaryUI();
     (window.showToast || console.log)(`👑 Selected Outlaw #${id} for questing!`);
   };
 
