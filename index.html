@@ -5568,6 +5568,7 @@ tslib/tslib.es6.js:
         <div class="loot-card-rarity ${rarityClass}">${item.rarity}</div>
         <div class="loot-card-count">Held: <strong>${count}</strong></div>
         <div class="loot-card-status">${isLocked ? '🔒 Unowned' : (isEquipped ? '✓ Equipped' : '○ Unequipped')}</div>
+        ${(!isLocked && item.id === 5) ? `<div style="margin-top:6px;"><button type="button" class="btn" style="font-size:10px; padding:3px 8px; background:#6b21a8; border:1px solid #c084fc; color:#fff; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="event.stopPropagation(); window.useElixirForOutlaw(window.currentSeed || 1);">🧪 Drink (+5 ⚡ Stamina)</button></div>` : ''}
       `;
       card.addEventListener('click', () => {
         if (isLocked) {
@@ -6462,6 +6463,190 @@ tslib/tslib.es6.js:
     fetchOutlawQuestStats(currentSeed);
   });
 
+  // ---- Unified On-Chain Cooldown & Stamina Management ----
+  const activeCooldownEnds = {};
+
+  function getUtcDayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function getOutlawStamina(tokenId) {
+    const day = getUtcDayKey();
+    const used = parseInt(localStorage.getItem(`hq_stamina_used_${day}_${tokenId}`) || '0', 10);
+    const elixirActive = localStorage.getItem(`hq_elixir_active_${day}_${tokenId}`) === 'true';
+    const max = elixirActive ? 10 : 5;
+    const remaining = Math.max(0, max - used);
+    return { remaining, max, used, elixirActive };
+  }
+
+  function recordHeistUsed(tokenId) {
+    const day = getUtcDayKey();
+    const used = parseInt(localStorage.getItem(`hq_stamina_used_${day}_${tokenId}`) || '0', 10);
+    localStorage.setItem(`hq_stamina_used_${day}_${tokenId}`, (used + 1).toString());
+    updateStaminaUI();
+  }
+
+  function useElixirForOutlaw(tokenId) {
+    initAudio();
+    const day = getUtcDayKey();
+    const currentElixirs = walletLootBalances[5] || 0;
+    const { elixirActive } = getOutlawStamina(tokenId);
+
+    if (elixirActive) {
+      (window.showToast || console.log)('🧪 Greenwood Elixir already active today (+5 Bonus Stamina applied)!');
+      return;
+    }
+    if (currentElixirs <= 0) {
+      playSound('hit');
+      (window.showToast || console.log)('⚠️ No Greenwood Alchemical Elixirs held! Brew one at Sherwood Camp Outfitter (15 Gold).');
+      return;
+    }
+
+    // Burn 1 Elixir from inventory
+    walletLootBalances[5] = Math.max(0, currentElixirs - 1);
+    renderLootGrid();
+    localStorage.setItem(`hq_elixir_active_${day}_${tokenId}`, 'true');
+    playSound('fanfare');
+    (window.showToast || console.log)(`🧪 Greenwood Elixir drank! Outlaw #${tokenId} gained +5 Bonus Stamina!`);
+
+    const logBox = document.getElementById('questLogBox');
+    if (logBox) {
+      const entry = document.createElement('div');
+      entry.className = 'quest-log-entry success';
+      entry.innerHTML = `<span class="log-time">🧪 Elixir Imbibed:</span><span>Outlaw #${tokenId} drank <strong>Greenwood Alchemical Elixir</strong>! Daily Stamina expanded to <strong>10 / 10 ⚡</strong>!</span>`;
+      logBox.prepend(entry);
+    }
+
+    updateStaminaUI();
+    updateCooldownAndButtonUI();
+  }
+  window.useElixirForOutlaw = useElixirForOutlaw;
+
+  function ensureStaminaCard() {
+    let card = document.getElementById('statStaminaCard');
+    if (!card) {
+      const grid = document.querySelector('.quest-stats-grid');
+      if (grid) {
+        card = document.createElement('div');
+        card.className = 'quest-stat-card';
+        card.id = 'statStaminaCard';
+        card.innerHTML = `
+          <span class="quest-stat-label">Daily Stamina</span>
+          <span class="quest-stat-value" id="statStaminaVal" style="color:#38bdf8;">5 / 5 ⚡</span>
+        `;
+        const first = grid.children[0];
+        if (first && first.nextSibling) {
+          grid.insertBefore(card, first.nextSibling);
+        } else {
+          grid.appendChild(card);
+        }
+      }
+    }
+    return card;
+  }
+
+  function updateStaminaUI() {
+    ensureStaminaCard();
+    const targetTokenId = currentSeed || 1;
+    const { remaining, max, elixirActive } = getOutlawStamina(targetTokenId);
+    const valEl = document.getElementById('statStaminaVal');
+    if (valEl) {
+      valEl.innerText = `${remaining} / ${max} ⚡`;
+      if (remaining === 0) {
+        valEl.style.color = '#ef4444';
+        valEl.innerText += ' (Fatigued)';
+      } else if (elixirActive) {
+        valEl.style.color = '#c084fc';
+        valEl.innerText += ' 🧪';
+      } else {
+        valEl.style.color = '#38bdf8';
+      }
+    }
+  }
+
+  function setOutlawCooldown(tokenId, seconds = 60) {
+    activeCooldownEnds[tokenId] = Date.now() + (seconds * 1000);
+    updateCooldownAndButtonUI();
+  }
+
+  function getOutlawCooldownRemaining(tokenId) {
+    const end = activeCooldownEnds[tokenId] || 0;
+    return Math.max(0, Math.ceil((end - Date.now()) / 1000));
+  }
+
+  function updateCooldownAndButtonUI() {
+    const targetTokenId = currentSeed || 1;
+    const rem = getOutlawCooldownRemaining(targetTokenId);
+    const badge = document.getElementById('questCooldownBadge');
+    const cdStat = document.getElementById('statCooldown');
+    const heistBtn = document.getElementById('btnOnchainHeist');
+
+    if (rem > 0) {
+      if (badge) {
+        badge.className = 'cooldown-pill active';
+        badge.innerText = `⏱️ Ambush Cooldown: ${rem}s`;
+      }
+      if (cdStat) {
+        cdStat.innerText = `${rem}s`;
+        cdStat.style.color = '#fbbf24';
+      }
+      if (heistBtn) {
+        heistBtn.disabled = true;
+        heistBtn.innerText = `⏱️ Carriage Guarded (${rem}s Cooldown)`;
+        heistBtn.style.background = '#374151';
+        heistBtn.style.borderColor = '#4b5563';
+        heistBtn.style.color = '#9ca3af';
+        heistBtn.style.cursor = 'not-allowed';
+      }
+    } else {
+      if (badge) {
+        badge.className = 'cooldown-pill ready';
+        badge.innerText = `🟢 Carriage Spotted: Ready to Ambush`;
+      }
+      if (cdStat) {
+        cdStat.innerText = `Ready`;
+        cdStat.style.color = '#4ade80';
+      }
+      if (heistBtn) {
+        const isMine = userOwnedOutlaws.includes(targetTokenId);
+        const { remaining } = getOutlawStamina(targetTokenId);
+        heistBtn.disabled = false;
+        if (!isMine) {
+          heistBtn.innerHTML = `🔒 Spectator Mode (Outlaw #${targetTokenId} Not Owned)`;
+          heistBtn.style.background = '#334155';
+          heistBtn.style.borderColor = '#64748b';
+          heistBtn.style.color = '#94a3b8';
+          heistBtn.style.cursor = 'not-allowed';
+        } else if (remaining === 0) {
+          heistBtn.innerHTML = `😴 Outlaw #${targetTokenId} Fatigued (Drink 🧪 Elixir)`;
+          heistBtn.style.background = '#451a03';
+          heistBtn.style.borderColor = '#b45309';
+          heistBtn.style.color = '#fde68a';
+          heistBtn.style.cursor = 'pointer';
+        } else {
+          heistBtn.innerHTML = `👑 Ambush Royal Carriage with Outlaw #${targetTokenId} ⚔️`;
+          heistBtn.style.background = '#15803d';
+          heistBtn.style.borderColor = '#22c55e';
+          heistBtn.style.color = '#ffffff';
+          heistBtn.style.cursor = 'pointer';
+        }
+      }
+    }
+  }
+
+  window.setOutlawCooldown = setOutlawCooldown;
+  window.getOutlawStamina = getOutlawStamina;
+  window.updateCooldownAndButtonUI = updateCooldownAndButtonUI;
+  window.updateStaminaUI = updateStaminaUI;
+
+  // Active 1-second ticking timer for HUD, cooldowns, and stamina
+  if (!window._hqCooldownTimer) {
+    window._hqCooldownTimer = setInterval(() => {
+      updateCooldownAndButtonUI();
+      updateStaminaUI();
+    }, 1000);
+  }
+
   // --- Real-Time On-Chain Quest & Ambush Tracker ---
   async function fetchOutlawQuestStats(tokenId) {
     if (!tokenId) return;
@@ -6519,20 +6704,15 @@ tslib/tslib.es6.js:
         const vBarEl = document.getElementById('vaultBreachBar');
         if (vBarEl) vBarEl.style.width = `${breachPct}%`;
 
-        // Cooldown calculation (60s cooldown)
+        // Cooldown calculation (60s cooldown from on-chain lastHeistTimestamp)
         const nowSec = Math.floor(Date.now() / 1000);
         const elapsed = nowSec - lastHeistTimestamp;
         const cooldownRemaining = Math.max(0, 60 - elapsed);
-        const badge = document.getElementById('questCooldownBadge');
-        if (badge) {
-          if (cooldownRemaining > 0 && lastHeistTimestamp > 0) {
-            badge.className = 'cooldown-pill active';
-            badge.innerText = `⏱️ Ambush Cooldown: ${cooldownRemaining}s`;
-          } else {
-            badge.className = 'cooldown-pill ready';
-            badge.innerText = `🟢 Carriage Spotted: Ready to Ambush`;
-          }
+        if (cooldownRemaining > 0 && lastHeistTimestamp > 0) {
+          setOutlawCooldown(tokenId, cooldownRemaining);
         }
+        updateCooldownAndButtonUI();
+        updateStaminaUI();
       }
 
       // 1c. Query ownerOf(tokenId) and auto-sync wallet loot
@@ -6762,6 +6942,42 @@ tslib/tslib.es6.js:
       return;
     }
 
+    // 4. Hard Cooldown Guard: Prevent transaction dispatch when smart contract is cooling down!
+    const cooldownRem = getOutlawCooldownRemaining(targetTokenId);
+    if (cooldownRem > 0) {
+      playSound('hit');
+      (window.showToast || console.log)(`⏱️ Royal carriage ambush on cooldown! Guards passing in ${cooldownRem}s.`);
+      if (logBox) {
+        const entry = document.createElement('div');
+        entry.className = 'quest-log-entry';
+        entry.style.borderLeftColor = '#f59e0b';
+        entry.innerHTML = `<span class="log-time">⏱️ Ambush Cooldown:</span><span>Sheriff guards are still alert from the previous raid! You must wait <strong>${cooldownRem} seconds</strong> before ambushing again.</span>`;
+        logBox.prepend(entry);
+      }
+      return;
+    }
+
+    // 5. Daily Stamina Guard (5/5 Base, +5 Bonus via Elixir)
+    const { remaining: staminaRem, max: staminaMax, elixirActive } = getOutlawStamina(targetTokenId);
+    if (staminaRem <= 0) {
+      playSound('hit');
+      const elixirs = walletLootBalances[5] || 0;
+      if (elixirs > 0 && !elixirActive) {
+        (window.showToast || console.log)('⚡ Outlaw fatigued! Drinking 🧪 Greenwood Elixir for +5 Stamina...');
+        useElixirForOutlaw(targetTokenId);
+      } else {
+        (window.showToast || console.log)(`😴 Outlaw #${targetTokenId} is out of stamina for today (${staminaMax}/${staminaMax} heists used)!`);
+        if (logBox) {
+          const entry = document.createElement('div');
+          entry.className = 'quest-log-entry';
+          entry.style.borderLeftColor = '#f59e0b';
+          entry.innerHTML = `<span class="log-time">😴 Daily Stamina Depleted:</span><span>Outlaw #${targetTokenId} has exhausted today's <strong>${staminaMax} daily heists</strong>! Brew a <strong>🧪 Greenwood Elixir</strong> at the Outfitter below to restore +5 Stamina, or wait until tomorrow (00:00 UTC).</span>`;
+          logBox.prepend(entry);
+        }
+        return;
+      }
+    }
+
     const hasProvider = !!(window.ethereum || (wcClient && wcSession));
     if (!hasProvider) {
       playSound('coin');
@@ -6781,6 +6997,9 @@ tslib/tslib.es6.js:
       if (wcSession && wcClient) {
         pendingEntry.innerHTML = `<span class="log-time">📱 Sent to Phone:</span><span>Please approve the heist in your mobile wallet...</span>`;
       }
+
+      // Lock cooldown immediately upon user initiating transaction
+      setOutlawCooldown(targetTokenId, 61);
 
       const txHash = await sendOnchainTx({
         to: OUTLAWS_CONTRACT,
@@ -6812,12 +7031,18 @@ tslib/tslib.es6.js:
       pendingEntry.className = 'quest-log-entry success';
       pendingEntry.innerHTML = `<span class="log-time">👑 Ambush Victory!</span><span>Outlaw #${targetTokenId} overwhelmed the royal escort and captured <strong>${lootAnnounce}</strong>! <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">Tx Confirmed ↗</a></span>`;
 
+      // Record successful heist for daily stamina & lock 60s cooldown
+      recordHeistUsed(targetTokenId);
+      setOutlawCooldown(targetTokenId, 61);
+
       await fetchWalletLoot(connectedUserAddress);
       await fetchOutlawQuestStats(targetTokenId);
     } catch(err) {
       pendingEntry.className = 'quest-log-entry';
       pendingEntry.style.borderLeftColor = '#e74c3c';
       pendingEntry.innerHTML = `<span class="log-time">⚠️ Ambush Interrupted:</span><span>${err.message || err}</span>`;
+      // Re-sync cooldown in case it failed due to existing on-chain cooldown
+      await fetchOutlawQuestStats(targetTokenId);
     }
   });
 
