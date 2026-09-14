@@ -5925,8 +5925,12 @@ tslib/tslib.es6.js:
     if (!modal) return;
 
     modal.style.display = 'flex';
-    document.getElementById('wcStatusText').innerText = '⏳ Connecting to WalletConnect relay...';
-    document.getElementById('wcQrBox').innerHTML = '<div style="color:#64748b; padding:40px 10px; font-size:12px;">Generating QR Code...</div>';
+    const isMobile = isMobileDevice();
+    const laptopBanner = document.getElementById('wcLaptopBanner');
+    if (laptopBanner) laptopBanner.style.display = isMobile ? 'none' : 'block';
+
+    document.getElementById('wcStatusText').innerText = isMobile ? '⚡ Tap a wallet below to connect & sign' : '⏳ Connecting to WalletConnect relay...';
+    document.getElementById('wcQrBox').innerHTML = '<div style="color:#64748b; padding:40px 10px; font-size:12px;">Generating pairing link...</div>';
 
     // Populate swappable config drawer inputs
     const relayInput = document.getElementById('wcCfgRelay');
@@ -5982,13 +5986,53 @@ tslib/tslib.es6.js:
 
       if (uri) {
         const qrDataUrl = await window.QRCode.toDataURL(uri, { width: 220, margin: 1 });
-        document.getElementById('wcQrBox').innerHTML = `
-          <img src="${qrDataUrl}" style="border-radius:8px; display:block; margin:0 auto; width:220px; height:220px;" alt="WalletConnect QR Code" />
-          <div style="font-size:11px; color:#94a3b8; margin-top:8px; text-align:center;">
-            📲 Point camera or scan in <strong>MetaMask Mobile</strong>, <strong>Rainbow</strong>, or <strong>Robinhood Wallet</strong>
-          </div>
-        `;
-        document.getElementById('wcStatusText').innerText = '📲 Scan with your mobile wallet app';
+        const encodedUri = encodeURIComponent(uri);
+        const dappUrl = (window.location.origin + window.location.pathname).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+
+        if (isMobile) {
+          document.getElementById('wcQrBox').innerHTML = `
+            <div style="text-align:left; margin-bottom:10px; display:flex; flex-direction:column; gap:8px;">
+              <div style="font-size:12px; font-weight:bold; color:#38bdf8; text-align:center; margin-bottom:2px;">
+                ⚡ Tap your wallet to connect & sign:
+              </div>
+              <a href="https://metamask.app.link/wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#ea580c; border:1px solid #fb923c; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
+                <span>🦊 MetaMask Mobile</span>
+              </a>
+              <a href="robinhood://wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#15803d; border:1px solid #22c55e; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
+                <span>🪙 Robinhood Wallet</span>
+              </a>
+              <a href="https://rnbwapp.com/wc?uri=${encodedUri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#2563eb; border:1px solid #60a5fa; color:#fff; font-size:12px; font-weight:bold; padding:10px 14px; border-radius:8px; text-decoration:none;">
+                <span>🌈 Rainbow</span>
+              </a>
+              <a href="${uri}" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#334155; border:1px solid #64748b; color:#cbd5e1; font-size:11px; font-weight:bold; padding:9px 12px; border-radius:8px; text-decoration:none;">
+                <span>📱 Any Installed Wallet (wc: intent)</span>
+              </a>
+            </div>
+
+            <div style="margin-top:10px; border-top:1px solid #1e3a1f; padding-top:10px;">
+              <a href="https://metamask.app.link/dapp/${dappUrl}" style="display:block; text-align:center; font-size:11px; color:#f97316; text-decoration:underline; font-weight:bold; margin-bottom:10px;">
+                🚀 Or Open HoodQuest in MetaMask In-App Browser
+              </a>
+              <details style="text-align:left; background:#080e09; border:1px solid #1a2f1c; border-radius:8px; padding:6px 10px;">
+                <summary style="font-size:11px; color:#94a3b8; cursor:pointer; user-select:none; font-weight:bold;">
+                  📷 Show QR Code (scan from another device)
+                </summary>
+                <div style="margin-top:10px; text-align:center;">
+                  <img src="${qrDataUrl}" style="border-radius:8px; display:block; margin:0 auto; width:190px; height:190px;" alt="WalletConnect QR Code" />
+                </div>
+              </details>
+            </div>
+          `;
+          document.getElementById('wcStatusText').innerText = '⚡ Tap a wallet button above to approve';
+        } else {
+          document.getElementById('wcQrBox').innerHTML = `
+            <img src="${qrDataUrl}" style="border-radius:8px; display:block; margin:0 auto; width:220px; height:220px;" alt="WalletConnect QR Code" />
+            <div style="font-size:11px; color:#94a3b8; margin-top:8px; text-align:center;">
+              📲 Point camera or scan in <strong>MetaMask Mobile</strong>, <strong>Rainbow</strong>, or <strong>Robinhood Wallet</strong>
+            </div>
+          `;
+          document.getElementById('wcStatusText').innerText = '📲 Scan with your mobile wallet app';
+        }
         
         const copyBtn = document.getElementById('btnCopyWcUri');
         if (copyBtn) {
@@ -6133,6 +6177,53 @@ tslib/tslib.es6.js:
   let activeInjectedProvider = null;
   let activeWalletName = '';
 
+  function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '')
+      || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 680px)').matches && ('ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0)));
+  }
+
+  // Inject mobile-responsive styles for wallet bar and modals
+  (function ensureMobileStyles() {
+    const styleId = 'hoodquest-mobile-enhancements';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @media (max-width: 640px) {
+          .wallet-bar {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+          .wallet-input {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            box-sizing: border-box !important;
+          }
+          #walletButtonsCluster {
+            width: 100% !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+          }
+          #walletButtonsCluster .btn,
+          #walletButtonsCluster button {
+            flex: 1 1 calc(50% - 6px) !important;
+            min-width: 130px !important;
+            text-align: center !important;
+            justify-content: center !important;
+            box-sizing: border-box !important;
+            padding: 8px 6px !important;
+            font-size: 11px !important;
+          }
+          #btnRefreshLoot {
+            flex: 0 0 auto !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  })();
+
   function getWalletEmoji(name = '') {
     const n = (name || '').toLowerCase();
     if (n.includes('metamask')) return '🦊';
@@ -6146,10 +6237,51 @@ tslib/tslib.es6.js:
     return '👛';
   }
 
-  function registerDiscoveredWallet(key, info, provider) {
+  function getCanonicalWalletKey(info, provider) {
+    const rdns = (info && info.rdns ? info.rdns : '').toLowerCase().trim();
+    const name = (info && info.name ? info.name : '').toLowerCase().trim();
+    if (rdns.includes('metamask') || name.includes('metamask') || (provider && provider.isMetaMask && !provider.isCompass && !provider.isPhantom)) return 'metamask';
+    if (rdns.includes('compass') || name.includes('compass') || (provider && provider.isCompass)) return 'compass';
+    if (rdns.includes('phantom') || name.includes('phantom') || (provider && provider.isPhantom)) return 'phantom';
+    if (rdns.includes('coinbase') || name.includes('coinbase') || (provider && provider.isCoinbaseWallet)) return 'coinbase';
+    if (rdns.includes('rabby') || name.includes('rabby') || (provider && provider.isRabby)) return 'rabby';
+    if (rdns.includes('brave') || name.includes('brave') || (provider && provider.isBraveWallet)) return 'brave';
+    if (rdns.includes('rainbow') || name.includes('rainbow')) return 'rainbow';
+    if (rdns) return rdns;
+    if (name) return name;
+    return 'injected';
+  }
+
+  function registerDiscoveredWallet(rawKey, info, provider) {
     if (!info || !provider) return;
-    const name = info.name || 'Browser Wallet';
-    discoveredWallets.set(key, { info: { ...info, name }, provider });
+    const canonKey = getCanonicalWalletKey(info, provider);
+    
+    // Check if this provider or canonical key is already registered
+    let existingKey = null;
+    for (const [k, existing] of discoveredWallets.entries()) {
+      if (existing.provider === provider || k === canonKey) {
+        existingKey = k;
+        break;
+      }
+    }
+    
+    const cleanName = (info.name && !info.name.includes('window.ethereum') && !info.name.includes('Injected Wallet'))
+      ? info.name
+      : (canonKey === 'metamask' ? 'MetaMask' : (existingKey && discoveredWallets.get(existingKey).info.name) || 'Browser Wallet');
+
+    if (existingKey) {
+      const prev = discoveredWallets.get(existingKey);
+      discoveredWallets.delete(existingKey);
+      discoveredWallets.set(canonKey, {
+        info: { ...prev.info, ...info, name: cleanName },
+        provider: provider || prev.provider
+      });
+    } else {
+      discoveredWallets.set(canonKey, {
+        info: { ...info, name: cleanName },
+        provider
+      });
+    }
     renderWalletChoice();
   }
 
@@ -6462,14 +6594,33 @@ tslib/tslib.es6.js:
       return;
     }
 
-    // Not connected: render detected injected wallets + Phone Wallet · WalletConnect
-    if (discoveredWallets.size > 1) {
-      for (const [key, w] of discoveredWallets) {
+    // Deduplicate discovered wallets by canonical key, provider, and normalized name
+    const uniqueWallets = [];
+    const seenKeys = new Set();
+    const seenNames = new Set();
+    const seenProviders = new Set();
+
+    for (const [key, w] of discoveredWallets.entries()) {
+      const normKey = getCanonicalWalletKey(w.info, w.provider);
+      const normName = (w.info.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (seenKeys.has(normKey) || seenNames.has(normName) || seenProviders.has(w.provider)) {
+        continue;
+      }
+      seenKeys.add(normKey);
+      seenNames.add(normName);
+      seenProviders.add(w.provider);
+      uniqueWallets.push({ key: normKey, ...w });
+    }
+
+    const isMobile = isMobileDevice();
+
+    if (uniqueWallets.length > 0) {
+      for (const w of uniqueWallets) {
         const b = document.createElement('button');
         b.className = 'btn';
         const name = w.info.name || 'Wallet';
         const emoji = getWalletEmoji(name);
-        b.textContent = `${emoji} ${name}`;
+        b.textContent = `${emoji} Connect ${name}`;
         if (name.toLowerCase().includes('metamask')) {
           b.style.background = '#ea580c';
           b.style.borderColor = '#fb923c';
@@ -6487,73 +6638,76 @@ tslib/tslib.es6.js:
         b.addEventListener('click', () => connectWithInjected(w.provider, name));
         cluster.appendChild(b);
       }
-    } else if (discoveredWallets.size === 1) {
-      const [key, w] = [...discoveredWallets.entries()][0];
-      const name = w.info.name || 'Wallet';
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.id = 'btnConnectWallet';
-      b.textContent = `${getWalletEmoji(name)} Connect ${name}`;
-      if (name.toLowerCase().includes('metamask')) {
-        b.style.background = '#ea580c';
-        b.style.borderColor = '#fb923c';
-        b.style.color = '#fff';
-      } else {
-        b.style.background = '#0284c7';
-        b.style.borderColor = '#38bdf8';
-        b.style.color = '#fff';
-      }
-      b.style.fontWeight = 'bold';
-      b.addEventListener('click', () => connectWithInjected(w.provider, name));
-      cluster.appendChild(b);
     } else {
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.id = 'btnConnectWallet';
-      b.textContent = '🦊 Connect Laptop Wallet';
-      b.addEventListener('click', () => {
-        const p = getInjectedProvider();
-        if (p) {
-          connectWithInjected(p, 'Injected Wallet');
-        } else {
-          const inIframe = (window.self !== window.top);
-          if (inIframe) {
-            (window.showToast || console.log)('📱 Sandboxed explorer detected. Opening Phone Wallet / standalone pairing...');
+      // No injected wallet detected
+      if (isMobile) {
+        // Mobile browser without injected provider: offer 1-tap open in MetaMask Mobile app
+        const mmBtn = document.createElement('button');
+        mmBtn.className = 'btn';
+        mmBtn.id = 'btnOpenMetaMaskApp';
+        mmBtn.textContent = '🦊 Open in MetaMask App';
+        mmBtn.style.background = '#ea580c';
+        mmBtn.style.borderColor = '#fb923c';
+        mmBtn.style.color = '#fff';
+        mmBtn.style.fontWeight = 'bold';
+        mmBtn.title = 'Launch MetaMask Mobile directly into HoodQuest';
+        mmBtn.addEventListener('click', () => {
+          initAudio();
+          playSound('coin');
+          const dappUrl = (window.location.origin + window.location.pathname).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+          window.location.href = `https://metamask.app.link/dapp/${dappUrl}`;
+        });
+        cluster.appendChild(mmBtn);
+      } else {
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.id = 'btnConnectWallet';
+        b.textContent = '🦊 Connect Laptop Wallet';
+        b.addEventListener('click', () => {
+          const p = getInjectedProvider();
+          if (p) {
+            connectWithInjected(p, 'Injected Wallet');
           } else {
-            (window.showToast || console.log)('📱 Extension wallet not detected. Opening WalletConnect...');
+            const inIframe = (window.self !== window.top);
+            if (inIframe) {
+              (window.showToast || console.log)('📱 Sandboxed explorer detected. Opening Phone Wallet / standalone pairing...');
+            } else {
+              (window.showToast || console.log)('📱 Extension wallet not detected. Opening WalletConnect...');
+            }
+            startWalletConnect();
           }
-          startWalletConnect();
-        }
-      });
-      cluster.appendChild(b);
+        });
+        cluster.appendChild(b);
+      }
     }
 
-    // Frame Desktop Wallet button (loopback 127.0.0.1:1248)
-    const frameBtn = document.createElement('button');
-    frameBtn.className = 'btn';
-    frameBtn.id = 'btnFrameWallet';
-    frameBtn.style.background = '#7c3aed';
-    frameBtn.style.borderColor = '#a78bfa';
-    frameBtn.style.color = '#fff';
-    frameBtn.style.fontWeight = 'bold';
-    frameBtn.style.display = 'none'; // Hidden unless detected running
-    frameBtn.textContent = '🖥️ Frame · Desktop';
-    frameBtn.title = 'Connect via Frame desktop wallet (frame.sh)';
-    frameBtn.addEventListener('click', connectFrameWallet);
-    cluster.appendChild(frameBtn);
+    // Frame Desktop Wallet button (loopback 127.0.0.1:1248) - desktop only
+    if (!isMobile) {
+      const frameBtn = document.createElement('button');
+      frameBtn.className = 'btn';
+      frameBtn.id = 'btnFrameWallet';
+      frameBtn.style.background = '#7c3aed';
+      frameBtn.style.borderColor = '#a78bfa';
+      frameBtn.style.color = '#fff';
+      frameBtn.style.fontWeight = 'bold';
+      frameBtn.style.display = 'none'; // Hidden unless detected running
+      frameBtn.textContent = '🖥️ Frame · Desktop';
+      frameBtn.title = 'Connect via Frame desktop wallet (frame.sh)';
+      frameBtn.addEventListener('click', connectFrameWallet);
+      cluster.appendChild(frameBtn);
 
-    // Probe Frame availability in background and show ONLY if running
-    probeFrameAvailable().then(available => {
-      if (available) {
-        frameBtn.style.display = 'inline-block';
-        frameBtn.textContent = '🖥️ Frame · Desktop ✓';
-        frameBtn.style.background = '#6d28d9';
-      } else {
-        frameBtn.style.display = 'none';
-      }
-    });
+      probeFrameAvailable().then(available => {
+        if (available) {
+          frameBtn.style.display = 'inline-block';
+          frameBtn.textContent = '🖥️ Frame · Desktop ✓';
+          frameBtn.style.background = '#6d28d9';
+        } else {
+          frameBtn.style.display = 'none';
+        }
+      });
+    }
 
-    // Always include Phone Wallet · WalletConnect button
+    // Phone Wallet · WalletConnect button
     const wcBtn = document.createElement('button');
     wcBtn.className = 'btn';
     wcBtn.id = 'btnWalletConnect';
@@ -6561,7 +6715,8 @@ tslib/tslib.es6.js:
     wcBtn.style.borderColor = '#3b82f6';
     wcBtn.style.color = '#fff';
     wcBtn.style.fontWeight = 'bold';
-    wcBtn.textContent = '📱 Phone Wallet · WalletConnect';
+    wcBtn.textContent = isMobile ? '📱 Connect Mobile Wallet' : '📱 Phone Wallet · WalletConnect';
+    wcBtn.title = isMobile ? 'Connect via mobile wallet switcher' : 'Scan QR code with phone wallet app';
     wcBtn.addEventListener('click', startWalletConnect);
     cluster.appendChild(wcBtn);
   }
@@ -7961,18 +8116,34 @@ tslib/tslib.es6.js:
 
         const btnCopy = document.getElementById('btnCopyFooterPortal');
         if (btnCopy) {
-          btnCopy.addEventListener('click', () => copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy));
+          btnCopy.addEventListener('click', () => {
+            if (window.copyPortalUrl) {
+              window.copyPortalUrl(btnCopy);
+            } else {
+              copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy);
+            }
+          });
         }
         const box = document.getElementById('footerPortalBox');
         if (box) {
-          box.addEventListener('click', () => copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy));
+          box.addEventListener('click', () => {
+            if (window.copyPortalUrl) {
+              window.copyPortalUrl(btnCopy);
+            } else {
+              copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy);
+            }
+          });
         }
         const openLink = document.getElementById('btnOpenFooterPortal');
         if (openLink) {
           openLink.addEventListener('click', (e) => {
             const inIframe = (window.self !== window.top);
             if (inIframe) {
-              copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy);
+              if (window.copyPortalUrl) {
+                window.copyPortalUrl(btnCopy);
+              } else {
+                copyUrl('https://srhsoulja.github.io/hoodquest/', btnCopy);
+              }
             }
           });
         }
@@ -8010,7 +8181,7 @@ tslib/tslib.es6.js:
       </div>
 
       <!-- Direct Laptop MetaMask Web Portal Banner -->
-      <div style="margin-top:12px; background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:12px; text-align:left; font-size:11px;">
+      <div id="wcLaptopBanner" style="margin-top:12px; background:#0f172a; border:1px solid #38bdf8; border-radius:10px; padding:12px; text-align:left; font-size:11px;">
         <div style="color:#38bdf8; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
           <span>🦊 Playing on Laptop with Desktop MetaMask?</span>
         </div>
