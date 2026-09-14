@@ -6835,6 +6835,30 @@
     }
   }
 
+  let rosterViewMode = 'auto'; // 'my_band' or 'all'
+
+  function getActiveRosterList() {
+    if (rosterViewMode === 'my_band' && userOwnedOutlaws.length > 0) {
+      return userOwnedOutlaws;
+    }
+    if (rosterViewMode === 'all') {
+      return allMintedOutlaws;
+    }
+    return (userOwnedOutlaws.length > 0) ? userOwnedOutlaws : allMintedOutlaws;
+  }
+
+  window.setRosterMode = function(mode) {
+    initAudio();
+    playSound('coin');
+    rosterViewMode = mode;
+    const list = getActiveRosterList();
+    if (list.length > 0 && !list.includes(currentSeed)) {
+      selectOutlaw(list[0]);
+    } else {
+      updateRosterUI();
+    }
+  };
+
   function updateRosterUI() {
     const heroNameEl = document.getElementById('rosterHeroName');
     const heroSubEl = document.getElementById('rosterHeroSub');
@@ -6849,9 +6873,9 @@
     if (heroNameEl && currentToken) {
       let ownershipBadge = '';
       if (isMine) {
-        ownershipBadge = '<span style="color:#22c55e; font-size:11px; margin-left:6px; font-weight:bold; background:#14532d; padding:2px 6px; border-radius:4px; border:1px solid #22c55e;">👑 YOUR HERO</span>';
+        ownershipBadge = '<span style="color:#22c55e; font-size:11px; margin-left:6px; font-weight:bold; background:#14532d; padding:3px 8px; border-radius:6px; border:1px solid #22c55e; box-shadow:0 0 10px rgba(34,197,94,0.3);">👑 YOUR HERO (Active)</span>';
       } else if (connectedUserAddress) {
-        ownershipBadge = `<span style="color:#f59e0b; font-size:11px; margin-left:6px; font-weight:bold; background:#451a03; padding:2px 6px; border-radius:4px; border:1px solid #f59e0b;">🔒 SPECTATING (Owner: ${ownerShort || 'Other'})</span>`;
+        ownershipBadge = `<span style="color:#f59e0b; font-size:11px; margin-left:6px; font-weight:bold; background:#451a03; padding:3px 8px; border-radius:6px; border:1px solid #f59e0b;">👁️ SPECTATING (Owner: ${ownerShort || 'Sherwood Outlaw'})</span>`;
       } else {
         ownershipBadge = `<span style="color:#94a3b8; font-size:10px; margin-left:6px;">${ownerShort ? '(Owner: ' + ownerShort + ')' : ''}</span>`;
       }
@@ -6862,22 +6886,59 @@
       const dnaStr = currentToken.dna ? ` • DNA: 0x${currentToken.dna.slice(0, 6)}...` : '';
       heroSubEl.innerText = `${currentToken.archetype.title} • ${heists} On-Chain Heists${dnaStr}`;
     }
+
     if (chipsRow) {
-      if (summaryCount) {
-        summaryCount.innerText = `${allMintedOutlaws.length} Minted • ${userOwnedOutlaws.length} in Your Band`;
+      // Create or update Collector Tabs container
+      let tabsEl = document.getElementById('rosterFilterTabs');
+      if (!tabsEl) {
+        tabsEl = document.createElement('div');
+        tabsEl.id = 'rosterFilterTabs';
+        tabsEl.style.cssText = 'display:flex; gap:6px; margin-bottom:8px; align-items:center; flex-wrap:wrap;';
+        chipsRow.parentNode.insertBefore(tabsEl, chipsRow);
       }
-      chipsRow.innerHTML = allMintedOutlaws.map(id => {
+
+      const activeMode = (rosterViewMode === 'auto') ? (userOwnedOutlaws.length > 0 ? 'my_band' : 'all') : rosterViewMode;
+
+      if (userOwnedOutlaws.length > 0) {
+        tabsEl.innerHTML = `
+          <button type="button" class="btn" style="font-size:11px; font-weight:bold; padding:4px 12px; border-radius:6px; cursor:pointer; background:${activeMode === 'my_band' ? '#15803d' : '#1e293b'}; border:1px solid ${activeMode === 'my_band' ? '#4ade80' : '#475569'}; color:${activeMode === 'my_band' ? '#fff' : '#94a3b8'};" onclick="window.setRosterMode('my_band')">
+            👑 My Band (${userOwnedOutlaws.length})
+          </button>
+          <button type="button" class="btn" style="font-size:11px; font-weight:bold; padding:4px 12px; border-radius:6px; cursor:pointer; background:${activeMode === 'all' ? '#0284c7' : '#1e293b'}; border:1px solid ${activeMode === 'all' ? '#38bdf8' : '#475569'}; color:${activeMode === 'all' ? '#fff' : '#94a3b8'};" onclick="window.setRosterMode('all')">
+            🌲 Sherwood World (${allMintedOutlaws.length})
+          </button>
+        `;
+        tabsEl.style.display = 'flex';
+      } else {
+        tabsEl.innerHTML = `
+          <span style="font-size:10px; color:#8fa789;">🌲 Sherwood World Roster (${allMintedOutlaws.length} Minted)</span>
+        `;
+        tabsEl.style.display = 'flex';
+      }
+
+      if (summaryCount) {
+        if (userOwnedOutlaws.length > 0) {
+          summaryCount.innerHTML = `<span style="color:#4ade80; font-weight:bold;">👑 Commander of ${userOwnedOutlaws.length} Hero${userOwnedOutlaws.length > 1 ? 'es' : ''}</span>`;
+        } else {
+          summaryCount.innerText = `${allMintedOutlaws.length} Verified Outlaws`;
+        }
+      }
+
+      const displayList = (activeMode === 'my_band' && userOwnedOutlaws.length > 0) ? userOwnedOutlaws : allMintedOutlaws;
+
+      chipsRow.innerHTML = displayList.map(id => {
         const isSel = (currentSeed === id);
         const ownedByMe = userOwnedOutlaws.includes(id);
-        const label = ownedByMe ? `★ Hero #${id} (Yours 👑)` : `Outlaw #${id} 🔒`;
-        const bg = isSel ? (ownedByMe ? '#15803d' : '#334155') : (ownedByMe ? '#1e293b' : '#0f172a');
-        const border = isSel ? (ownedByMe ? '#22c55e' : '#94a3b8') : (ownedByMe ? '#3b82f6' : '#334155');
-        const color = isSel ? '#ffffff' : (ownedByMe ? '#93c5fd' : '#94a3b8');
-        return `<div class="roster-chip ${isSel ? 'active' : ''}" style="cursor:pointer; background:${bg}; border:1px solid ${border}; color:${color}; font-size:10px; padding:4px 8px; margin:2px; display:inline-block; border-radius:6px; font-weight:${isSel || ownedByMe ? 'bold' : 'normal'};" onclick="window.selectOutlaw(${id})">${label}</div>`;
+        const label = ownedByMe ? `★ Outlaw #${id} (Yours 👑)` : `Outlaw #${id} 🔒`;
+        const bg = isSel ? (ownedByMe ? '#15803d' : '#0284c7') : (ownedByMe ? '#1e293b' : '#0f172a');
+        const border = isSel ? (ownedByMe ? '#4ade80' : '#38bdf8') : (ownedByMe ? '#22c55e' : '#334155');
+        const color = isSel ? '#ffffff' : (ownedByMe ? '#86efac' : '#94a3b8');
+        return `<div class="roster-chip ${isSel ? 'active' : ''}" style="cursor:pointer; background:${bg}; border:1px solid ${border}; color:${color}; font-size:10.5px; padding:5px 10px; margin:2px; display:inline-block; border-radius:6px; font-weight:${isSel || ownedByMe ? 'bold' : 'normal'};" onclick="window.selectOutlaw(${id})">${label}</div>`;
       }).join('');
     }
 
     if (heistBtn) {
+      const heroClass = (currentToken && currentToken.archetype && currentToken.archetype.title) ? currentToken.archetype.title : 'Hero';
       if (!connectedUserAddress) {
         heistBtn.innerHTML = '📱 Connect Wallet to Ambush Carriage';
         heistBtn.style.background = '';
@@ -6897,7 +6958,7 @@
         heistBtn.style.color = '#94a3b8';
         heistBtn.style.cursor = 'not-allowed';
       } else {
-        heistBtn.innerHTML = `👑 Ambush Royal Carriage with Outlaw #${currentSeed} ⚔️`;
+        heistBtn.innerHTML = `👑 Ambush Royal Carriage with Outlaw #${currentSeed} (${heroClass}) ⚔️`;
         heistBtn.style.background = '#15803d';
         heistBtn.style.borderColor = '#22c55e';
         heistBtn.style.color = '#ffffff';
@@ -6920,7 +6981,8 @@
   document.getElementById('btnPrevHero')?.addEventListener('click', () => {
     initAudio();
     playSound('coin');
-    const list = allMintedOutlaws;
+    const list = getActiveRosterList();
+    if (!list || list.length === 0) return;
     const idx = list.indexOf(currentSeed);
     const prevIdx = (idx <= 0) ? list.length - 1 : idx - 1;
     selectOutlaw(list[prevIdx]);
@@ -6928,9 +6990,10 @@
   document.getElementById('btnNextHero')?.addEventListener('click', () => {
     initAudio();
     playSound('coin');
-    const list = allMintedOutlaws;
+    const list = getActiveRosterList();
+    if (!list || list.length === 0) return;
     const idx = list.indexOf(currentSeed);
-    const nextIdx = (idx >= list.length - 1) ? 0 : idx + 1;
+    const nextIdx = (idx >= list.length - 1 || idx === -1) ? 0 : idx + 1;
     selectOutlaw(list[nextIdx]);
   });
 
