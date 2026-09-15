@@ -5568,6 +5568,71 @@ tslib/tslib.es6.js:
     }
   ];
 
+  function getPetDevotion(compName) {
+    const xpKey = `hq_pet_xp_${compName}`;
+    const xp = parseInt(localStorage.getItem(xpKey) || '120', 10);
+    let rank = 1;
+    let rankTitle = 'Young Fledgling/Pup';
+    let nextReq = 300;
+    if (xp >= 3650) { rank = 5; rankTitle = 'Celestial Legend ✨'; nextReq = 3650; }
+    else if (xp >= 1800) { rank = 4; rankTitle = 'Hardened Veteran 🛡️'; nextReq = 3650; }
+    else if (xp >= 900)  { rank = 3; rankTitle = 'Adult Hunter ⚔️'; nextReq = 1800; }
+    else if (xp >= 300)  { rank = 2; rankTitle = 'Juvenile Stalker 🐾'; nextReq = 900; }
+    return { xp, rank, rankTitle, nextReq };
+  }
+
+  function performCompanionSoloForage(curComp) {
+    if (window.initAudio) window.initAudio();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const forageKey = `hq_forage_${curComp}_${todayStr}`;
+    if (localStorage.getItem(forageKey) === 'true') {
+      if (window.playSound) playSound('hit');
+      (window.showToast || console.log)(`🌿 ${curComp} has already solo-foraged today! Returns tomorrow at 00:00 UTC.`);
+      return;
+    }
+
+    localStorage.setItem(forageKey, 'true');
+    if (window.playSound) {
+      playSound('purr');
+      setTimeout(() => playSound('coin'), 250);
+    }
+
+    // Devotion XP +10
+    const xpKey = `hq_pet_xp_${curComp}`;
+    let currentXp = parseInt(localStorage.getItem(xpKey) || '120', 10);
+    currentXp += 10;
+    localStorage.setItem(xpKey, currentXp.toString());
+
+    // Deterministic drop rates: 12% Sherwood Yew (#16), 8% Sherwood Iron (#17)
+    const rand = Math.random();
+    let dropMsg = '';
+    if (rand < 0.12) {
+      walletLootBalances[16] = (walletLootBalances[16] || 0) + 1;
+      dropMsg = '🌲 Found +1 Soulbound Sherwood Yew (#16)!';
+    } else if (rand < 0.20) {
+      walletLootBalances[17] = (walletLootBalances[17] || 0) + 1;
+      dropMsg = '⛏️ Uncovered +1 Soulbound Sherwood Iron (#17)!';
+    }
+
+    if (dropMsg) {
+      if (window.playSound) setTimeout(() => playSound('fanfare'), 500);
+      (window.showToast || console.log)(`🌿 Solo Forage Victory! ${dropMsg} (+10 Pet XP)`);
+    } else {
+      (window.showToast || console.log)(`🌿 ${curComp} foraged through deep Sherwood: +10 Pet XP gained!`);
+    }
+
+    const logBox = document.getElementById('questLogBox');
+    if (logBox) {
+      const entry = document.createElement('div');
+      entry.className = 'quest-log-entry success';
+      entry.innerHTML = `<span class="log-time">🌿 Solo Pet Forage:</span><span>${curComp} explored the wild greenwood (+10 Devotion XP). ${dropMsg ? '<strong>' + dropMsg + '</strong>' : 'No rare materials found today, but devotion strengthened!'}</span>`;
+      logBox.prepend(entry);
+    }
+
+    updateSanctuaryUI();
+    renderLootGrid();
+  }
+
   function updateSanctuaryUI() {
     const grid = document.getElementById('sanctuaryCardsGrid');
     if (!grid) return;
@@ -5575,18 +5640,84 @@ tslib/tslib.es6.js:
       ? companionOverride
       : ((typeof currentToken !== 'undefined' && currentToken && currentToken.companion) ? currentToken.companion : 'Camp Hound');
 
+    const bannerBox = document.getElementById('activeBondBanner');
     const bannerEmoji = document.getElementById('activePetEmoji');
     const bannerName = document.getElementById('activePetName');
     const bannerStageTag = document.getElementById('activePetStageTag');
+    const bannerTraitTag = document.getElementById('activePetTraitTag');
     const bannerPerk = document.getElementById('companionPerkInfo');
+    const forageBtn = document.getElementById('btnSoloForage');
 
     const activeData = BEASTS_CATALOG.find(b => b.id === curComp) || BEASTS_CATALOG[0];
     if (bannerEmoji) bannerEmoji.innerText = activeData.emoji;
     if (bannerName) bannerName.innerText = activeData.name;
-    const stg = (typeof companionStageOverride !== 'undefined' && companionStageOverride !== 'auto') ? companionStageOverride : 3;
-    const stgLabels = { 1: 'Young Pup/Kitten', 3: 'Adult Hunter', 5: 'Celestial Legend' };
-    if (bannerStageTag) bannerStageTag.innerText = stgLabels[stg] || 'Adult';
+
+    const devotion = getPetDevotion(curComp);
+    const isStudioStage = (typeof companionStageOverride !== 'undefined' && companionStageOverride !== 'auto');
+    const stg = isStudioStage ? companionStageOverride : (devotion.rank === 1 ? 1 : (devotion.rank >= 4 ? 5 : 3));
+    const stgLabels = { 1: 'Young Pup/Fledgling', 3: 'Adult Hunter', 5: 'Celestial Legend ✨' };
+    
+    if (bannerStageTag) {
+      if (isStudioStage) {
+        bannerStageTag.innerText = `${stgLabels[stg] || 'Adult Hunter'} (🧪 Studio Preview)`;
+      } else {
+        bannerStageTag.innerText = `🐾 ${devotion.rankTitle} (${devotion.xp}/${devotion.nextReq} XP)`;
+      }
+      bannerStageTag.style.borderColor = (stg === 5) ? '#ffd700' : (stg === 1 ? '#38bdf8' : '#22c55e');
+      bannerStageTag.style.color = (stg === 5) ? '#fef08a' : (stg === 1 ? '#bae6fd' : '#86efac');
+    }
+
+    // Trait label: Permanent genetics derived from seed vs simulated
+    const curTrait = (typeof companionTraitOverride !== 'undefined' && companionTraitOverride !== 'auto') ? companionTraitOverride : 'auto';
+    let traitLabel = 'Permanent Genetics';
+    const traitsList = (typeof COMPANION_TRAITS !== 'undefined' && COMPANION_TRAITS[curComp]) ? COMPANION_TRAITS[curComp] : [];
+    if (curTrait !== 'auto' && traitsList.length > 0) {
+      const found = traitsList.find(t => t.id === curTrait);
+      if (found) traitLabel = `${found.label} (🧪 Studio Preview)`;
+    } else if (traitsList.length > 0) {
+      const seedNum = (typeof currentSeed === 'number' ? currentSeed : 4);
+      const seedIdx = seedNum % traitsList.length;
+      traitLabel = `${traitsList[seedIdx].label} (On-Chain DNA)`;
+    }
+    if (bannerTraitTag) {
+      bannerTraitTag.innerText = traitLabel;
+    }
+
+    if (bannerBox) {
+      if (stg === 5) {
+        bannerBox.style.borderColor = '#ffd700';
+        bannerBox.style.boxShadow = '0 0 16px rgba(253, 224, 71, 0.35), inset 0 0 12px rgba(253, 224, 71, 0.15)';
+      } else {
+        bannerBox.style.borderColor = '#22c55e';
+        bannerBox.style.boxShadow = 'inset 0 0 12px rgba(34,197,94,0.15)';
+      }
+    }
+
     if (bannerPerk) bannerPerk.innerText = `${activeData.emoji} ${activeData.name}: ${activeData.perk}`;
+
+    // Update Daily Solo Forage Button
+    if (forageBtn) {
+      if (curComp === 'None') {
+        forageBtn.style.display = 'none';
+      } else {
+        forageBtn.style.display = 'inline-flex';
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const foragedToday = localStorage.getItem(`hq_forage_${curComp}_${todayStr}`) === 'true';
+        if (foragedToday) {
+          forageBtn.innerHTML = '<span>🌿</span><span>Foraged Today ✓</span>';
+          forageBtn.style.background = '#153319';
+          forageBtn.style.borderColor = '#235028';
+          forageBtn.style.color = '#86efac';
+          forageBtn.title = 'Solo forage completed for today. Resets at 00:00 UTC.';
+        } else {
+          forageBtn.innerHTML = '<span>🌿</span><span>Daily Solo Forage (+10 XP)</span>';
+          forageBtn.style.background = 'linear-gradient(180deg, #15803d, #14532d)';
+          forageBtn.style.borderColor = '#4ade80';
+          forageBtn.style.color = '#fff';
+          forageBtn.title = 'Send companion to forage in Sherwood (+10 XP Devotion, 12% Yew, 8% Iron drops)';
+        }
+      }
+    }
 
     grid.innerHTML = BEASTS_CATALOG.map(b => {
       const isBonded = (b.id === curComp);
@@ -5626,7 +5757,6 @@ tslib/tslib.es6.js:
           else playSound('lute');
         }
         updateSanctuaryUI();
-        if (typeof renderCompanionTraitChips === 'function') renderCompanionTraitChips();
         if (window.updateHUD) window.updateHUD();
         const found = BEASTS_CATALOG.find(x => x.id === compId);
         (window.showToast || console.log)(`🐾 Bonded with ${found ? found.name : compId}! Active combat perk applied.`);
@@ -5641,6 +5771,40 @@ tslib/tslib.es6.js:
       btn.style.borderColor = isActive ? '#22c55e' : '#234324';
       btn.style.fontWeight = isActive ? 'bold' : 'normal';
     });
+
+    // Synchronize and render breed/trait chips for curComp
+    const traitContainer = document.getElementById('companionTraitChips');
+    const traitRow = document.getElementById('companionTraitRow');
+    if (traitContainer) {
+      if (curComp === 'None' || !traitsList || traitsList.length === 0) {
+        if (traitRow) traitRow.style.opacity = '0.35';
+        traitContainer.innerHTML = `<span style="font-size:10px; color:#64748b; font-style:italic;">No companion bonded (Hearth Den rest)</span>`;
+      } else {
+        if (traitRow) traitRow.style.opacity = '1.0';
+        let html = `<button type="button" class="pill-btn trait-chip ${curTrait === 'auto' ? 'active' : ''}" data-trait="auto" style="font-size:9.5px; padding:3px 9px; cursor:pointer; background:${curTrait === 'auto' ? '#15803d' : '#132014'}; border:1px solid ${curTrait === 'auto' ? '#22c55e' : '#234324'}; color:${curTrait === 'auto' ? '#fff' : '#86efac'}; border-radius:4px; font-weight:${curTrait === 'auto' ? 'bold' : 'normal'};">Auto (Genetics)</button>`;
+        traitsList.forEach(t => {
+          const isActive = (curTrait === t.id);
+          html += `<button type="button" class="pill-btn trait-chip ${isActive ? 'active' : ''}" data-trait="${t.id}" style="font-size:9.5px; padding:3px 9px; cursor:pointer; background:${isActive ? '#15803d' : '#132014'}; border:1px solid ${isActive ? '#22c55e' : '#234324'}; color:${isActive ? '#fff' : '#86efac'}; border-radius:4px; font-weight:${isActive ? 'bold' : 'normal'};">${t.label}</button>`;
+        });
+        traitContainer.innerHTML = html;
+
+        traitContainer.querySelectorAll('.trait-chip').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const traitId = btn.getAttribute('data-trait');
+            companionTraitOverride = traitId;
+            window.companionTraitOverride = traitId;
+            initAudio();
+            if (curComp === 'Sherwood Cat') playSound('purr');
+            else if (curComp === 'Camp Hound') playSound('hit');
+            else playSound('lute');
+            updateSanctuaryUI();
+            if (window.updateHUD) window.updateHUD();
+            (window.showToast || console.log)(`🧬 Companion Breed: ${btn.innerText}`);
+          });
+        });
+      }
+    }
   }
 
   function renderBeastAdoptionSanctuary() {
@@ -5675,20 +5839,32 @@ tslib/tslib.es6.js:
         </div>
       </div>
 
+      <!-- On-Chain Companion Protocol Architecture Notice -->
+      <div style="background:rgba(21, 128, 61, 0.15); border:1px solid #15803d; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:10px; color:#cbd5e1; line-height:1.45;">
+        <strong style="color:#86efac;">🌲 Canonical On-Chain Genetics & Devotion:</strong> Greenwood Companions are uniquely minted ERC-721 NFTs (<code>HQPET</code>). Coat markings and eye pigments are <strong>permanent immutable genetics</strong> derived from each pet's on-chain seed (<code>petSeed</code>). Companions <strong>grow old and evolve themselves</strong> through biological aging and daily foraging devotion (<code>soloForage</code> +10 XP/day).
+      </div>
+
       <!-- Active Bond Banner -->
       <div id="activeBondBanner" style="background:radial-gradient(ellipse at 15% 50%, #153819 0%, #06150a 100%); border:1px solid #22c55e; border-radius:8px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; box-shadow:inset 0 0 12px rgba(34,197,94,0.15);">
         <div style="display:flex; align-items:center; gap:12px;">
           <span id="activePetEmoji" style="font-size:26px; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">🐕</span>
           <div>
-            <div style="font-size:12px; font-weight:bold; color:#fef08a; display:flex; align-items:center; gap:6px;">
+            <div style="font-size:12px; font-weight:bold; color:#fef08a; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span>Bonded:</span>
               <span id="activePetName" style="color:#4ade80;">Camp Hound</span>
+              <span id="activePetTraitTag" style="font-size:9.5px; background:#1e1b4b; border:1px solid #818cf8; color:#e0e7ff; padding:1px 6px; border-radius:4px; font-weight:bold;">Natural Genetics</span>
               <span id="activePetStageTag" style="font-size:9px; background:#042f1a; border:1px solid #22c55e; color:#86efac; padding:1px 6px; border-radius:4px;">Adult</span>
             </div>
             <div id="companionPerkInfo" style="font-size:10px; color:#86efac; margin-top:3px;">🐕 Camp Hound: +15% Sherwood Yew Drops • +10 DEF (Forest Tracker)</div>
           </div>
         </div>
-        <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <button id="btnSoloForage" class="btn" style="background:linear-gradient(180deg, #15803d, #14532d); border:1px solid #4ade80; color:#fff; font-size:10.5px; padding:5px 12px; border-radius:6px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(34,197,94,0.3);" title="Send companion to solo-forage deep in Sherwood Forest (+10 XP Devotion, Chance for Soulbound Yew & Iron)">
+            <span>🌿</span><span>Daily Solo Forage (+10 XP)</span>
+          </button>
+          <button type="button" class="btn" onclick="window.scrollTo({top:0, behavior:'smooth'})" style="background:#14532d; border:1px solid #4ade80; color:#fff; font-size:10.5px; padding:5px 10px; border-radius:6px; font-weight:bold; cursor:pointer;" title="View companion standing with your Outlaw at campfire">
+            <span>👁️</span><span>View Beside Hero ↑</span>
+          </button>
           <button id="btnFeedBerries" class="btn" style="background:linear-gradient(180deg, #9d174d, #831843); border:1px solid #f43f5e; color:#ffe4e6; font-size:10.5px; padding:5px 12px; border-radius:6px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(244,63,94,0.3);" title="Feed sweet forest berries to your pet (+Affection)">
             <span>🫐</span><span>Feed Treats</span>
           </button>
@@ -5702,10 +5878,17 @@ tslib/tslib.es6.js:
       <div class="adoption-grid" id="sanctuaryCardsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:12px;">
       </div>
 
-      <!-- Evolution & Genetics -->
-      <div style="background:#061007; border:1px solid #142817; border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-          <div style="font-size:10px; font-weight:bold; color:#86efac; text-transform:uppercase; letter-spacing:0.5px;">🐾 Life Stage:</div>
+      <!-- Artisan Visual Preview Studio (Artwork Simulator) -->
+      <details style="background:#061007; border:1px dashed #22c55e; border-radius:8px; padding:8px 10px; margin-top:8px;">
+        <summary style="font-size:10.5px; font-weight:bold; color:#86efac; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+          <span style="display:flex; align-items:center; gap:6px;"><span>🧪</span><span>Artisan Visual Preview Studio (Artwork & Stage Simulator)</span></span>
+          <span style="font-size:9px; color:#94a3b8; background:#132014; padding:2px 6px; border-radius:4px; border:1px solid #234324;">Click to Expand ▼</span>
+        </summary>
+        <div style="font-size:9.5px; color:#8fa789; margin:8px 0 10px 0; line-height:1.35; background:#08160a; padding:6px 8px; border-radius:6px; border-left:3px solid #22c55e;">
+          💡 <strong>Simulator Controls:</strong> In the live smart contracts, companions grow old naturally through Devotion XP and have permanent on-chain coats. Use this artisan preview drawer to simulate all 3 life stages and coat variations across the campfire renderer.
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+          <div style="font-size:10px; font-weight:bold; color:#86efac; text-transform:uppercase; letter-spacing:0.5px;">🐾 Simulate Stage:</div>
           <div style="display:flex; gap:4px;" id="sanctuaryStageButtons">
             <button class="stage-btn" data-stage="1" style="background:#132014; border:1px solid #234324; color:#a7f3d0; font-size:9.5px; padding:3px 8px; border-radius:4px; cursor:pointer;">🐾 Young Pup</button>
             <button class="stage-btn active" data-stage="3" style="background:#15803d; border:1px solid #22c55e; color:#fff; font-size:9.5px; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">⚔️ Adult Hunter</button>
@@ -5715,19 +5898,46 @@ tslib/tslib.es6.js:
         
         <div id="companionTraitRow" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; border-top:1px solid #0e1e10; padding-top:6px;">
           <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:10px; font-weight:bold; color:#86efac; text-transform:uppercase; letter-spacing:0.5px;">🧬 Breed / Trait:</span>
+            <span style="font-size:10px; font-weight:bold; color:#86efac; text-transform:uppercase; letter-spacing:0.5px;">🧬 Simulate Coat:</span>
             <button id="btnRandomAnimalTrait" class="btn" style="background:#164e63; border:1px solid #06b6d4; color:#a5f3fc; font-size:9px; padding:2px 7px; border-radius:4px; cursor:pointer;" title="Randomize species coat/breed pattern">🎲 Mutate</button>
           </div>
           <div id="companionTraitChips" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
         </div>
-      </div>
+      </details>
     `;
+
+    sanctuary.querySelector('#btnSoloForage')?.addEventListener('click', () => {
+      const curComp = (typeof companionOverride !== 'undefined' && companionOverride !== 'auto')
+        ? companionOverride
+        : ((typeof currentToken !== 'undefined' && currentToken && currentToken.companion) ? currentToken.companion : 'Camp Hound');
+      if (curComp === 'None') {
+        (window.showToast || console.log)('🐾 No companion bonded! Adopt a pet first.');
+        return;
+      }
+      performCompanionSoloForage(curComp);
+    });
 
     sanctuary.querySelector('#btnFeedBerries')?.addEventListener('click', () => {
       if (window.initAudio) window.initAudio();
       if (window.playSound) { playSound('munch'); setTimeout(() => playSound('purr'), 200); }
       const cur = (typeof companionOverride !== 'undefined' && companionOverride !== 'auto') ? companionOverride : 'Companion';
       (window.showToast || console.log)(`🫐 Fed sweet forest berries to ${cur}! (Camp Affection ❤️)`);
+    });
+
+    sanctuary.querySelector('#btnRandomAnimalTrait')?.addEventListener('click', () => {
+      const curComp = (typeof companionOverride !== 'undefined' && companionOverride !== 'auto')
+        ? companionOverride
+        : ((typeof currentToken !== 'undefined' && currentToken && currentToken.companion) ? currentToken.companion : 'Camp Hound');
+      const traitsList = (typeof COMPANION_TRAITS !== 'undefined' && COMPANION_TRAITS[curComp]) ? COMPANION_TRAITS[curComp] : [];
+      if (!traitsList || traitsList.length === 0) return;
+      const randTrait = traitsList[Math.floor(Math.random() * traitsList.length)];
+      companionTraitOverride = randTrait.id;
+      window.companionTraitOverride = randTrait.id;
+      if (window.initAudio) window.initAudio();
+      if (window.playSound) playSound('coin');
+      updateSanctuaryUI();
+      if (window.updateHUD) window.updateHUD();
+      (window.showToast || console.log)(`🎲 Mutated Coat: ${randTrait.label}!`);
     });
 
     sanctuary.querySelectorAll('#sanctuaryStageButtons .stage-btn').forEach(btn => {
@@ -5739,7 +5949,7 @@ tslib/tslib.es6.js:
         if (window.playSound) playSound('coin');
         updateSanctuaryUI();
         if (window.updateHUD) window.updateHUD();
-        const labels = { 1: 'Young Pup/Kitten', 3: 'Adult Hunter', 5: 'Ancient Celestial Legend' };
+        const labels = { 1: 'Young Pup/Fledgling', 3: 'Adult Hunter', 5: 'Ancient Celestial Legend' };
         (window.showToast || console.log)(`✨ Evolution Stage: ${labels[s]}!`);
       });
     });
@@ -7048,8 +7258,196 @@ tslib/tslib.es6.js:
         heistBtn.style.cursor = 'pointer';
       }
     }
+    if (typeof updateOutlawUpkeepCard === 'function') {
+      updateOutlawUpkeepCard();
+    }
   }
   window.updateRosterUI = updateRosterUI;
+
+  async function performOutlawDailyCare(tokenId) {
+    if (window.initAudio) window.initAudio();
+    if (!connectedUserAddress) {
+      if (window.playSound) playSound('coin');
+      (window.showToast || console.log)('📱 Please connect your wallet to check in on your Outlaw!');
+      startWalletConnect();
+      return;
+    }
+    if (!userOwnedOutlaws.includes(tokenId)) {
+      if (window.playSound) playSound('hit');
+      (window.showToast || console.log)(`⛔ Spectator Mode: Outlaw #${tokenId} is not owned by you!`);
+      return;
+    }
+
+    const hasProvider = !!(window.ethereum || (wcClient && wcSession));
+    if (!hasProvider) {
+      if (window.playSound) playSound('coin');
+      (window.showToast || console.log)('📱 Connect wallet via WalletConnect to sign on Robinhood testnet!');
+      startWalletConnect();
+      return;
+    }
+
+    const logBox = document.getElementById('questLogBox');
+    const entry = document.createElement('div');
+    entry.className = 'quest-log-entry';
+    entry.innerHTML = `<span class="log-time">☀️ Daily Care Check-in:</span><span>Checking in on Outlaw #${tokenId} (Proof of life upkeep)... Signing transaction in wallet...</span>`;
+    if (logBox) logBox.prepend(entry);
+
+    try {
+      const tokenIdHex = tokenId.toString(16).padStart(64, '0');
+      const calldata = '0x9dac653f' + tokenIdHex; // dailyCare(uint256)
+      
+      const txHash = await sendOnchainTx({
+        to: OUTLAWS_CONTRACT,
+        data: calldata,
+        gas: '0x22000'
+      });
+
+      entry.innerHTML = `<span class="log-time">☀️ Care Tx Broadcast:</span><span>Proof of life submitted to Robinhood testnet! Waiting for block confirmation... <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700;">View Tx ↗</a></span>`;
+      (window.showToast || console.log)(`☀️ DAILY CARE BROADCAST! 🌲 Keeping camp alert...`);
+
+      const receipt = await waitForTxReceipt(txHash);
+      if (window.playSound) playSound('fire');
+      entry.className = 'quest-log-entry success';
+      entry.innerHTML = `<span class="log-time">☀️ Proof of Life Logged!</span><span>Outlaw #${tokenId} completed daily care check-in! Devotion conditioning & biological wakefulness secured. <a href="https://explorer.testnet.chain.robinhood.com/tx/${txHash}" target="_blank" style="color:#ffd700; text-decoration:underline;">Tx Confirmed ↗</a></span>`;
+      
+      const todayStr = new Date().toISOString().slice(0, 10);
+      localStorage.setItem(`hq_care_${tokenId}_${todayStr}`, 'true');
+      if (currentToken && currentToken.careCount !== undefined) {
+        currentToken.careCount += 1;
+      }
+      
+      (window.showToast || console.log)(`☀️ Daily Care complete! Outlaw #${tokenId} is wide awake & conditioned.`);
+      await fetchOutlawQuestStats(tokenId);
+      updateRosterUI();
+    } catch(err) {
+      entry.className = 'quest-log-entry';
+      entry.style.borderLeftColor = '#ef4444';
+      const errText = (err && (err.message || err.toString())) || 'Failed';
+      entry.innerHTML = `<span class="log-time">⚠️ Care Check-in Failed:</span><span>${errText}</span>`;
+      (window.showToast || console.log)(`⚠️ Care check-in failed: ${errText}`);
+    }
+  }
+
+  function feedOutlawRations(tokenId) {
+    if (window.initAudio) window.initAudio();
+    if (!connectedUserAddress) {
+      if (window.playSound) playSound('coin');
+      (window.showToast || console.log)('📱 Please connect your wallet first!');
+      startWalletConnect();
+      return;
+    }
+    if (!userOwnedOutlaws.includes(tokenId)) {
+      if (window.playSound) playSound('hit');
+      (window.showToast || console.log)(`⛔ Spectator Mode: Outlaw #${tokenId} is not owned by you!`);
+      return;
+    }
+    
+    const feasts = walletLootBalances[7] || 0; // Item 7 = Forest Feast Basket
+    if (feasts <= 0) {
+      if (window.playSound) playSound('hit');
+      (window.showToast || console.log)('🧺 You have no Forest Feast Baskets! Craft one below at the Outfitter for 3 Gold.');
+      const outfitter = document.querySelector('.outfitter-box') || document.getElementById('lootGrid');
+      if (outfitter) outfitter.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    walletLootBalances[7] = Math.max(0, feasts - 1);
+    const feastUntil = Date.now() + 7 * 86400 * 1000;
+    localStorage.setItem(`hq_feast_until_${tokenId}`, feastUntil.toString());
+    
+    if (window.playSound) {
+      playSound('munch');
+      setTimeout(() => playSound('fanfare'), 300);
+    }
+    (window.showToast || console.log)(`🧺 Fed 1 Forest Feast Basket to Outlaw #${tokenId}! Camp rations shielded for +7 Days against Slumber.`);
+    
+    const logBox = document.getElementById('questLogBox');
+    if (logBox) {
+      const entry = document.createElement('div');
+      entry.className = 'quest-log-entry success';
+      entry.innerHTML = `<span class="log-time">🧺 Camp Rations Stocked:</span><span>Outlaw #${tokenId} consumed a hearty Forest Feast Basket! Slumber protection extended by <strong>+7 Days</strong>.</span>`;
+      logBox.prepend(entry);
+    }
+
+    renderLootGrid();
+    updateRosterUI();
+  }
+
+  function updateOutlawUpkeepCard() {
+    let upkeepCard = document.getElementById('outlawUpkeepCard');
+    if (!upkeepCard) {
+      upkeepCard = document.createElement('div');
+      upkeepCard.id = 'outlawUpkeepCard';
+      const row = document.getElementById('ownedOutlawsRow');
+      if (row && row.parentNode) {
+        row.parentNode.insertBefore(upkeepCard, row.nextSibling);
+      }
+    }
+    if (!upkeepCard) return;
+
+    const isMine = userOwnedOutlaws.includes(currentSeed);
+    if (!isMine) {
+      upkeepCard.style.display = 'none';
+      return;
+    }
+
+    upkeepCard.style.display = 'block';
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const caredToday = localStorage.getItem(`hq_care_${currentSeed}_${todayStr}`) === 'true';
+    const careCount = (currentToken && currentToken.careCount !== undefined) ? currentToken.careCount : 0;
+    const feastShieldUntil = parseInt(localStorage.getItem(`hq_feast_until_${currentSeed}`) || '0', 10);
+    const isShielded = feastShieldUntil > Date.now();
+    const daysShieldRem = isShielded ? Math.ceil((feastShieldUntil - Date.now()) / (86400 * 1000)) : 0;
+    const feastsHeld = walletLootBalances[7] || 0;
+
+    upkeepCard.innerHTML = `
+      <div style="background:radial-gradient(ellipse at 15% 50%, #0d2812 0%, #041206 100%); border:1.5px solid #22c55e; border-radius:8px; padding:10px 12px; margin:8px 0; box-shadow:0 3px 12px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:20px;">☀️</span>
+            <div>
+              <div style="font-weight:bold; color:#86efac; font-size:12px; display:flex; align-items:center; gap:6px;">
+                <span>Outlaw Daily Upkeep & Devotion</span>
+                <span style="font-size:9px; background:#14532d; color:#4ade80; border:1px solid #22c55e; padding:1px 5px; border-radius:4px;">Proof of Life</span>
+              </div>
+              <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">Check in each UTC day to maintain wakefulness & prevent conditioning rust (0 Gold)</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:9.5px; font-weight:bold; background:${isShielded ? '#1e1b4b' : '#064e3b'}; color:${isShielded ? '#c7d2fe' : '#6ee7b7'}; border:1px solid ${isShielded ? '#6366f1' : '#10b981'}; padding:2px 8px; border-radius:5px;">
+              ${isShielded ? '🛡️ Rations Shield (' + daysShieldRem + 'd)' : '☀️ Awake & Active'}
+            </span>
+            <span style="font-size:9.5px; color:#ffd700; background:#1e293b; padding:2px 6px; border-radius:4px; border:1px solid #475569;">
+              📋 Care Checks: <strong>${careCount}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; border-top:1px solid #143519; padding-top:8px;">
+          <div style="font-size:10px; color:#cbd5e1;">
+            ${caredToday 
+              ? '✅ <strong style="color:#4ade80;">Daily Care Logged for Today!</strong> Next check-in resets at 00:00 UTC.' 
+              : '⚠️ <strong style="color:#fde047;">Daily Care Pending:</strong> Check in to log proof-of-life on Robinhood chain.'}
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" id="btnPerformDailyCare" class="btn" style="background:${caredToday ? '#1f3d23' : '#15803d'}; border:1px solid ${caredToday ? '#2e5c33' : '#4ade80'}; color:${caredToday ? '#86efac' : '#fff'}; font-size:10px; font-weight:bold; padding:5px 12px; border-radius:5px; cursor:pointer;" title="Submit 0-Gold proof of life dailyCare() on Robinhood testnet">
+              ${caredToday ? '✓ Care Completed (0 Gold)' : '☀️ Perform Daily Care (0 Gold)'}
+            </button>
+            <button type="button" id="btnFeedRations" class="btn" style="background:#831843; border:1px solid #f43f5e; color:#ffe4e6; font-size:10px; font-weight:bold; padding:5px 12px; border-radius:5px; cursor:pointer;" title="Feed 1 Feast Basket (+7 Days Slumber Protection)">
+              🧺 Feed Rations (${feastsHeld} Held)
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    upkeepCard.querySelector('#btnPerformDailyCare')?.addEventListener('click', () => {
+      performOutlawDailyCare(currentSeed);
+    });
+    upkeepCard.querySelector('#btnFeedRations')?.addEventListener('click', () => {
+      feedOutlawRations(currentSeed);
+    });
+  }
 
   window.setConnectedWallet = async function(addr) {
     connectedUserAddress = addr;
@@ -7232,6 +7630,7 @@ tslib/tslib.es6.js:
   window.selectOutlaw = (id) => {
     setSeed(id);
     updateOwnedOutlawsUI();
+    if (typeof updateSanctuaryUI === 'function') updateSanctuaryUI();
     (window.showToast || console.log)(`👑 Selected Outlaw #${id} for questing!`);
   };
 
@@ -7476,13 +7875,16 @@ tslib/tslib.es6.js:
         const dna = hex.slice(0, 64);
         const lastHeistTimestamp = parseInt(hex.slice(128, 192), 16);
         const totalHeists = parseInt(hex.slice(192, 256), 16);
+        const careCount = hex.length >= 320 ? parseInt(hex.slice(256, 320), 16) : 0;
         
         const statEl = document.getElementById('statTotalHeists');
         if (statEl) statEl.innerText = totalHeists;
         if (currentToken) {
           currentToken.totalHeists = totalHeists;
           currentToken.dna = dna;
+          currentToken.careCount = careCount;
         }
+        if (typeof updateOutlawUpkeepCard === 'function') updateOutlawUpkeepCard();
 
         // Dynamic Vault Breach calculation
         vaultBreachPoints = Math.min(10000, 6400 + (totalHeists * 100));
