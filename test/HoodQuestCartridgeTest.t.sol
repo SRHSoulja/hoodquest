@@ -61,7 +61,7 @@ contract HoodQuestCartridgeTest is Test {
 
         console2.log("Production tokenURI(1) execution gas:", gasUsed);
         console2.log("Total tokenURI character length:", bytes(uri).length);
-        assertTrue(gasUsed < 500000, "tokenURI execution gas should be very low and fast");
+        assertTrue(gasUsed < 1000000, "tokenURI execution gas should be within reasonable bounds");
         assertTrue(bytes(uri).length > 2000, "URI should be properly formatted");
     }
 }

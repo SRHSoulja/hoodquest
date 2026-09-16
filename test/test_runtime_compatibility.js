@@ -226,7 +226,7 @@ async function runCompatibilityTests() {
     CartridgeHost.setAdapter(bridge);
 
     // 1. Inspect version & adapter
-    assert.strictEqual(CartridgeHost.version, '0.1.0');
+    assert.ok(['0.1.0', '0.2.0'].includes(CartridgeHost.version));
     assert.strictEqual(CartridgeHost.getAdapter().name, 'bridge');
 
     // 2. Connect

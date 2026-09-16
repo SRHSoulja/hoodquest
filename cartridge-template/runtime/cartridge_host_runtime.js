@@ -30,6 +30,10 @@
     root.ELEVATED_SELECTORS = exports.ELEVATED_SELECTORS;
     root.CANONICAL_SIGNATURES = exports.CANONICAL_SIGNATURES;
     root.normalizeChainId = exports.normalizeChainId;
+    root.toCaip2ChainId = exports.toCaip2ChainId;
+    root.canonicalizeJson = exports.canonicalizeJson;
+    root.normalizeLog = exports.normalizeLog;
+    root.normalizeLogs = exports.normalizeLogs;
     root.CartridgeLoader = exports.CartridgeLoader;
   }
 }(typeof self !== 'undefined' ? self : this, function() {
@@ -66,9 +70,13 @@
   ]);
 
   // Normalize chain ID to canonical EIP-1193 hex string (e.g. '0xaa36a7', '0x1')
+  // Supports both hex strings, integers, and CAIP-2 identifiers (e.g. 'eip155:11155111')
   function normalizeChainId(chainId) {
     if (chainId === null || chainId === undefined) return null;
     if (typeof chainId === 'string') {
+      if (chainId.startsWith('eip155:')) {
+        return '0x' + BigInt(chainId.slice(7)).toString(16).toLowerCase();
+      }
       if (chainId.startsWith('0x') || chainId.startsWith('0X')) {
         return '0x' + BigInt(chainId).toString(16).toLowerCase();
       }
@@ -80,10 +88,70 @@
     return null;
   }
 
+  // Convert EIP-1193 hex chain ID to CAIP-2 identifier (e.g. '0xaa36a7' -> 'eip155:11155111')
+  function toCaip2ChainId(chainId) {
+    const hex = normalizeChainId(chainId);
+    if (!hex) return null;
+    return 'eip155:' + BigInt(hex).toString(10);
+  }
+
+  // RFC 8785 JSON Canonicalization Scheme (JCS)
+  // Deterministic serialization: sorted keys, no whitespace, standard float/string formatting
+  function canonicalizeJson(obj) {
+    if (obj === null || typeof obj !== 'object') {
+      return JSON.stringify(obj);
+    }
+    if (Array.isArray(obj)) {
+      return '[' + obj.map(canonicalizeJson).join(',') + ']';
+    }
+    const keys = Object.keys(obj).sort();
+    const pairs = keys
+      .filter(k => obj[k] !== undefined)
+      .map(k => JSON.stringify(k) + ':' + canonicalizeJson(obj[k]));
+    return '{' + pairs.join(',') + '}';
+  }
+
   // Parse 20-byte address from 32-byte ABI word
   function parseAddressFromWord(wordHex) {
     if (!wordHex || wordHex.length < 40) return '';
     return '0x' + wordHex.slice(-40).toLowerCase();
+  }
+
+  // Normalize hex string / integer values
+  function normalizeHex(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string') {
+      if (value.startsWith('0x') || value.startsWith('0X')) {
+        return value.toLowerCase();
+      }
+      return '0x' + BigInt(value).toString(16).toLowerCase();
+    }
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return '0x' + BigInt(value).toString(16).toLowerCase();
+    }
+    return null;
+  }
+
+  // Normalize EVM event log structure
+  function normalizeLog(log) {
+    if (!log || typeof log !== 'object') return null;
+    return {
+      address: (log.address || '').toLowerCase(),
+      topics: Array.isArray(log.topics) ? log.topics.map(t => (t || '').toLowerCase()) : [],
+      data: log.data || '0x',
+      blockNumber: normalizeHex(log.blockNumber),
+      blockHash: log.blockHash ? log.blockHash.toLowerCase() : null,
+      transactionHash: log.transactionHash ? log.transactionHash.toLowerCase() : null,
+      transactionIndex: normalizeHex(log.transactionIndex),
+      logIndex: normalizeHex(log.logIndex),
+      removed: !!log.removed
+    };
+  }
+
+  // Normalize an array of EVM event logs
+  function normalizeLogs(logs) {
+    if (!Array.isArray(logs)) return [];
+    return logs.map(normalizeLog).filter(Boolean);
   }
 
   // Standardized Console Runtime Error Hierarchy
@@ -655,6 +723,7 @@
         evm: {
           chainId: this.activeChainId,
           read: { supported: true, available: true },
+          logs: { supported: true, available: true },
           write: { supported: hasSigner && !sandboxed, available: hasSigner && isConn, authorized: true }
         },
         environment: {
@@ -723,6 +792,39 @@
       throw ConsoleRuntimeError.transportUnavailable('No transport available for readContract');
     }
 
+    async getLogs(filter = {}) {
+      if (typeof filter !== 'object' || filter === null) {
+        throw ConsoleRuntimeError.invalidParams('Filter must be an object');
+      }
+
+      if (this.injectedProvider && this.injectedProvider.request) {
+        try {
+          const res = await this.injectedProvider.request({
+            method: 'eth_getLogs',
+            params: [filter]
+          });
+          if (Array.isArray(res)) return normalizeLogs(res);
+        } catch (_) {}
+      }
+
+      if (typeof fetch === 'function') {
+        const resp = await fetch(this.rpcUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: Date.now(),
+            method: 'eth_getLogs',
+            params: [filter]
+          })
+        });
+        const json = await resp.json();
+        if (json.error) throw new Error(json.error.message || 'RPC Error');
+        return normalizeLogs(json.result || []);
+      }
+      throw ConsoleRuntimeError.transportUnavailable('No transport available for getLogs');
+    }
+
     async writeContract({ to, data, gas = '0x55730', value = '0x0' }) {
       if (!to || !data) throw ConsoleRuntimeError.invalidParams('"to" and "data" required');
       if (!this.activeAccount) throw ConsoleRuntimeError.unauthorized('Wallet not connected');
@@ -788,6 +890,7 @@
         evm: {
           chainId: this.activeChainId,
           read: { supported: true, available: true },
+          logs: { supported: true, available: true },
           write: { supported: true, available: false, authorized: true }
         },
         environment: { isSandboxed: true, hasHostBridge: true, openExternalApp: false, canonicalAppUrl: '' },
@@ -986,6 +1089,13 @@
       return await this._sendRequest('evm.read', { to, data }, 10000);
     }
 
+    async getLogs(filter = {}) {
+      if (typeof filter !== 'object' || filter === null) {
+        throw ConsoleRuntimeError.invalidParams('Filter must be an object');
+      }
+      return await this._sendRequest('evm.logs', { ...filter, chainId: this.activeChainId }, 30000);
+    }
+
     async writeContract({ to, data, gas, value }) {
       if (!this.activeAccount) {
         throw ConsoleRuntimeError.unauthorized('Cannot dispatch write: wallet not connected');
@@ -1064,7 +1174,7 @@
 
   // --- CartridgeHost Singleton Runtime ---
   const CartridgeHost = {
-    version: '0.1.0',
+    version: '0.2.0',
     _adapter: null,
     _listeners: new Map(),
     _handshakeEstablished: false,
@@ -1110,6 +1220,10 @@
 
     async readContract(params) {
       return await this.getAdapter().readContract(params);
+    },
+
+    async getLogs(filter) {
+      return await this.getAdapter().getLogs(filter);
     },
 
     async writeContract(params) {
@@ -1206,6 +1320,10 @@
     ELEVATED_SELECTORS,
     CANONICAL_SIGNATURES,
     normalizeChainId,
+    toCaip2ChainId,
+    canonicalizeJson,
+    normalizeLog,
+    normalizeLogs,
     CartridgeLoader
   };
 }));

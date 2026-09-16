@@ -230,6 +230,75 @@ async function runGenericHostTestSuite() {
     port2.close();
   });
 
+  // --- 4B. EVM.LOGS BRIDGE DISPATCHING & CHAIN GATING ---
+  await test('Host Bridge: Dispatches evm.logs with normalization, parameter validation, and fail-closed chain gating', async () => {
+    const host = new GenericHostCore({
+      resolver,
+      keccakFn,
+      account: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      chainId: SEPOLIA_HEX
+    });
+
+    host.logsHandler = async (filter) => {
+      return [
+        {
+          address: '0xF75323518DF7CE90637E2B93CFD7F7D0627CC205',
+          topics: ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'],
+          data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          blockNumber: 123456,
+          blockHash: '0xABCD',
+          transactionHash: '0x1234',
+          transactionIndex: 2,
+          logIndex: 0,
+          removed: false
+        }
+      ];
+    };
+
+    await host.loadCartridge('runtime-test-cartridge');
+
+    const { port1, port2 } = new MessageChannel();
+    host.bindPortRpc(port1);
+    const bridge = new BridgeHostAdapter(port2);
+
+    // 1. Query logs successfully
+    const logs = await bridge.getLogs({
+      address: '0xF75323518df7Ce90637e2b93cFd7f7d0627cc205',
+      topics: ['0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef']
+    });
+
+    assert.strictEqual(Array.isArray(logs), true);
+    assert.strictEqual(logs.length, 1);
+    assert.strictEqual(logs[0].address, '0xf75323518df7ce90637e2b93cfd7f7d0627cc205');
+    assert.strictEqual(logs[0].blockNumber, '0x1e240'); // 123456 in hex
+    assert.strictEqual(logs[0].transactionIndex, '0x2');
+    assert.strictEqual(logs[0].logIndex, '0x0');
+    assert.strictEqual(logs[0].removed, false);
+
+    // 2. Chain mismatch fails closed (4901)
+    let caughtChainMismatch = null;
+    try {
+      await bridge._sendRequest('evm.logs', { chainId: MAINNET_HEX, address: '0xF75323518df7Ce90637e2b93cFd7f7d0627cc205' });
+    } catch (e) {
+      caughtChainMismatch = e;
+    }
+    assert.ok(caughtChainMismatch, 'Chain mismatch must fail closed');
+    assert.strictEqual(caughtChainMismatch.code, 4901);
+
+    // 3. Malformed filter fails closed (-32602)
+    let caughtBadFilter = null;
+    try {
+      await bridge.getLogs('not-an-object');
+    } catch (e) {
+      caughtBadFilter = e;
+    }
+    assert.ok(caughtBadFilter);
+    assert.strictEqual(caughtBadFilter.code, -32602);
+
+    port1.close();
+    port2.close();
+  });
+
   // --- 5. TWO-CARTRIDGE HOSTING PROOF (CARTRIDGE #0001 & #0002) ---
   await test('Two-Cartridge Proof: Host loads Cartridge #0001 and #0002 sequentially through exact same path', async () => {
     const host = new GenericHostCore({

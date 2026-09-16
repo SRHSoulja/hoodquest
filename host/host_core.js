@@ -23,6 +23,8 @@
     ConsoleRuntimeError,
     PolicyEngine,
     normalizeChainId,
+    normalizeLog,
+    normalizeLogs,
     CartridgeLoader,
     ELEVATED_SELECTORS
   } = runtimeModule;
@@ -117,8 +119,8 @@
 
       // C. Check Runtime Compatibility
       const requiredRuntime = resolved.runtimeRequirement || '^0.1.0';
-      if (!requiredRuntime.includes('0.1')) {
-        const err = ConsoleRuntimeError.runtimeVersionMismatch(requiredRuntime, '0.1.0');
+      if (!requiredRuntime.includes('0.1') && !requiredRuntime.includes('0.2')) {
+        const err = ConsoleRuntimeError.runtimeVersionMismatch(requiredRuntime, '0.2.0');
         this.log('HOST', 'COMPATIBILITY_FAIL', err.message, true);
         this.emit('status', { state: 'error', error: err.message });
         throw err;
@@ -391,6 +393,16 @@
             break;
           }
 
+          case 'evm.logs': {
+            const { chainId, ...filter } = params || {};
+            const reqChain = normalizeChainId(chainId) || this.activeChainId;
+            if (reqChain !== this.activeChainId) {
+              throw ConsoleRuntimeError.chainDisconnected(`Active host chain is ${this.activeChainId}, but logs requested chain ${reqChain}`);
+            }
+            result = await this.executeGetLogs(filter);
+            break;
+          }
+
           default:
             throw ConsoleRuntimeError.unsupportedMethod(method);
         }
@@ -462,6 +474,48 @@
       // Simulated dev transaction hash
       const randomBytes = Array.from({ length: 32 }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
       return '0x' + randomBytes;
+    }
+
+    async executeGetLogs(filter = {}) {
+      if (typeof filter !== 'object' || filter === null) {
+        throw ConsoleRuntimeError.invalidParams('Filter must be an object');
+      }
+      if (this.logsHandler) {
+        const raw = await this.logsHandler(filter);
+        return normalizeLogs(raw || []);
+      }
+      if (typeof window !== 'undefined' && window.ethereum && window.ethereum.request) {
+        try {
+          const res = await window.ethereum.request({
+            method: 'eth_getLogs',
+            params: [filter]
+          });
+          if (Array.isArray(res)) return normalizeLogs(res);
+        } catch (_) {}
+      }
+      if (typeof fetch === 'function') {
+        try {
+          const resp = await fetch(this.rpcUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 3,
+              method: 'eth_getLogs',
+              params: [filter]
+            })
+          });
+          const json = await resp.json();
+          if (json && json.result) return normalizeLogs(json.result);
+          if (json && json.error) throw new Error(json.error.message || 'RPC eth_getLogs error');
+        } catch (e) {
+          if (typeof window === 'undefined') {
+            return [];
+          }
+          throw e;
+        }
+      }
+      return [];
     }
 
     async fetchReceipt(txHash) {
