@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HoodQuest On-Chain Cartridge PoC</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #081009;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 12px;
+    user-select: none;
+  }
+  .card {
+    background: #0d1a10;
+    border: 1.5px solid #284c22;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 380px;
+    padding: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 11px;
+    color: #88b04b;
+    border-bottom: 1px solid #1a3317;
+    padding-bottom: 6px;
+  }
+  #heroCanvas {
+    background: #132415;
+    border: 1px solid #3b6632;
+    border-radius: 8px;
+    display: block;
+  }
+  .controls {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+  }
+  input {
+    flex: 1;
+    background: #09130a;
+    border: 1px solid #284c22;
+    color: #ffd700;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    outline: none;
+  }
+  input:focus { border-color: #88b04b; }
+  button {
+    background: #20451a;
+    border: 1px solid #84cc4c;
+    color: #bbf766;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:active { background: #2f6927; }
+  .status {
+    width: 100%;
+    background: #060d07;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 10px;
+    color: #94a3b8;
+    text-align: center;
+    border: 1px dashed #1a3317;
+  }
+  .status span { color: #ffd700; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <span>🏹 HoodQuest On-Chain Cartridge</span>
+    <span>Robinhood Testnet</span>
+  </div>
+  <canvas id="heroCanvas" width="280" height="280"></canvas>
+  <div class="controls">
+    <input type="number" id="tokenIdInput" value="1" min="1" placeholder="Token ID">
+    <button id="btnInspect">Query RPC</button>
+  </div>
+  <div class="status" id="statusBox">Status: Initialized (Zero External Assets)</div>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+  const input = document.getElementById('tokenIdInput');
+  const btn = document.getElementById('btnInspect');
+  const status = document.getElementById('statusBox');
+
+  function drawHero(seed, biologicalAge, isSlumbering) {
+    ctx.clearRect(0, 0, 280, 280);
+    // Background Grove
+    const bgGrad = ctx.createRadialGradient(140, 140, 10, 140, 140, 140);
+    bgGrad.addColorStop(0, '#1a3a1e');
+    bgGrad.addColorStop(1, '#09150b');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 280, 280);
+
+    // Ancient Sherwood Trunk
+    ctx.fillStyle = '#22150c';
+    ctx.fillRect(20, 40, 36, 240);
+
+    // Character Center (X=140, Y=190)
+    ctx.save();
+    ctx.translate(140, 190);
+
+    // Boots & Legs
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-10, 10, 8, 30);
+    ctx.fillRect(2, 10, 8, 30);
+
+    // Lincoln Green Tunic
+    ctx.fillStyle = '#2f6932';
+    ctx.beginPath();
+    ctx.moveTo(-16, -30);
+    ctx.lineTo(16, -30);
+    ctx.lineTo(20, 14);
+    ctx.lineTo(-20, 14);
+    ctx.closePath();
+    ctx.fill();
+
+    // Belt & Gold Buckle
+    ctx.fillStyle = '#3e2717';
+    ctx.fillRect(-18, 0, 36, 5);
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(-4, -1, 8, 7);
+
+    // Head / Face
+    ctx.fillStyle = '#f5c69b';
+    ctx.beginPath();
+    ctx.arc(0, -44, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    if (isSlumbering) {
+      ctx.strokeStyle = '#2d180d';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-6, -44); ctx.lineTo(-2, -44);
+      ctx.moveTo(2, -44); ctx.lineTo(6, -44);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#2d180d';
+      ctx.fillRect(-5, -45, 2.5, 2.5);
+      ctx.fillRect(2.5, -45, 2.5, 2.5);
+    }
+
+    // Bycocket Hat with Golden Feather
+    ctx.fillStyle = '#1c421e';
+    ctx.beginPath();
+    ctx.ellipse(0, -53, 14, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath();
+    ctx.moveTo(4, -54); ctx.quadraticCurveTo(14, -68, 20, -64); ctx.lineTo(6, -53);
+    ctx.closePath();
+    ctx.fill();
+
+    // Gilded Longbow
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.arc(22, -20, 24, Math.PI * 0.6, Math.PI * 1.4);
+    ctx.stroke();
+
+    ctx.restore();
+
+    // Bio Age & Slumber Badge
+    ctx.fillStyle = '#ffd700';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    const stateText = isSlumbering === true ? 'Slumbering' : (isSlumbering === false ? 'Awake' : 'State Unverified');
+    const ageText = biologicalAge !== null ? 'Age: ' + biologicalAge + ' yrs • ' + stateText : 'Age: Unverified • ' + stateText;
+    ctx.fillText(ageText, 140, 260);
+  }
+
+  // Initial immediate offline render (No external calls)
+  drawHero(1, null, null);
+
+  btn.addEventListener('click', async () => {
+    const id = parseInt(input.value, 10) || 1;
+    status.textContent = 'Querying Robinhood Chain Testnet RPC...';
+
+    // Standard JSON-RPC eth_call to Robinhood Testnet
+    const rpcUrl = 'https://rpc.testnet.chain.robinhood.com';
+    // Selector for effectiveBiologicalAge(uint256) is 0x181a5413
+    const padId = id.toString(16).padStart(64, '0');
+    const payload = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'eth_call',
+      params: [{
+        to: '0x0000000000000000000000000000000000000000',
+        data: '0x181a5413' + padId
+      }, 'latest']
+    };
+
+    try {
+      const res = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data && data.result && data.result !== '0x') {
+        const age = parseInt(data.result, 16);
+        drawHero(id, age, false);
+        status.textContent = 'Verified On-Chain Age: ' + age + ' (Token #' + id + ')';
+      } else {
+        // Honest fallback: never invent game state
+        drawHero(id, null, null);
+        status.textContent = 'Token #' + id + ': Unregistered or State Unavailable';
+      }
+    } catch (err) {
+      // Honest fallback: never invent game state
+      drawHero(id, null, null);
+      status.textContent = 'RPC Offline: Unable to verify on-chain state (' + err.message + ')';
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -975,8 +975,8 @@
 
       <div class="wallet-bar">
         <input type="text" id="walletInput" value="" placeholder="Enter 0x address to connect wallet & read loot..." class="wallet-input">
-        <button class="btn" id="btnConnectWallet">🦊 MetaMask</button>
-        <button class="btn" id="btnWalletConnect" style="background:#1d4ed8; color:#fff; border-color:#3b82f6; font-weight:bold;">📱 WalletConnect</button>
+        <button class="btn" id="btnConnectWallet">🦊 Connect Wallet</button>
+        <button class="btn" id="btnWalletConnect" style="background:#1d4ed8; color:#fff; border-color:#3b82f6; font-weight:bold;">📱 Phone Wallet · WalletConnect</button>
         <button class="btn primary" id="btnRefreshLoot">🔄 Read Loot</button>
       </div>
 
@@ -6001,19 +6001,25 @@
       const ids = [1, 2, 3, 4, 5, 6, 7, 8].map(n => n.toString(16).padStart(64, '0')).join('');
       const calldata = '0x' + selector + off1 + off2 + len + addrs + len + ids;
 
-      const res = await fetch(getActiveRpcUrl(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: Date.now(),
-          method: 'eth_call',
-          params: [{ to: LOOT_CONTRACT, data: calldata }, 'latest']
-        })
-      });
-      const data = await res.json();
-      if (data && data.result && data.result.length >= 130) {
-        const hex = data.result.slice(2);
+      let dataResult = null;
+      if (typeof window !== 'undefined' && window.CartridgeHost) {
+        dataResult = await window.CartridgeHost.readContract({ to: LOOT_CONTRACT, data: calldata });
+      } else {
+        const res = await fetch(getActiveRpcUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: Date.now(),
+            method: 'eth_call',
+            params: [{ to: LOOT_CONTRACT, data: calldata }, 'latest']
+          })
+        });
+        const data = await res.json();
+        dataResult = data && data.result;
+      }
+      if (dataResult && dataResult.length >= 130) {
+        const hex = dataResult.startsWith('0x') ? dataResult.slice(2) : dataResult;
         for (let i = 0; i < 8; i++) {
           const word = hex.slice((2 + i) * 64, (3 + i) * 64);
           const val = parseInt(word, 16) || 0;
@@ -6039,6 +6045,55 @@
       lootSyncStatus.innerText = '● Offline / Local Sandbox Mode';
       lootSyncStatus.style.color = '#ffd700';
     }
+  }
+
+  // --- Canonical App Configuration & Safe Host Detection ---
+  const CANONICAL_APP_URL = 'https://srhsoulja.github.io/hoodquest/';
+
+  function isSandboxedIframe() {
+    try {
+      if (typeof window === 'undefined') return false;
+      if (window.self !== window.top) {
+        if (!window.location.origin || window.location.origin === 'null') return true;
+        try {
+          const _ = window.parent.location.href;
+        } catch (_) {
+          return true; // Cross-origin or sandboxed iframe
+        }
+        return true;
+      }
+    } catch (_) {
+      return true;
+    }
+    return false;
+  }
+
+  function getAppUrl() {
+    try {
+      if (typeof window !== 'undefined' && window.self === window.top) {
+        const origin = window.location.origin;
+        if (origin && origin !== 'null' && (origin.startsWith('http://') || origin.startsWith('https://'))) {
+          return window.location.href;
+        }
+      }
+    } catch (_) {}
+    return CANONICAL_APP_URL;
+  }
+
+  function getDappUrl() {
+    return getAppUrl().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  }
+
+  function getSafeParentEthereum() {
+    try {
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        return window.parent.ethereum || null;
+      }
+    } catch (_) {
+      // Cross-origin / sandboxed frame denial: expected capability failure, not an error
+      return null;
+    }
+    return null;
   }
 
   // --- Real WalletConnect v2 Core Engine ---
@@ -6072,9 +6127,9 @@
         throw new Error('WalletConnect module not loaded yet');
       }
 
-      let originUrl = 'https://explorer.testnet.chain.robinhood.com';
+      let originUrl = CANONICAL_APP_URL;
       try {
-        if (window.location && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file')) {
+        if (window.self === window.top && window.location && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file')) {
           originUrl = window.location.origin;
         }
       } catch(_) {}
@@ -6114,8 +6169,8 @@
       if (uri) {
         const qrDataUrl = await window.QRCode.toDataURL(uri, { width: 220, margin: 1 });
         const encodedUri = encodeURIComponent(uri);
-        const dappUrl = (window.location.origin + window.location.pathname).replace(/^https?:\/\//, '').replace(/\/+$/, '');
-        const fullHref = window.location.href;
+        const dappUrl = getDappUrl();
+        const appUrl = getAppUrl();
 
         if (isMobile) {
           document.getElementById('wcQrBox').innerHTML = `
@@ -6146,7 +6201,7 @@
                 <a href="https://metamask.app.link/dapp/${dappUrl}" style="font-size:11px; color:#f97316; text-decoration:underline; font-weight:bold;">
                   🦊 MetaMask Browser
                 </a>
-                <a href="https://phantom.app/ul/browse/${encodeURIComponent(fullHref)}?ref=${encodeURIComponent(fullHref)}" style="font-size:11px; color:#ab9ff2; text-decoration:underline; font-weight:bold;">
+                <a href="https://phantom.app/ul/browse/${encodeURIComponent(appUrl)}?ref=${encodeURIComponent(appUrl)}" style="font-size:11px; color:#ab9ff2; text-decoration:underline; font-weight:bold;">
                   👻 Phantom Browser
                 </a>
               </div>
@@ -6521,10 +6576,11 @@
         }
       }
 
-      // Check parent iframe provider if sandboxed
+      // Check parent iframe provider if accessible (probe safely, treat denial as expected capability failure)
       try {
-        if (window.parent && window.parent !== window && window.parent.ethereum) {
-          checkAndRegister(window.parent.ethereum, 'parent_eth', 'Parent Frame Wallet', 'parent.ethereum');
+        const parentEth = getSafeParentEthereum();
+        if (parentEth) {
+          checkAndRegister(parentEth, 'parent_eth', 'Parent Frame Wallet', 'parent.ethereum');
         }
       } catch(_) {}
     } catch (_) {}
@@ -6565,6 +6621,8 @@
       }
       return window.ethereum;
     }
+    const parentEth = getSafeParentEthereum();
+    if (parentEth) return parentEth;
     return null;
   }
 
@@ -6831,6 +6889,53 @@
     }
 
     const isMobile = isMobileDevice();
+    const isSandboxed = isSandboxedIframe();
+    const hostCaps = (window.CartridgeHost && window.CartridgeHost.getCapabilities()) || {};
+
+    // 1. Host Bridge Mode: when running inside an authorized Cartridge Host shell
+    if (hostCaps.adapter === 'bridge') {
+      const isConn = hostCaps.wallet && hostCaps.wallet.connected;
+      const addr = hostCaps.wallet && hostCaps.wallet.address;
+      if (isConn && addr) {
+        const shortAddr = `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+        const pill = document.createElement('span');
+        pill.className = 'btn';
+        pill.style.background = '#15803d';
+        pill.style.borderColor = '#22c55e';
+        pill.style.color = '#fff';
+        pill.style.fontWeight = 'bold';
+        pill.textContent = `🛡️ ${shortAddr} (Host)`;
+        cluster.appendChild(pill);
+
+        const disBtn = document.createElement('button');
+        disBtn.className = 'btn';
+        disBtn.style.background = '#334155';
+        disBtn.style.borderColor = '#64748b';
+        disBtn.style.color = '#cbd5e1';
+        disBtn.textContent = 'Disconnect';
+        disBtn.title = 'Disconnect host wallet';
+        disBtn.addEventListener('click', () => window.CartridgeHost.disconnect());
+        cluster.appendChild(disBtn);
+      } else {
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.id = 'btnConnectHostWallet';
+        b.textContent = '🛡️ Connect via Host';
+        b.style.background = '#0284c7';
+        b.style.borderColor = '#38bdf8';
+        b.style.color = '#fff';
+        b.style.fontWeight = 'bold';
+        b.addEventListener('click', async () => {
+          try {
+            await window.CartridgeHost.connect();
+          } catch (e) {
+            (window.showToast || console.log)('⚠️ Host connection failed: ' + (e.message || e));
+          }
+        });
+        cluster.appendChild(b);
+      }
+      return;
+    }
 
     if (uniqueWallets.length > 0) {
       for (const w of uniqueWallets) {
@@ -6865,68 +6970,37 @@
         cluster.appendChild(b);
       }
     } else {
-      // No injected wallet detected
-      if (isMobile) {
-        // Mobile browser without injected provider:
-        // Offer direct 1-tap browser launchers for MetaMask and Phantom
-        const mmBtn = document.createElement('button');
-        mmBtn.className = 'btn';
-        mmBtn.id = 'btnOpenMetaMaskApp';
-        mmBtn.textContent = '🦊 MetaMask';
-        mmBtn.style.background = '#ea580c';
-        mmBtn.style.borderColor = '#fb923c';
-        mmBtn.style.color = '#fff';
-        mmBtn.style.fontWeight = 'bold';
-        mmBtn.title = 'Launch MetaMask Mobile in-app browser';
-        mmBtn.addEventListener('click', () => {
-          initAudio();
-          playSound('coin');
-          const dappUrl = (window.location.origin + window.location.pathname).replace(/^https?:\/\//, '').replace(/\/+$/, '');
-          window.location.href = `https://metamask.app.link/dapp/${dappUrl}`;
-        });
-        cluster.appendChild(mmBtn);
-
-        const phBtn = document.createElement('button');
-        phBtn.className = 'btn';
-        phBtn.id = 'btnOpenPhantomApp';
-        phBtn.textContent = '👻 Phantom';
-        phBtn.style.background = '#582c8b';
-        phBtn.style.borderColor = '#ab9ff2';
-        phBtn.style.color = '#fff';
-        phBtn.style.fontWeight = 'bold';
-        phBtn.title = 'Launch Phantom Mobile in-app browser';
-        phBtn.addEventListener('click', () => {
-          initAudio();
-          playSound('coin');
-          const fullHref = window.location.href;
-          window.location.href = `https://phantom.app/ul/browse/${encodeURIComponent(fullHref)}?ref=${encodeURIComponent(fullHref)}`;
-        });
-        cluster.appendChild(phBtn);
-      } else {
-        const b = document.createElement('button');
-        b.className = 'btn';
-        b.id = 'btnConnectWallet';
-        b.textContent = '🦊 Connect Laptop Wallet';
-        b.addEventListener('click', () => {
-          const p = getInjectedProvider();
-          if (p) {
-            connectWithInjected(p, 'Injected Wallet');
-          } else {
-            const inIframe = (window.self !== window.top);
-            if (inIframe) {
-              (window.showToast || console.log)('📱 Sandboxed explorer detected. Opening Phone Wallet / standalone pairing...');
-            } else {
-              (window.showToast || console.log)('📱 Extension wallet not detected. Opening WalletConnect...');
-            }
-            startWalletConnect();
+      // Primary connect button with direct injected probe first
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.id = 'btnConnectWallet';
+      b.textContent = '🦊 Connect Wallet';
+      b.style.fontWeight = 'bold';
+      b.addEventListener('click', async () => {
+        initAudio();
+        // 1. Direct injected-provider attempt first
+        const p = getInjectedProvider();
+        if (p) {
+          try {
+            await connectWithInjected(p, 'Injected Wallet');
+            return;
+          } catch (err) {
+            console.warn('Direct injected connection attempt failed:', err);
           }
-        });
-        cluster.appendChild(b);
-      }
+        }
+        // 2. Fallback when injected provider is not available
+        if (isSandboxed) {
+          (window.showToast || console.log)('📱 Sandboxed explorer detected. Opening Phone Wallet / WalletConnect...');
+        } else {
+          (window.showToast || console.log)('📱 Extension wallet not detected. Opening Phone Wallet / WalletConnect...');
+        }
+        startWalletConnect();
+      });
+      cluster.appendChild(b);
     }
 
-    // Frame Desktop Wallet button (loopback 127.0.0.1:1248) - desktop only
-    if (!isMobile) {
+    // Frame Desktop Wallet button (loopback 127.0.0.1:1248) - desktop standalone only
+    if (!isMobile && !isSandboxed) {
       const frameBtn = document.createElement('button');
       frameBtn.className = 'btn';
       frameBtn.id = 'btnFrameWallet';
@@ -6951,7 +7025,7 @@
       });
     }
 
-    // Phone Wallet · WalletConnect button
+    // Phone Wallet · WalletConnect button - identical label across all platforms
     const wcBtn = document.createElement('button');
     wcBtn.className = 'btn';
     wcBtn.id = 'btnWalletConnect';
@@ -6959,10 +7033,30 @@
     wcBtn.style.borderColor = '#3b82f6';
     wcBtn.style.color = '#fff';
     wcBtn.style.fontWeight = 'bold';
-    wcBtn.textContent = isMobile ? '📱 Connect Mobile Wallet' : '📱 Phone Wallet · WalletConnect';
-    wcBtn.title = isMobile ? 'Connect via mobile wallet switcher' : 'Scan QR code with phone wallet app';
+    wcBtn.textContent = '📱 Phone Wallet · WalletConnect';
+    wcBtn.title = 'Connect via Phone Wallet or scan QR code';
     wcBtn.addEventListener('click', startWalletConnect);
     cluster.appendChild(wcBtn);
+
+    // Explicit Open Full Web App fallback when in sandboxed/iframe host
+    if (isSandboxed) {
+      const openAppBtn = document.createElement('a');
+      openAppBtn.className = 'btn';
+      openAppBtn.id = 'btnOpenFullApp';
+      openAppBtn.href = CANONICAL_APP_URL;
+      openAppBtn.target = '_blank';
+      openAppBtn.rel = 'noopener noreferrer';
+      openAppBtn.textContent = '🌐 Open Full App ↗';
+      openAppBtn.title = `Open full web app at ${CANONICAL_APP_URL}`;
+      openAppBtn.style.background = '#065f46';
+      openAppBtn.style.borderColor = '#10b981';
+      openAppBtn.style.color = '#fff';
+      openAppBtn.style.fontWeight = 'bold';
+      openAppBtn.style.textDecoration = 'none';
+      openAppBtn.style.display = 'inline-flex';
+      openAppBtn.style.alignItems = 'center';
+      cluster.appendChild(openAppBtn);
+    }
   }
   window.renderWalletChoice = renderWalletChoice;
   renderWalletChoice();
@@ -6991,19 +7085,25 @@
     for (let id = 1; id <= 25; id++) {
       try {
         const calldata = '0x' + selector + id.toString(16).padStart(64, '0');
-        const res = await fetch(getActiveRpcUrl(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: id,
-            method: 'eth_call',
-            params: [{ to: OUTLAWS_CONTRACT, data: calldata }, 'latest']
-          })
-        });
-        const data = await res.json();
-        if (data && data.result && data.result.length >= 66 && data.result !== '0x') {
-          const owner = '0x' + data.result.slice(26, 66).toLowerCase();
+        let hexResult = null;
+        if (typeof window !== 'undefined' && window.CartridgeHost) {
+          hexResult = await window.CartridgeHost.readContract({ to: OUTLAWS_CONTRACT, data: calldata });
+        } else {
+          const res = await fetch(getActiveRpcUrl(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: id,
+              method: 'eth_call',
+              params: [{ to: OUTLAWS_CONTRACT, data: calldata }, 'latest']
+            })
+          });
+          const data = await res.json();
+          hexResult = data && data.result;
+        }
+        if (hexResult && hexResult.length >= 66 && hexResult !== '0x') {
+          const owner = '0x' + hexResult.slice(26, 66).toLowerCase();
           if (owner !== '0x0000000000000000000000000000000000000000') {
             newMinted.push(id);
             newOwners[id] = owner;
@@ -7932,8 +8032,14 @@
     }
   }
 
-  // Universal On-Chain Transaction Dispatcher (WalletConnect v2 + Injected)
-  async function sendOnchainTx({ to, data, gas = '0x55730', value = '0x0' }) {
+  // =========================================================================
+  // CARTRIDGE HOST RUNTIME V0
+  // Clean architectural boundary decoupling cartridge application logic
+  // from wallet discovery, signing, EVM transport, and host environment.
+  // =========================================================================
+
+  // Universal On-Chain Direct Transaction Execution (Direct Transport)
+  async function executeDirectOnchainTx({ to, data, gas = '0x55730', value = '0x0' }) {
     if (!connectedUserAddress) {
       throw new Error('Please connect your wallet first (via Injected or WalletConnect)');
     }
@@ -7975,10 +8081,9 @@
       throw new Error('No wallet connected. Please click 📱 WalletConnect first.');
     }
   }
-  window.sendOnchainTx = sendOnchainTx;
 
-  // Universal Public RPC Transaction Receipt Poller
-  async function waitForTxReceipt(txHash, maxAttempts = 15) {
+  // Universal Public RPC Transaction Receipt Poller (Direct Transport)
+  async function executeDirectReceiptPoll(txHash, maxAttempts = 15) {
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise(r => setTimeout(r, 1500));
       try {
@@ -8000,6 +8105,452 @@
     }
     return null;
   }
+
+  // DirectHostAdapter: Handles standalone web app, injected providers, and WalletConnect
+  class DirectHostAdapter {
+    constructor() {
+      this.name = 'direct';
+    }
+
+    getAddress() {
+      return connectedUserAddress || null;
+    }
+
+    getCapabilities() {
+      const isSandboxed = isSandboxedIframe();
+      const injected = getInjectedProvider();
+      const hasSigner = !!(injected || (wcClient && wcSession));
+      const isConn = !!connectedUserAddress;
+
+      let providerName = 'None';
+      if (activeWalletName) providerName = activeWalletName;
+      else if (wcSession) providerName = 'WalletConnect';
+      else if (injected) providerName = 'Injected';
+
+      return {
+        adapter: 'direct',
+        wallet: {
+          supported: !!(injected || typeof window.SignClient !== 'undefined' || !isSandboxed),
+          connected: isConn,
+          address: connectedUserAddress || null,
+          providerName: providerName
+        },
+        evm: {
+          read: { supported: true, available: true },
+          write: { supported: hasSigner || !isSandboxed, available: hasSigner && isConn, authorized: true }
+        },
+        environment: {
+          isSandboxed: isSandboxed,
+          hasHostBridge: false,
+          openExternalApp: isSandboxed && !hasSigner,
+          canonicalAppUrl: CANONICAL_APP_URL
+        },
+        // Convenience flat flags for backward compatibility
+        signing: hasSigner && isConn,
+        contractRead: true,
+        contractWrite: hasSigner && isConn,
+        openExternalApp: isSandboxed && !hasSigner,
+        isSandboxed: isSandboxed,
+        providerName: providerName,
+        canonicalAppUrl: CANONICAL_APP_URL
+      };
+    }
+
+    async requestAccounts() {
+      const p = getInjectedProvider();
+      if (!p) throw new Error('No direct injected provider available in host');
+      return await p.request({ method: 'eth_requestAccounts' });
+    }
+
+    async connect(options = {}) {
+      const p = getInjectedProvider();
+      if (p && !options.forceWalletConnect) {
+        try {
+          const accounts = await this.requestAccounts();
+          if (accounts && accounts.length > 0) {
+            await window.setConnectedWallet(accounts[0]);
+            CartridgeHost._emit('accountsChanged', accounts[0]);
+            CartridgeHost._emit('capabilitiesChanged', this.getCapabilities());
+            return accounts[0];
+          }
+        } catch (err) {
+          console.warn('Direct injected connection attempt failed:', err);
+          if (options.fallbackToWalletConnect) {
+            return await startWalletConnect();
+          }
+          throw err;
+        }
+      }
+      return await startWalletConnect();
+    }
+
+    async disconnect() {
+      if (typeof disconnectWallet === 'function') {
+        disconnectWallet();
+      }
+      CartridgeHost._emit('accountsChanged', null);
+      CartridgeHost._emit('capabilitiesChanged', this.getCapabilities());
+    }
+
+    async readContract({ to, data }) {
+      const provider = activeInjectedProvider || getInjectedProvider();
+      if (provider && provider.request) {
+        try {
+          const res = await provider.request({
+            method: 'eth_call',
+            params: [{ to, data }, 'latest']
+          });
+          if (res && res !== '0x') return res;
+        } catch (_) {}
+      }
+
+      const res = await fetch(getActiveRpcUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'eth_call',
+          params: [{ to, data }, 'latest']
+        })
+      });
+      const json = await res.json();
+      if (json && json.result) return json.result;
+      if (json && json.error) throw new Error(json.error.message || 'RPC eth_call error');
+      return '0x';
+    }
+
+    async writeContract({ to, data, gas = '0x55730', value = '0x0' }) {
+      return await executeDirectOnchainTx({ to, data, gas, value });
+    }
+
+    async waitForReceipt(txHash, maxAttempts = 15) {
+      return await executeDirectReceiptPoll(txHash, maxAttempts);
+    }
+  }
+
+  // BridgeHostAdapter: Communicates with parent Cartridge Host shell via postMessage / MessagePort
+  class BridgeHostAdapter {
+    constructor(port, initialCapabilities) {
+      this.name = 'bridge';
+      this.port = port || null;
+      this.caps = initialCapabilities || {
+        adapter: 'bridge',
+        wallet: { supported: true, connected: false, address: null, providerName: 'Cartridge Host' },
+        evm: {
+          read: { supported: true, available: true },
+          write: { supported: true, available: false, authorized: true }
+        },
+        environment: { isSandboxed: true, hasHostBridge: true, openExternalApp: false, canonicalAppUrl: CANONICAL_APP_URL },
+        signing: false,
+        contractRead: true,
+        contractWrite: false,
+        openExternalApp: false,
+        isSandboxed: true,
+        providerName: 'Cartridge Host',
+        canonicalAppUrl: CANONICAL_APP_URL
+      };
+      this.pendingRequests = new Map();
+      this.setupMessageListener();
+    }
+
+    setupMessageListener() {
+      const handleMsg = (event) => {
+        const data = event.data;
+        if (!data || typeof data !== 'object') return;
+
+        // Correlated response resolution
+        if (data.id && this.pendingRequests.has(data.id)) {
+          const pending = this.pendingRequests.get(data.id);
+          clearTimeout(pending.timer);
+          this.pendingRequests.delete(data.id);
+          if (data.error || data.success === false) {
+            const errObj = data.error || {};
+            const err = new Error(typeof errObj === 'string' ? errObj : (errObj.message || 'Host bridge error'));
+            if (errObj.code) err.code = errObj.code;
+            pending.reject(err);
+          } else {
+            pending.resolve(data.result);
+          }
+          return;
+        }
+
+        // Host pushed events
+        if (data.method === 'wallet.accountsChanged') {
+          const newAddr = (data.params && data.params.accounts && data.params.accounts[0]) || null;
+          this.caps.wallet.address = newAddr;
+          this.caps.wallet.connected = !!newAddr;
+          this.caps.evm.write.available = !!newAddr;
+          this.caps.signing = !!newAddr;
+          this.caps.contractWrite = !!newAddr;
+          CartridgeHost._emit('accountsChanged', newAddr);
+          CartridgeHost._emit('capabilitiesChanged', this.getCapabilities());
+        } else if (data.method === 'runtime.capabilitiesChanged') {
+          if (data.params && data.params.capabilities) {
+            this.caps = { ...this.caps, ...data.params.capabilities };
+            CartridgeHost._emit('capabilitiesChanged', this.getCapabilities());
+          }
+        }
+      };
+
+      if (this.port) {
+        this.port.onmessage = handleMsg;
+      } else {
+        window.addEventListener('message', handleMsg);
+      }
+    }
+
+    _sendRequest(method, params = {}, timeoutMs = 15000) {
+      return new Promise((resolve, reject) => {
+        const id = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const timer = setTimeout(() => {
+          if (this.pendingRequests.has(id)) {
+            this.pendingRequests.delete(id);
+            const err = new Error(`Cartridge host request timed out (${method})`);
+            err.code = -32000;
+            reject(err);
+          }
+        }, timeoutMs);
+
+        this.pendingRequests.set(id, { resolve, reject, timer, method });
+
+        const payload = {
+          jsonrpc: '2.0',
+          id: id,
+          method: method,
+          params: params
+        };
+
+        try {
+          if (this.port) {
+            this.port.postMessage(payload);
+          } else if (window.parent && window.parent !== window) {
+            window.parent.postMessage(payload, '*');
+          } else {
+            clearTimeout(timer);
+            this.pendingRequests.delete(id);
+            reject(new Error('Host bridge transport unavailable'));
+          }
+        } catch (e) {
+          clearTimeout(timer);
+          this.pendingRequests.delete(id);
+          reject(e);
+        }
+      });
+    }
+
+    getAddress() {
+      return this.caps.wallet.address || null;
+    }
+
+    getCapabilities() {
+      return { ...this.caps };
+    }
+
+    async requestAccounts() {
+      return await this.connect();
+    }
+
+    async connect(options = {}) {
+      const res = await this._sendRequest('wallet.connect', options, 30000);
+      const accounts = Array.isArray(res) ? res : (res && res.accounts ? res.accounts : [res]);
+      const addr = accounts[0] || null;
+      if (addr) {
+        this.caps.wallet.address = addr;
+        this.caps.wallet.connected = true;
+        this.caps.evm.write.available = true;
+        this.caps.signing = true;
+        this.caps.contractWrite = true;
+        await window.setConnectedWallet(addr);
+        CartridgeHost._emit('accountsChanged', addr);
+        CartridgeHost._emit('capabilitiesChanged', this.getCapabilities());
+      }
+      return addr;
+    }
+
+    async disconnect() {
+      await this._sendRequest('wallet.disconnect', {}, 5000).catch(() => {});
+      this.caps.wallet.address = null;
+      this.caps.wallet.connected = false;
+      this.caps.evm.write.available = false;
+      this.caps.signing = false;
+      this.caps.contractWrite = false;
+      await window.setConnectedWallet(null);
+      CartridgeHost._emit('accountsChanged', null);
+      CartridgeHost._emit('capabilitiesChanged', this.getCapabilities());
+    }
+
+    async readContract({ to, data }) {
+      return await this._sendRequest('evm.read', { to, data }, 10000);
+    }
+
+    async writeContract({ to, data, gas, value }) {
+      return await this._sendRequest('evm.write', { to, data, gas, value }, 60000);
+    }
+
+    async waitForReceipt(txHash, maxAttempts = 15) {
+      return await this._sendRequest('evm.receipt', { txHash, maxAttempts }, 60000);
+    }
+  }
+
+  // CartridgeHost: Unified application-facing Cartridge Runtime Client
+  const CartridgeHost = {
+    _adapter: null,
+    _listeners: new Map(),
+
+    init(adapter) {
+      this._adapter = adapter || new DirectHostAdapter();
+    },
+
+    getAdapter() {
+      if (!this._adapter) {
+        this._adapter = new DirectHostAdapter();
+      }
+      return this._adapter;
+    },
+
+    setAdapter(adapter) {
+      this._adapter = adapter;
+      this._emit('adapterChanged', adapter.name);
+      this._emit('capabilitiesChanged', this.getCapabilities());
+    },
+
+    getAddress() {
+      return this.getAdapter().getAddress();
+    },
+
+    getCapabilities() {
+      return this.getAdapter().getCapabilities();
+    },
+
+    async requestAccounts() {
+      return await this.getAdapter().requestAccounts();
+    },
+
+    async connect(options) {
+      return await this.getAdapter().connect(options);
+    },
+
+    async disconnect() {
+      return await this.getAdapter().disconnect();
+    },
+
+    async readContract(params) {
+      return await this.getAdapter().readContract(params);
+    },
+
+    async writeContract(params) {
+      return await this.getAdapter().writeContract(params);
+    },
+
+    async waitForReceipt(txHash, maxAttempts) {
+      return await this.getAdapter().waitForReceipt(txHash, maxAttempts);
+    },
+
+    on(event, handler) {
+      if (!this._listeners.has(event)) this._listeners.set(event, new Set());
+      this._listeners.get(event).add(handler);
+    },
+
+    removeListener(event, handler) {
+      if (this._listeners.has(event)) {
+        this._listeners.get(event).delete(handler);
+      }
+    },
+
+    _emit(event, data) {
+      if (this._listeners.has(event)) {
+        for (const h of this._listeners.get(event)) {
+          try { h(data); } catch (e) { console.error('CartridgeHost event error:', e); }
+        }
+      }
+    }
+  };
+
+  // Expose both generic CartridgeHost and HoodQuestHost backward-compatibility alias
+  window.CartridgeHost = CartridgeHost;
+  window.HoodQuestHost = CartridgeHost;
+
+  // Initialize runtime with Direct adapter by default
+  CartridgeHost.init(new DirectHostAdapter());
+
+  // Universal On-Chain Transaction & Receipt Wrappers (routes through active CartridgeHost)
+  async function sendOnchainTx(params) {
+    return await CartridgeHost.writeContract(params);
+  }
+  window.sendOnchainTx = sendOnchainTx;
+
+  async function waitForTxReceipt(txHash, maxAttempts = 15) {
+    return await CartridgeHost.waitForReceipt(txHash, maxAttempts);
+  }
+  window.waitForTxReceipt = waitForTxReceipt;
+
+  // Asynchronous Handshake Negotiation on Cartridge Boot
+  function initCartridgeHostNegotiation() {
+    // Only attempt bridge handshake if inside an iframe
+    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+      const channel = typeof MessageChannel !== 'undefined' ? new MessageChannel() : null;
+      const handshakeId = 'hs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+      let handshakeResolved = false;
+
+      const finishHandshake = (caps, port) => {
+        if (handshakeResolved) return;
+        handshakeResolved = true;
+        const bridgeAdapter = new BridgeHostAdapter(port, caps);
+        CartridgeHost.setAdapter(bridgeAdapter);
+        console.log('🔌 CartridgeHost attached to parent host bridge via ' + (port ? 'MessagePort' : 'postMessage'));
+        if (typeof renderWalletChoice === 'function') renderWalletChoice();
+      };
+
+      const handleAck = (event) => {
+        const d = event.data;
+        if (!d || d.id !== handshakeId || d.type !== 'cartridge:handshake_ack') return;
+        window.removeEventListener('message', handleAck);
+        const port = (event.ports && event.ports[0]) || (channel ? channel.port1 : null);
+        finishHandshake(d.capabilities, port);
+      };
+
+      window.addEventListener('message', handleAck);
+
+      try {
+        const msg = {
+          type: 'cartridge:handshake',
+          id: handshakeId,
+          version: '1.0',
+          cartridge: 'hoodquest'
+        };
+        if (channel) {
+          window.parent.postMessage(msg, '*', [channel.port2]);
+        } else {
+          window.parent.postMessage(msg, '*');
+        }
+      } catch (_) {}
+
+      // If no host acknowledges within 250ms, keep DirectHostAdapter active
+      setTimeout(() => {
+        if (!handshakeResolved) {
+          window.removeEventListener('message', handleAck);
+        }
+      }, 250);
+    }
+  }
+  initCartridgeHostNegotiation();
+
+  // Dynamic UI Reactivity to CartridgeHost Events
+  CartridgeHost.on('capabilitiesChanged', () => {
+    if (typeof renderWalletChoice === 'function') renderWalletChoice();
+  });
+  CartridgeHost.on('accountsChanged', async (addr) => {
+    if (addr) {
+      if (typeof window.setConnectedWallet === 'function') await window.setConnectedWallet(addr);
+    } else {
+      connectedUserAddress = null;
+      const input = document.getElementById('walletInput');
+      if (input) input.value = '';
+      if (typeof renderWalletChoice === 'function') renderWalletChoice();
+      if (typeof renderLootGrid === 'function') renderLootGrid();
+    }
+  });
 
   // On-Chain Heist Button
   document.getElementById('btnOnchainHeist')?.addEventListener('click', async () => {
@@ -8237,7 +8788,7 @@
       if (outfitterFb) {
         outfitterFb.style.display = 'block';
         outfitterFb.style.borderColor = '#eab308';
-        outfitterFb.innerHTML = `⚠️ <strong>Wallet Not Connected:</strong> Please connect your wallet via 📱 <strong>WalletConnect</strong> or 💻 <strong>Laptop Connect</strong> to sign the crafting transaction on Robinhood Testnet.`;
+        outfitterFb.innerHTML = `⚠️ <strong>Wallet Not Connected:</strong> Please connect your wallet via 🦊 <strong>Connect Wallet</strong> or 📱 <strong>WalletConnect</strong> to sign the crafting transaction on Robinhood Testnet.`;
       }
       (window.showToast || console.log)('📱 Please connect your wallet to craft on-chain!');
       startWalletConnect();

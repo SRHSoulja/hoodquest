@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "test": "node test/test_cartridge_runtime.js && node test/test_runtime_compatibility.js && node test/test_adversarial_security.js && node test/test_generic_host.js",
+    "test:host": "node test/test_generic_host.js",
+    "test:compat": "node test/test_runtime_compatibility.js",
+    "test:security": "node test/test_adversarial_security.js"
+  },
+  "dependencies": {
+    "js-sha3": "^0.13.0",
+    "playwright": "^1.63.0",
+    "ws": "^8.21.3"
+  }
+}

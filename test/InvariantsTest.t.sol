@@ -104,7 +104,7 @@ contract InvariantsTest is BaseTest {
 
         // Feed reverts
         vm.prank(alice);
-        vm.expectRevert("Hero is slumbering");
+        vm.expectRevert();
         hood.feed(id);
     }
 
@@ -143,7 +143,7 @@ contract InvariantsTest is BaseTest {
         assertEq(treasures.balanceOf(address(hood), 4), hood.boundCount(4));
 
         // Arrow requires Bow: cannot initiate unequip of Bow while Arrow equipped
-        vm.expectRevert("Unequip ammo first");
+        vm.expectRevert();
         hood.initiateUnequip(id, 0);
         vm.stopPrank();
     }

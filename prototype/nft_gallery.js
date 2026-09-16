@@ -850,6 +850,10 @@
         selectNft(card.getAttribute('data-id'));
       });
     });
+
+    if (filtered.length > 0) {
+      selectNft(filtered[0].id);
+    }
   }
 
   function selectNft(id) {
@@ -860,14 +864,17 @@
       if (c.getAttribute('data-id') === id) {
         c.style.borderColor = '#ffd700';
         c.style.background = '#182b1b';
+        c.style.boxShadow = '0 0 12px rgba(255,215,0,0.35)';
       } else {
         c.style.borderColor = '#23361e';
         c.style.background = '#101d12';
+        c.style.boxShadow = 'none';
       }
     });
 
     const inspector = document.getElementById('galleryInspector');
     if (!inspector) return;
+    inspector.scrollTop = 0;
 
     const svgContent = SVG_DEFS[item.svgKey] || `<div style="font-size:80px; text-align:center;">${item.icon}</div>`;
 

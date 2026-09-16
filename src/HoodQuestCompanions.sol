@@ -18,9 +18,10 @@ contract HoodQuestCompanions is ERC721Enumerable, ReentrancyGuard, IHoodQuestCom
     uint256 public constant IRON = 17;
 
     mapping(uint256 => bool) public genesisAdoptionUsed;
-    uint256 public nextHoundId = 1;     // 1..4000
-    uint256 public nextFalconId = 4001; // 4001..7000
-    uint256 public nextOwlId = 7001;    // 7001..10000
+    uint256 public nextHoundId = 1;     // 1..3000
+    uint256 public nextFalconId = 3001; // 3001..5500
+    uint256 public nextOwlId = 5501;    // 5501..7500
+    uint256 public nextCatId = 7501;    // 7501..10000
 
     mapping(uint256 => bytes32) public petSeed;
     mapping(uint256 => uint256) public petXp;
@@ -64,17 +65,21 @@ contract HoodQuestCompanions is ERC721Enumerable, ReentrancyGuard, IHoodQuestCom
         genesisAdoptionUsed[hoodId] = true;
         
         if (speciesChoice == 0) {
-            require(nextHoundId <= 4000, "Hounds exhausted");
+            require(nextHoundId <= 3000, "Hounds exhausted");
             petId = nextHoundId++;
             treasuresContract.burnAdoptionGold(msg.sender, 20);
         } else if (speciesChoice == 1) {
-            require(nextFalconId <= 7000, "Falcons exhausted");
+            require(nextFalconId <= 5500, "Falcons exhausted");
             petId = nextFalconId++;
             treasuresContract.burnAdoptionGold(msg.sender, 30);
         } else if (speciesChoice == 2) {
-            require(nextOwlId <= 10000, "Owls exhausted");
+            require(nextOwlId <= 7500, "Owls exhausted");
             petId = nextOwlId++;
             treasuresContract.burnAdoptionGold(msg.sender, 40);
+        } else if (speciesChoice == 3) {
+            require(nextCatId <= 10000, "Cats exhausted");
+            petId = nextCatId++;
+            treasuresContract.burnAdoptionGold(msg.sender, 25);
         } else {
             revert("Invalid species");
         }
@@ -93,9 +98,10 @@ contract HoodQuestCompanions is ERC721Enumerable, ReentrancyGuard, IHoodQuestCom
 
     function species(uint256 petId) public pure returns (uint8) {
         require(petId >= 1 && petId <= 10000, "Invalid petId");
-        if (petId <= 4000) return 0;
-        if (petId <= 7000) return 1;
-        return 2;
+        if (petId <= 3000) return 0;
+        if (petId <= 5500) return 1;
+        if (petId <= 7500) return 2;
+        return 3;
     }
 
     function petSpecies(uint256 petId) external pure returns (uint8) {
